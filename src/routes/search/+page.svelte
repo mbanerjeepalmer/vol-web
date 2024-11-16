@@ -13,7 +13,7 @@
 
 	let searchResults: any[] = [];
 	let isLoading = true;
-	let streamedContent = '';
+	let thinkingAboutQueries = '';
 	let queries: string[] = [];
 
 	// Add interface for ratings
@@ -56,84 +56,172 @@
 		}
 	}
 
-	async function rateEpisode(episode: Episode) {
-		if (ratingInProgress.has(episode.id)) return;
+	// Add at top of script
+	const CACHE_VERSION = '1';
+	const MAX_CACHE_AGE = 24 * 60 * 60 * 1000; // 24 hours
 
-		ratingInProgress.add(episode.id);
+	// Cache helper functions
+	function getCacheKey(
+		prompt: string,
+		type: 'thinking' | 'queries' | 'search' | 'ratings'
+	): string {
+		return `vol-cache:${CACHE_VERSION}:${prompt}:${type}`;
+	}
 
+	interface CacheEntry {
+		timestamp: number;
+		data: any;
+	}
+
+	function getFromCache(key: string) {
 		try {
-			const response = await fetch('/api/rate-episode', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					episode,
-					prompt: data.prompt
-				})
-			});
+			const cached = localStorage.getItem(key);
+			if (!cached) return null;
 
-			const { ratings } = await response.json();
-			episode.ratings = ratings;
+			const entry: CacheEntry = JSON.parse(cached);
 
-			// Force reactivity
-			searchResults = [...searchResults];
+			// Check if cache is expired
+			if (Date.now() - entry.timestamp > MAX_CACHE_AGE) {
+				localStorage.removeItem(key);
+				return null;
+			}
+
+			return entry.data;
 		} catch (error) {
-			console.error('Error rating episode:', error);
-		} finally {
-			ratingInProgress.delete(episode.id);
+			console.warn('Cache read failed:', error);
+			return null;
 		}
 	}
 
-	function getAverageRating(ratings?: EpisodeRatings): number {
-		if (!ratings) return 0;
-		return Math.round((ratings.goal + ratings.context + ratings.quality + ratings.freshness) / 4);
+	function saveToCache(key: string, data: any) {
+		try {
+			const entry: CacheEntry = {
+				timestamp: Date.now(),
+				data
+			};
+			localStorage.setItem(key, JSON.stringify(entry));
+		} catch (error) {
+			// Handle QuotaExceededError or other storage errors
+			if (error instanceof Error && error.name === 'QuotaExceededError') {
+				clearOldCache();
+				try {
+					// Retry once after clearing old cache
+					localStorage.setItem(
+						key,
+						JSON.stringify({
+							timestamp: Date.now(),
+							data
+						})
+					);
+				} catch (retryError) {
+					console.warn('Cache write failed even after cleanup:', retryError);
+				}
+			} else {
+				console.warn('Cache write failed:', error);
+			}
+		}
 	}
 
-	// Helper for rating color classes
-	function getRatingColor(rating: number): string {
-		if (rating >= 8) return 'text-green-600';
-		if (rating >= 6) return 'text-blue-600';
-		if (rating >= 4) return 'text-yellow-600';
-		return 'text-red-600';
+	function clearOldCache() {
+		try {
+			const keys = Object.keys(localStorage);
+			const now = Date.now();
+
+			// Remove old version caches and expired entries
+			keys.forEach((key) => {
+				if (key.startsWith('vol-cache:')) {
+					// Remove if old version
+					if (!key.includes(`vol-cache:${CACHE_VERSION}`)) {
+						localStorage.removeItem(key);
+						return;
+					}
+
+					// Remove if expired
+					try {
+						const entry: CacheEntry = JSON.parse(localStorage.getItem(key) || '');
+						if (now - entry.timestamp > MAX_CACHE_AGE) {
+							localStorage.removeItem(key);
+						}
+					} catch {
+						// If entry is corrupt, remove it
+						localStorage.removeItem(key);
+					}
+				}
+			});
+		} catch (error) {
+			console.warn('Cache cleanup failed:', error);
+		}
 	}
 
-	function parseQueries(content: string): string[] {
-		const queryRegex = /<query>(.*?)<\/query>/g;
-		const matches = [...content.matchAll(queryRegex)];
-		return matches.map((match) => match[1].trim());
-	}
-
+	// Update onMount to handle cache errors gracefully
 	onMount(async () => {
+		try {
+			const thinkingCache = getFromCache(getCacheKey(data.prompt, 'thinking'));
+			const queriesCache = getFromCache(getCacheKey(data.prompt, 'queries'));
+
+			if (thinkingCache && queriesCache) {
+				thinkingAboutQueries = thinkingCache;
+				queries = queriesCache;
+				await fetchSearchResults(queries);
+				return;
+			}
+		} catch (error) {
+			console.warn('Cache read failed in onMount:', error);
+		}
+
+		// Proceed with normal flow if cache fails
 		const eventSource = new EventSource(
 			`/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`
 		);
 
 		eventSource.onmessage = (event) => {
-			streamedContent += event.data.replace(/\\n/g, '\n');
+			thinkingAboutQueries += event.data.replace(/\\n/g, '\n');
 		};
 
 		eventSource.onerror = () => {
 			eventSource.close();
-			// Parse queries after stream completes
-			queries = parseQueries(streamedContent);
+			// Save thinking to cache
+			saveToCache(getCacheKey(data.prompt, 'thinking'), thinkingAboutQueries);
+
+			// Parse and cache queries
+			queries = parseQueries(thinkingAboutQueries);
 			if (queries.length > 0) {
+				saveToCache(getCacheKey(data.prompt, 'queries'), queries);
 				fetchSearchResults(queries);
 			} else {
-				// Fallback to hardcoded queries if no queries found
 				queries = data.queries;
+				saveToCache(getCacheKey(data.prompt, 'queries'), queries);
 				fetchSearchResults(queries);
 			}
 		};
 	});
 
+	// Update fetchSearchResults with better error handling
 	async function fetchSearchResults(queryList: string[]) {
-		const searchResponse = await fetch(
-			`/api/spotify-search?queries=${encodeURIComponent(queryList.join(','))}`
-		);
-		const json = await searchResponse.json();
-		searchResults = json.searchResults;
-		isLoading = false;
+		try {
+			const searchCache = getFromCache(getCacheKey(data.prompt, 'search'));
+			if (searchCache) {
+				searchResults = searchCache;
+				isLoading = false;
+				return;
+			}
+		} catch (error) {
+			console.warn('Cache read failed in fetchSearchResults:', error);
+		}
+
+		try {
+			const searchResponse = await fetch(
+				`/api/spotify-search?queries=${encodeURIComponent(queryList.join(','))}`
+			);
+			const json = await searchResponse.json();
+			searchResults = json.searchResults;
+			saveToCache(getCacheKey(data.prompt, 'search'), searchResults);
+		} catch (error) {
+			console.error('Search request failed:', error);
+			searchResults = [];
+		} finally {
+			isLoading = false;
+		}
 	}
 
 	function formatDuration(ms: number): string {
@@ -153,6 +241,72 @@
 			.filter((episode) => !episode.ratings);
 		processRatingQueue();
 	}
+
+	// Update rateEpisode with better error handling
+	async function rateEpisode(episode: Episode) {
+		if (ratingInProgress.has(episode.id)) return;
+
+		let ratingsCache: Record<string, EpisodeRatings> = {};
+
+		try {
+			ratingsCache = getFromCache(getCacheKey(data.prompt, 'ratings')) || {};
+			if (ratingsCache[episode.id]) {
+				episode.ratings = ratingsCache[episode.id];
+				searchResults = [...searchResults];
+				return;
+			}
+		} catch (error) {
+			console.warn('Cache read failed in rateEpisode:', error);
+		}
+
+		ratingInProgress.add(episode.id);
+
+		try {
+			const response = await fetch('/api/rate-episode', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					episode,
+					prompt: data.prompt
+				})
+			});
+
+			const { ratings } = await response.json();
+			episode.ratings = ratings;
+
+			// Cache the rating
+			ratingsCache[episode.id] = ratings;
+			saveToCache(getCacheKey(data.prompt, 'ratings'), ratingsCache);
+
+			// Force reactivity
+			searchResults = [...searchResults];
+		} catch (error) {
+			console.error('Rating request failed:', error);
+		} finally {
+			ratingInProgress.delete(episode.id);
+		}
+	}
+
+	function getAverageRating(ratings?: EpisodeRatings): number {
+		if (!ratings) return 0;
+		return Math.round((ratings.goal + ratings.context + ratings.quality + ratings.freshness) / 4);
+	}
+
+	// Helper for rating color classes
+	function getRatingColor(rating: number): string {
+		if (rating >= 80) return 'text-green-600';
+		if (rating >= 60) return 'text-yellow-600';
+		if (rating >= 40) return 'text-red-600';
+		return 'text-red-600';
+	}
+
+	function parseQueries(content: string): string[] {
+		const queryRegex = /<query>(.*?)<\/query>/g;
+		const matches = [...content.matchAll(queryRegex)];
+		return matches.map((match) => match[1].trim());
+	}
 </script>
 
 <div class="container mx-auto px-4 py-8">
@@ -160,7 +314,7 @@
 		{isLoading ? 'Thinking...' : data.prompt}
 	</h1>
 
-	<Markdown content={streamedContent} />
+	<Markdown content={thinkingAboutQueries} />
 	{#if searchResults.length > 0}
 		<h2
 			class="mt-10 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors"

@@ -13,21 +13,25 @@ async function generateEpisodeRatings(episode: any, prompt: string) {
                 role: "system",
                 content: `You are an expert podcast curator. Rate this podcast episode on how well it matches the user's learning goals.
                 
-Rate each category from 1-10:
-- Goal Alignment (how well does it address the user's stated goal?)
-- Context Match (how appropriate is it for someone with the user's implied knowledge level?)
-- Quality (how well-produced and informative is the content?)
-- Freshness (how timely and relevant is the content?)
+Rate each category from 1-100:
+- Goal: A high score means this aligns well with our understanding of what the user wants.
+- Context: A high score means this matches the user's level of expertise (e.g. beginner vs expert) and perspective (e.g. practical versus theoretical).
+- Quality: A high score means this has good production value, original research, and/or reputation.
+- Freshness: a high score means it's evergreen or recent.
 
 Return only a JSON object with these four numeric ratings.
-Example: {"goal": 8, "context": 7, "quality": 9, "freshness": 6}`
+Example: {"goal": 85, "context": 70, "quality": 90, "freshness": 65}`
             },
             {
                 role: "user",
-                content: `User's goal: "${prompt}"
-
-Episode title: "${episode.name}"
-Description: "${episode.description}"`
+                content: JSON.stringify({
+                    userGoal: prompt,
+                    episode: {
+                        title: episode.name,
+                        description: episode.description,
+                        publishDate: episode.release_date
+                    }
+                })
             }
         ],
         model: "llama-3.2-3b-preview",
