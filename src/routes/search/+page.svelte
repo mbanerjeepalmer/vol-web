@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { cn } from '$lib/utils';
 	import Markdown from '$lib/components/Markdown.svelte';
@@ -307,6 +306,20 @@
 		const matches = [...content.matchAll(queryRegex)];
 		return matches.map((match) => match[1].trim());
 	}
+
+	function getBestEpisode(searchResults: any[]): Episode | null {
+		const allEpisodes = searchResults.flatMap((group) => group.results.episodes.items);
+
+		return (
+			allEpisodes
+				.filter((episode) => episode.ratings && getAverageRating(episode.ratings) > 50)
+				.sort((a, b) => getAverageRating(b.ratings!) - getAverageRating(a.ratings!))[0] || null
+		);
+	}
+
+	// Add this reactive statement to track the best episode
+	let bestEpisode: Episode | null = null;
+	$: bestEpisode = searchResults.length > 0 ? getBestEpisode(searchResults) : null;
 </script>
 
 <div class="container mx-auto px-4 py-8">
@@ -437,6 +450,15 @@
 					</div>
 				</div>
 			{/each}
+		</div>
+	{/if}
+
+	{#if bestEpisode}
+		<div class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
+			<Button class="shadow-lg" href={`/reflect/${bestEpisode.id}`}>
+				<Play class="mr-2 h-4 w-4" />
+				Listen to {bestEpisode.name}
+			</Button>
 		</div>
 	{/if}
 </div>
