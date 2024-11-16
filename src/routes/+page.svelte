@@ -1,18 +1,6 @@
 <script lang="ts">
 	import { Input } from '$lib/components/ui/input';
-	import { superForm } from 'sveltekit-superforms/client';
-	import type { PageData } from './$types';
 	import { Button } from '$lib/components/ui/button';
-	export let data: PageData;
-
-	const form = superForm(data.promptForm, {
-		dataType: 'json',
-		resetForm: false,
-		applyAction: true,
-		delayMs: 500,
-		timeoutMs: 30000
-	});
-	const { form: formData, submitting: submitting, delayed: delayed, submit: submit } = form;
 
 	const predefinedPrompts = [
 		'I want to be like Mark Zuckerberg',
@@ -40,7 +28,7 @@
 </div>
 <form method="POST" class="mx-auto w-full max-w-lg px-4">
 	<div class="flex flex-col gap-2 sm:flex-row">
-		<Input name="prompt" class="w-full" />
+		<Input name="prompt" class="w-full" placeholder="I'm thinking about..." />
 		<Button type="submit" class="w-full sm:w-auto">Submit</Button>
 	</div>
 </form>
