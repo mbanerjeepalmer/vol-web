@@ -5,17 +5,19 @@ const sdk = SpotifyApi.withClientCredentials(VITE_SPOTIFY_CLIENT_ID, VITE_SPOTIF
 
 export async function load({ url }) {
     const prompt = url.searchParams.get('prompt');
-    const hardcodedQueries = [
-        'Mark Zuckerberg interview',
-        'Early history of Facebook',
-        'Birth of social media'
-    ];
-    const searchResults = await Promise.all(
-        hardcodedQueries.map(async query => ({
-            query,
-            results: await sdk.search(query, ['episode'], "GB", 50, 0)
-        }))
-    );
+    if (!prompt) {
+        throw new Error('No prompt provided');
+    }
 
-    return { searchResults };
+    // Initial state
+    return {
+        prompt,
+        isThinking: true,
+        queries: [
+            'Mark Zuckerberg interview',
+            'Early history of Facebook',
+            'Birth of social media'
+        ],
+        searchResults: [] // Empty initially
+    };
 }

@@ -4,7 +4,7 @@
 </script>
 
 <div class="markdown">
-	{@html marked.parse(content, { async: false })}
+	{@html marked.parse(content, { async: false, breaks: true, gfm: true })}
 </div>
 
 <style lang="postcss">
