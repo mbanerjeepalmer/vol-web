@@ -13,6 +13,13 @@
 	let searchResults: any[] = [];
 	let isLoading = true;
 	let streamedContent = '';
+	let queries: string[] = [];
+
+	function parseQueries(content: string): string[] {
+		const queryRegex = /<query>(.*?)<\/query>/g;
+		const matches = [...content.matchAll(queryRegex)];
+		return matches.map((match) => match[1].trim());
+	}
 
 	onMount(async () => {
 		const eventSource = new EventSource(
@@ -20,20 +27,26 @@
 		);
 
 		eventSource.onmessage = (event) => {
-			console.log('Raw chunk:', event.data);
 			streamedContent += event.data.replace(/\\n/g, '\n');
 		};
 
 		eventSource.onerror = () => {
 			eventSource.close();
-			// Continue with search after streaming is done
-			fetchSearchResults();
+			// Parse queries after stream completes
+			queries = parseQueries(streamedContent);
+			if (queries.length > 0) {
+				fetchSearchResults(queries);
+			} else {
+				// Fallback to hardcoded queries if no queries found
+				queries = data.queries;
+				fetchSearchResults(queries);
+			}
 		};
 	});
 
-	async function fetchSearchResults() {
+	async function fetchSearchResults(queryList: string[]) {
 		const searchResponse = await fetch(
-			`/api/spotify-search?queries=${encodeURIComponent(data.queries.join(','))}`
+			`/api/spotify-search?queries=${encodeURIComponent(queryList.join(','))}`
 		);
 		const json = await searchResponse.json();
 		searchResults = json.searchResults;
@@ -62,25 +75,30 @@
 		{isLoading ? 'Thinking...' : 'Search Results'}
 	</h1>
 
-	<h2
-		class="mt-10 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0"
-	>
-		Identifying search queries
-	</h2>
-	<!-- <pre>{streamedContent}</pre> -->
 	<Markdown content={streamedContent} />
-	{data.queries.map((q) => `- ${q}`).join('\n')}
 	{#if searchResults.length > 0}
 		<h2
 			class="mt-10 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors"
 		>
 			Search results
 		</h2>
+		<ul class="mt-4 list-disc space-y-2 pl-6">
+			{#each queries as query}
+				<li>
+					<a href={`#${query.replace(/\s+/g, '-').toLowerCase()}`} class="hover:underline">
+						{query}
+					</a>
+				</li>
+			{/each}
+		</ul>
 
 		<div class="container mx-auto px-4 py-8">
 			{#each searchResults as searchGroup}
 				<div class="mb-12">
-					<h2 class="mb-6 scroll-m-20 text-2xl font-semibold tracking-tight">
+					<h2
+						id={searchGroup.query.replace(/\s+/g, '-').toLowerCase()}
+						class="mb-6 scroll-m-20 text-2xl font-semibold tracking-tight"
+					>
 						{searchGroup.query}
 					</h2>
 

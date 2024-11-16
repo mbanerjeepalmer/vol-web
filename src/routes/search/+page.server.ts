@@ -13,11 +13,7 @@ export async function load({ url }) {
     return {
         prompt,
         isThinking: true,
-        queries: [
-            'Mark Zuckerberg interview',
-            'Early history of Facebook',
-            'Birth of social media'
-        ],
+        queries: [],
         searchResults: [] // Empty initially
     };
 }

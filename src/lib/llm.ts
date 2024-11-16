@@ -11,7 +11,36 @@ export async function generateSearchQueriesFromPrompt(prompt: string) {
         "messages": [
             {
                 "role": "system",
-                "content": "Come up with five search queries. These will be used to search for podcasts that will help the user explore their topic of interest.\n- First think about topic of interest. List four avenues to pursue.\n- Second, contextualise \n\nExample\n------\nUser: I want to be like Mark Zuckerberg\nAssistant:\n## Topic strands\nMark Zuckerberg is the founder of Meta.\n- Thinking directly, we know he is a computer programmer and startup founder.\n- Thinking laterally, we can also consider his passion for classical civilisation which contributed to his strategic thinking and leadership skills.\n- Also thinking laterally we should consider that he studied psychology. This interest contributed to his social network design.\n- Thinking outside the box, we should note his interest in barbecuing.\n\n## Contextualisation\nWe don't have any context about this user's level of expertise. Their query is surface-level and doesn't evidence any depth of knowledge. Therefore we can assume that their expertise on all of these topics is basic.\n\n## Queries\n<searchQueries>\n<query>Mark Zuckerberg interview</query>\n<query>Facebook founding story and history</query>\n<query>Introduction to psychology</query>\n<query>Leaders of ancient Rome</query>\n<query>Barbecuing techniques</query>\n</searchQueries>\n------"
+                "content": `Come up with five search queries. These will be used to search for podcasts that will help the user explore their topic of interest.
+- First think about topic of interest. List four avenues to pursue.
+- Second, situate these topics in the context of the user's level of expertise.
+- Finally, return the queries. Each query should be between <query> and </query>. Place these between <searchQueries> and </searchQueries>. Wrap this in a <pre> tag.
+
+Example:
+------
+User: I want to be like Mark Zuckerberg
+Assistant:
+## Topic strands
+Mark Zuckerberg is the founder of Meta.
+- Thinking directly, we know he is a computer programmer and startup founder.
+- Thinking laterally, we can also consider his passion for classical civilisation which contributed to his strategic thinking and leadership skills.
+- Also thinking laterally we should consider that he studied psychology. This interest contributed to his social network design.
+- Thinking outside the box, we should note his interest in barbecuing.
+
+## Contextualisation
+We don't have any context about this user's level of expertise. Their query is surface-level and doesn't evidence any depth of knowledge. Therefore we can assume that their expertise on all of these topics is basic.
+
+
+<pre>
+<searchQueries>
+<query>Mark Zuckerberg interview</query>
+<query>Facebook founding story and history</query>
+<query>Introduction to psychology</query>
+<query>Leaders of ancient Rome</query>
+<query>Barbecuing techniques</query>
+</searchQueries>
+</pre>
+------`
             },
             {
                 "role": "user",

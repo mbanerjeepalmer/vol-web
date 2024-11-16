@@ -15,7 +15,6 @@ export async function GET({ url }) {
                 const content = chunk.choices[0]?.delta?.content || '';
                 if (content) {
                     const escapedContent = content.replace(/\n/g, '\\n');
-                    console.log('Raw chunk:', JSON.stringify(escapedContent));
                     controller.enqueue(`data: ${escapedContent}\n\n`);
                 }
             }
