@@ -1,8 +1,8 @@
 import Groq from 'groq-sdk';
-import { VITE_GROQ_API_KEY } from '$env/static/private';
+import { GROQ_API_KEY } from '$env/static/private';
 
 const client = new Groq({
-    apiKey: VITE_GROQ_API_KEY, // This is the default and can be omitted
+    apiKey: GROQ_API_KEY, // This is the default and can be omitted
 });
 
 export async function generateSearchQueriesFromPrompt(prompt: string) {
