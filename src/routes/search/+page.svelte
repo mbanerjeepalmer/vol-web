@@ -72,7 +72,7 @@
 
 <div class="container mx-auto px-4 py-8">
 	<h1 class="mb-8 scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-		{isLoading ? 'Thinking...' : 'Search Results'}
+		{isLoading ? 'Thinking...' : data.prompt}
 	</h1>
 
 	<Markdown content={streamedContent} />
