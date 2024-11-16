@@ -285,7 +285,7 @@ Here are some search queries we can try, ranked from most direct to most lateral
 										<div
 											class={cn('h-full rounded-full', getRatingColor(rating.score))}
 											style="width: {rating.score}%"
-										/>
+										></div>
 									</div>
 									<p class="text-sm text-muted-foreground">{rating.reasoning}</p>
 								</div>
@@ -308,10 +308,9 @@ Here are some search queries we can try, ranked from most direct to most lateral
 		</div>
 	{/each}
 
-	<div class="prose prose-stone dark:prose-invert mb-12 mt-8 max-w-3xl">
-		<p class="leading-7">
-			<Markdown
-				content={`
+	<div class="prose prose-stone dark:prose-invert mx-auto mb-12 mt-8 max-w-3xl">
+		<Markdown
+			content={`
 # The Augustus Connection
 Zuckerberg's fascination with Augustus Caesar goes beyond mere historical interest. Just as Augustus transformed the Roman Republic into an empire while maintaining traditional appearances, Zuckerberg has guided Facebook's evolution into Meta.
 
@@ -323,8 +322,7 @@ Zuckerberg's fascination with Augustus Caesar goes beyond mere historical intere
 ## Why It Matters
 By studying Augustus's methods, we gain unique insights into Zuckerberg's leadership philosophy and decision-making approach. The parallels between these two transformative leaders, separated by two millennia, are remarkably instructive.
 `}
-			/>
-		</p>
+		/>
 	</div>
 </div>
 <div class="container mx-auto flex justify-center px-4 py-8">
