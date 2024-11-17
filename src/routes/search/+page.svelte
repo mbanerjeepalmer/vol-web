@@ -241,7 +241,27 @@
 		processRatingQueue();
 	}
 
-	// Update rateEpisode with better error handling
+	// Add near other interfaces
+	interface EpisodeInteraction {
+		spotifyId: string;
+		reaction: string;
+		timestamp: number;
+		episodeTitle?: string;
+		episodeDescription?: string;
+		flightId?: string;
+	}
+
+	// Add with other utility functions
+	function getInteractionHistory(): EpisodeInteraction[] {
+		try {
+			return JSON.parse(localStorage.getItem('vol-interactions') || '[]');
+		} catch (error) {
+			console.error('Failed to load interaction history:', error);
+			return [];
+		}
+	}
+
+	// Update the rateEpisode function
 	async function rateEpisode(episode: Episode) {
 		if (ratingInProgress.has(episode.id)) return;
 
@@ -261,6 +281,7 @@
 		ratingInProgress.add(episode.id);
 
 		try {
+			const interactionHistory = getInteractionHistory();
 			const response = await fetch('/api/rate-episode', {
 				method: 'POST',
 				headers: {
@@ -268,18 +289,17 @@
 				},
 				body: JSON.stringify({
 					episode,
-					prompt: data.prompt
+					prompt: data.prompt,
+					interactionHistory
 				})
 			});
 
 			const { ratings } = await response.json();
 			episode.ratings = ratings;
 
-			// Cache the rating
 			ratingsCache[episode.id] = ratings;
 			saveToCache(getCacheKey(data.prompt, 'ratings'), ratingsCache);
 
-			// Force reactivity
 			searchResults = [...searchResults];
 		} catch (error) {
 			console.error('Rating request failed:', error);

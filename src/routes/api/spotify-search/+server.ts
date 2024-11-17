@@ -14,7 +14,7 @@ export async function GET({ url }) {
     const searchResults = await Promise.all(
         queries.map(async query => ({
             query,
-            results: await sdk.search(query, ['episode'], "GB", 50, 0)
+            results: await sdk.search(query, ['episode'], "GB", 5, 0)
         }))
     );
 
