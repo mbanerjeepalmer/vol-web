@@ -60,3 +60,38 @@ export const flyAndScale = (
 		easing: cubicOut
 	};
 };
+
+export interface Interaction {
+	spotifyId?: string;
+	reaction: string;
+	timestamp: number;
+	episodeTitle?: string;
+	episodeDescription?: string;
+}
+
+export function getInteractionHistory(): Interaction[] {
+	try {
+		return JSON.parse(localStorage.getItem('vol-interactions') || '[]');
+	} catch (error) {
+		console.error('Failed to load interaction history:', error);
+		return [];
+	}
+}
+
+export function saveInteraction(params: Partial<Interaction>) {
+	try {
+		const interactions = getInteractionHistory();
+		const newInteraction: Interaction = {
+			spotifyId: params.spotifyId || '',
+			reaction: params.reaction!,
+			timestamp: Date.now(),
+			episodeTitle: params.episodeTitle,
+			episodeDescription: params.episodeDescription,
+		};
+
+		interactions.unshift(newInteraction);
+		localStorage.setItem('vol-interactions', JSON.stringify(interactions));
+	} catch (error) {
+		console.error('Failed to save interaction:', error);
+	}
+}

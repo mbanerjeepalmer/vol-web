@@ -33,4 +33,6 @@
 		<Button type="submit" class="w-full sm:w-auto">Submit</Button>
 	</div>
 </form>
-<InteractionHistory />
+<div class="mx-auto mt-28 max-w-lg px-4">
+	<InteractionHistory />
+</div>

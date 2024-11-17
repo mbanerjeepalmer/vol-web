@@ -3,7 +3,6 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	export let data;
 	const spotifyId = $page.params.spotify_id;
-	const flightId = $page.url.searchParams.get('flight');
 
 	interface EpisodeInteraction {
 		spotifyId: string;
@@ -41,7 +40,6 @@
 				spotifyId,
 				reaction,
 				timestamp: Date.now(),
-				flightId,
 				episodeTitle: data.episodeTitle,
 				episodeDescription: data.episodeDescription
 			});

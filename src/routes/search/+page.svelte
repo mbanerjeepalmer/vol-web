@@ -7,6 +7,7 @@
 	import { Play } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import type { Episode as SpotifyEpisode } from '@spotify/web-api-ts-sdk';
+	import { saveInteraction } from '$lib/utils';
 
 	export let data: PageData;
 
@@ -108,7 +109,7 @@
 			url = `/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`;
 			console.warn('URL too long, falling back to prompt-only request');
 		}
-
+		saveInteraction({ reaction: data.prompt });
 		const eventSource = new EventSource(url);
 
 		eventSource.onmessage = (event) => {
@@ -149,8 +150,6 @@
 		return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 	}
 
-	const flightId = crypto.randomUUID();
-
 	// Start rating all episodes when results load
 	$: if (searchResults.length > 0 && !isProcessingQueue) {
 		// Flatten all episodes into a single queue
@@ -167,7 +166,6 @@
 		timestamp: number;
 		episodeTitle?: string;
 		episodeDescription?: string;
-		flightId?: string;
 	}
 
 	// Add with other utility functions
