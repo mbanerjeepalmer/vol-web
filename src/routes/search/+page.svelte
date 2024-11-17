@@ -345,34 +345,32 @@
 												{formatDuration(episode.duration_ms)}
 											</span>
 											{#if episode.ratings}
-												<div class="flex gap-2 text-sm font-medium">
+												<div class="flex gap-2 py-2 text-sm font-medium">
 													<span class={getRatingColor(episode.ratings.goal)}
-														>{episode.ratings.goal}</span
+														>G{episode.ratings.goal}</span
 													>
 													<span class={getRatingColor(episode.ratings.context)}
-														>{episode.ratings.context}</span
+														>C{episode.ratings.context}</span
 													>
 													<span class={getRatingColor(episode.ratings.quality)}
-														>{episode.ratings.quality}</span
+														>Q{episode.ratings.quality}</span
 													>
 													<span class={getRatingColor(episode.ratings.freshness)}
-														>{episode.ratings.freshness}</span
+														>F{episode.ratings.freshness}</span
 													>
 													<span
-														class={`font-black ${getRatingColor(getAverageRating(episode.ratings))}`}
+														class={`ml-2 font-black ${getRatingColor(getAverageRating(episode.ratings))}`}
 													>
 														{getAverageRating(episode.ratings)}
 													</span>
 												</div>
 											{:else}
-												<Button
-													variant="outline"
-													size="sm"
-													disabled={ratingInProgress.has(episode.id)}
-													on:click={() => queueEpisodeRating(episode)}
-												>
-													{ratingInProgress.has(episode.id) ? 'Rating...' : 'Waiting...'}
-												</Button>
+												<div>
+													<p class="py-2 font-bold text-white">
+														rating according to your goals, your level of expertise, episode quality
+														and freshness
+													</p>
+												</div>
 											{/if}
 										</div>
 										<Card.Description class="line-clamp-2 text-white/90">

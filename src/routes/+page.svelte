@@ -42,7 +42,7 @@
 				class="h-16 w-full"
 				placeholder="take me on a journey with..."
 			/>
-			<Button type="submit" class="w-full sm:w-auto">Submit</Button>
+			<Button type="submit" class="text-md h-16 w-full sm:w-auto">Submit</Button>
 		</div>
 	</form>
 </div>

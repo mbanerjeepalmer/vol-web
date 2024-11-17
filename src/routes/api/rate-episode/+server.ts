@@ -10,8 +10,10 @@ async function generateEpisodeRatings(episode: any, prompt: string) {
     const chatCompletion = await client.chat.completions.create({
         messages: [
             {
-                role: "system",
-                content: `You are an expert podcast curator. Rate this podcast episode on how well it matches the user's learning goals.
+                role: "user",
+
+                content: [{
+                    "type": "text", "text": `You are an expert podcast curator. Rate this podcast episode on how well it matches the user's learning goals.
                 
 Rate each category from 1-100:
 - Goal: A high score means this aligns well with our understanding of what the user wants.
@@ -21,20 +23,30 @@ Rate each category from 1-100:
 
 Return only a JSON object with these four numeric ratings.
 Example: {"goal": 85, "context": 70, "quality": 90, "freshness": 65}`
-            },
-            {
-                role: "user",
-                content: JSON.stringify({
-                    userGoal: prompt,
-                    episode: {
-                        title: episode.name,
-                        description: episode.description,
-                        publishDate: episode.release_date
+                },
+                {
+                    type: "image_url",
+                    image_url: {
+                        url: episode.images[1]?.url
                     }
-                })
-            }
-        ],
-        model: "llama-3.2-3b-preview",
+                },
+                {
+                    type: "text",
+                    text: JSON.stringify({
+                        userGoal: prompt,
+                        episode: {
+                            title: episode.name,
+                            description: episode.description,
+                            publishDate: episode.release_date
+                        }
+                    })
+                },
+                ]
+            }],
+        model: "llama-3.2-90b-vision-preview",
+        response_format: {
+            type: "json_object"
+        },
         temperature: 0.7,
         max_tokens: 150,
     });
