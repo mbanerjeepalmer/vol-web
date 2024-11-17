@@ -29,8 +29,8 @@
 			}
 		})();
 	});
-	async function handleNah() {
-		saveReaction('Nah');
+	async function handleNext(reactionText: string) {
+		saveReaction(reactionText);
 		const interactions = getInteractionHistory();
 
 		console.log('Interactions:', interactions);
@@ -99,9 +99,9 @@
 
 	<div class="mt-4 grid gap-4">
 		<Button
-			on:click={handleNah}
+			on:click={() => handleNext('Nah')}
 			variant={existingReaction === 'Nah' ? 'default' : 'outline'}
-			class="h-full w-full text-wrap p-3"
+			class="h-full w-full text-wrap border-2 border-fuchsia-800 p-3"
 			type="submit"
 		>
 			Nah
@@ -109,8 +109,8 @@
 
 		<Button
 			variant={existingReaction === 'Love' ? 'default' : 'outline'}
-			class="h-full w-full text-wrap p-3"
-			on:click={() => saveReaction('Love')}
+			class="h-full w-full text-wrap border-2 border-green-600 p-3"
+			on:click={() => handleNext('Love')}
 		>
 			Love
 		</Button>

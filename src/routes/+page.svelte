@@ -11,9 +11,6 @@
 	];
 </script>
 
-<header class="my-8 flex justify-center px-4">
-	<h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">Vol</h1>
-</header>
 <div class="mx-auto mb-4 grid w-full max-w-lg grid-cols-1 gap-4 px-4 sm:grid-cols-2">
 	{#each predefinedPrompts as prompt}
 		<form method="POST" class="h-full">

@@ -9,10 +9,10 @@ export async function POST({ request }) {
     const { searchResults, interactions } = await request.json();
 
     const systemPrompt = `Your job is to inspire curiosity and ambition by recommending stimulating podcasts.
-The user has responded that they didn't like the last recommendation.
+The user is looking for another recommendation. Pay attention to their most recent interaction.
 
-Your short explanation can be something like: "This might be more fun", "Something a bit deeper", "Less Roman", "MORE COWBELL", "Let's delve".
-Be creative with it.
+Your short reason should be something that explains the delta between the last episode and the new one you recommend. Be creative. Some examples: "This might be more fun", "Something a bit deeper", "Less Roman", "Deeper on swimming", "MORE COWBELL", "Let's delve".
+
 
 You must now respond ONLY WITH JSON in the following format:
 {"spotifyId": "the-spotify-id-of-the-episode-to-recommend", "reason": "a-short-explanation-for-your-choice"}
