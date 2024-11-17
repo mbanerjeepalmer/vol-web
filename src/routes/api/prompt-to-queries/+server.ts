@@ -1,38 +1,46 @@
 import Groq from 'groq-sdk';
 import { GROQ_API_KEY } from '$env/static/private';
-
+import type { Interaction } from '$lib/utils';
 const client = new Groq({
     apiKey: GROQ_API_KEY,
 });
 
-interface EpisodeInteraction {
-    spotifyId: string;
-    reaction: string;
-    timestamp: number;
-    episodeTitle?: string;
-    episodeDescription?: string;
-}
 
-function formatInteractionContext(interactions: EpisodeInteraction[]): string {
+
+function formatInteractionContext(interactions: Interaction[]): string {
     if (!interactions.length) return '';
 
-    const recentInteractions = interactions
+    // Deduplicate search queries while keeping the most recent occurrence
+    const seenSearchQueries = new Set<string>();
+    const uniqueInteractions = interactions
         .sort((a, b) => b.timestamp - a.timestamp)
+        .filter(i => {
+            if (!i.spotifyId) {
+                // For search queries, only keep the first occurrence
+                if (seenSearchQueries.has(i.reaction)) return false;
+                seenSearchQueries.add(i.reaction);
+            }
+            return true;
+        })
         .slice(0, 5); // Only use 5 most recent for context
 
     return `
 ## Recent User Preferences
-The user has recently interacted with these podcasts:
-${recentInteractions.map(i => {
-        const title = i.episodeTitle || 'Unknown Episode';
-        const description = i.episodeDescription ? `: ${i.episodeDescription}` : '';
-        return `- Reaction "${i.reaction}" to "${title}"${description}`;
+${uniqueInteractions.map(i => {
+        if (i.spotifyId) {
+            // This is a podcast episode interaction
+            const description = i.episodeDescription ? `: ${i.episodeDescription}` : '';
+            return `- Reaction "${i.reaction}" to "${i.episodeTitle}"${description}`;
+        } else {
+            // This is a search query
+            return `- Search: "${i.reaction}"`;
+        }
     }).join('\n')}
 
 Consider these preferences when generating queries.`;
 }
 
-async function generateSearchQueriesFromPrompt(prompt: string, interactions: EpisodeInteraction[]) {
+async function generateSearchQueriesFromPrompt(prompt: string, interactions: Interaction[]) {
     const interactionContext = formatInteractionContext(interactions);
     console.log(interactionContext);
 

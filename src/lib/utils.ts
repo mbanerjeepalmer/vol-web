@@ -67,6 +67,7 @@ export interface Interaction {
 	timestamp: number;
 	episodeTitle?: string;
 	episodeDescription?: string;
+	searchId?: string;
 }
 
 export function getInteractionHistory(): Interaction[] {
@@ -93,5 +94,16 @@ export function saveInteraction(params: Partial<Interaction>) {
 		localStorage.setItem('vol-interactions', JSON.stringify(interactions));
 	} catch (error) {
 		console.error('Failed to save interaction:', error);
+	}
+}
+
+
+export function getStoredSearch(searchId: string) {
+	try {
+		const stored = localStorage.getItem(`vol-search-${searchId}`);
+		return stored ? JSON.parse(stored) : null;
+	} catch (error) {
+		console.error('Failed to load stored search:', error);
+		return null;
 	}
 }

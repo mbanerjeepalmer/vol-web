@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { zod } from "sveltekit-superforms/adapters";
 import { superValidate } from 'sveltekit-superforms/server';
 import { fail, redirect } from '@sveltejs/kit';
+import { randomUUID } from 'crypto';
 
 const promptSchema = z.object({
     prompt: z.string().min(5, "What's on your mind?")
@@ -14,11 +15,10 @@ export const load = async () => {
 
 export const actions = {
     default: async ({ request }: { request: Request }) => {
-
         const form = await superValidate(request, zod(promptSchema));
-        // if (!form.valid) return fail(400, { promptForm: form });
+        const searchId = randomUUID();
 
-        // Redirect to search with the prompt
-        throw redirect(303, `/search?prompt=${encodeURIComponent(form.data.prompt)}`);
+        // Redirect to search with both prompt and searchId
+        throw redirect(303, `/search?prompt=${encodeURIComponent(form.data.prompt)}&searchId=${searchId}`);
     }
 };

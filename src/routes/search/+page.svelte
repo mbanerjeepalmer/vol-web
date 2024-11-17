@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import * as Card from '$lib/components/ui/card/index.js';
-	import { cn } from '$lib/utils';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Play } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import type { Episode as SpotifyEpisode } from '@spotify/web-api-ts-sdk';
-	import { saveInteraction } from '$lib/utils';
+	import { saveInteraction, getStoredSearch } from '$lib/utils';
 
 	export let data: PageData;
 
@@ -92,23 +91,34 @@
 		return encoded;
 	}
 
-	// Update the onMount function to handle potential URL length issues
+	// Update the onMount function
 	onMount(async () => {
+		// Check for existing search data first
+		const storedSearch = getStoredSearch(data.searchId);
+		if (storedSearch) {
+			thinkingAboutQueries = storedSearch.thinking;
+			queries = storedSearch.queries || parseQueries(storedSearch.thinking);
+			searchResults = storedSearch.searchResults;
+			isLoading = false;
+			return;
+		}
+
 		// Get and encode interaction history with limits
 		const interactionHistory = getInteractionHistory();
 		const encodedHistory = encodeInteractionHistory(interactionHistory);
 
-		const params = new URLSearchParams({
+		const userContext = new URLSearchParams({
 			prompt: data.prompt,
 			interactions: encodedHistory
 		});
 
 		// Create URL with fallback if too long
-		let url = `/api/prompt-to-queries?${params}`;
+		let url = `/api/prompt-to-queries?${userContext}`;
 		if (url.length > MAX_URL_LENGTH) {
 			url = `/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`;
 			console.warn('URL too long, falling back to prompt-only request');
 		}
+
 		saveInteraction({ reaction: data.prompt });
 		const eventSource = new EventSource(url);
 
@@ -127,6 +137,19 @@
 			}
 		};
 	});
+
+	// Save search data whenever we have results
+	$: if (searchResults.length > 0) {
+		const searchData = {
+			id: data.searchId,
+			prompt: data.prompt,
+			queries,
+			searchResults,
+			thinking: thinkingAboutQueries,
+			timestamp: Date.now()
+		};
+		localStorage.setItem(`vol-search-${data.searchId}`, JSON.stringify(searchData));
+	}
 
 	// Update fetchSearchResults with better error handling
 	async function fetchSearchResults(queryList: string[]) {
@@ -242,6 +265,21 @@
 	// Add this reactive statement to track the best episode
 	let bestEpisode: Episode | null = null;
 	$: bestEpisode = searchResults.length > 0 ? getBestEpisode(searchResults) : null;
+
+	// Add after searchResults declaration
+	let searchId = crypto.randomUUID();
+
+	// Add after searchResults are loaded
+	$: if (searchResults.length > 0) {
+		const searchData = {
+			id: searchId,
+			results: searchResults,
+			thinking: thinkingAboutQueries,
+			prompt: data.prompt,
+			timestamp: Date.now()
+		};
+		localStorage.setItem(`vol-search-${searchId}`, JSON.stringify(searchData));
+	}
 </script>
 
 <div class="container mx-auto px-4 py-8">
@@ -363,7 +401,7 @@
 
 	{#if bestEpisode}
 		<div class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
-			<Button class="shadow-lg" href={`/reflect/${bestEpisode.id}`}>
+			<Button class="shadow-lg" href={`/reflect/${bestEpisode.id}?searchId=${searchId}`}>
 				<Play class="mr-2 h-4 w-4" />
 				Listen to {bestEpisode.name}
 			</Button>

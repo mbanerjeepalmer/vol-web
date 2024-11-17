@@ -1,61 +1,89 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import type { Interaction } from '$lib/utils';
+	import { getStoredSearch, getInteractionHistory } from '$lib/utils';
+	import { onMount } from 'svelte';
+
 	export let data;
 	const spotifyId = $page.params.spotify_id;
+	const searchId = $page.url.searchParams.get('searchId') || '';
+	let existingReaction: string | null = null;
+	let searchResults: any = null;
 
-	interface EpisodeInteraction {
-		spotifyId: string;
-		reaction: string;
-		timestamp: number;
-		episodeTitle?: string;
-		episodeDescription?: string;
+	onMount(async () => {
+		searchResults = getStoredSearch(searchId);
+
+		// Get existing reaction from localStorage
+		existingReaction = (() => {
+			try {
+				const interactions: Interaction[] = JSON.parse(
+					localStorage.getItem('vol-interactions') || '[]'
+				);
+				return interactions.find((i) => i.spotifyId === spotifyId)?.reaction || null;
+			} catch (error) {
+				console.error('Failed to get existing reaction:', error);
+				return null;
+			}
+		})();
+	});
+	async function handleNah() {
+		saveReaction('Nah');
+		const interactions = getInteractionHistory();
+
+		console.log('Interactions:', interactions);
+		console.log('Search results:', searchResults);
+
+		const filteredResults = searchResults?.results.map((group) => ({
+			query: group.query,
+			episodes: group.results.episodes.items.map((episode) => ({
+				id: episode.id,
+				name: episode.name,
+				// description: episode.description,
+				ratings: episode.ratings
+			}))
+		}));
+
+		const response = await fetch('/api/rerank', {
+			method: 'POST',
+			body: JSON.stringify({ searchResults: filteredResults, interactions })
+		});
+		const nextEpisode = await response.json();
+		console.log('Next episode:', nextEpisode);
+		window.location.href = `/reflect/${nextEpisode.spotifyId}?searchId=${searchId}&reason=${nextEpisode.reason}`;
 	}
 
-	// Get existing reaction for this episode
-	function getExistingReaction(): string | null {
+	function saveReaction(reactionText: string) {
 		try {
-			const interactions: EpisodeInteraction[] = JSON.parse(
+			const interactions: Interaction[] = JSON.parse(
 				localStorage.getItem('vol-interactions') || '[]'
 			);
-			const existing = interactions.find((i) => i.spotifyId === spotifyId);
-			return existing?.reaction || null;
-		} catch (error) {
-			console.error('Failed to get existing reaction:', error);
-			return null;
-		}
-	}
-
-	function saveInteraction(reaction: string) {
-		try {
-			const interactions: EpisodeInteraction[] = JSON.parse(
-				localStorage.getItem('vol-interactions') || '[]'
-			);
-
-			// Remove any existing interaction for this episode
 			const filteredInteractions = interactions.filter((i) => i.spotifyId !== spotifyId);
 
-			// Add the new interaction
 			filteredInteractions.push({
 				spotifyId,
-				reaction,
+				reaction: reactionText,
 				timestamp: Date.now(),
 				episodeTitle: data.episodeTitle,
-				episodeDescription: data.episodeDescription
+				episodeDescription: data.episodeDescription,
+				searchId
 			});
 
 			localStorage.setItem('vol-interactions', JSON.stringify(filteredInteractions));
-			existingReaction = reaction; // Update the UI
+			existingReaction = reactionText;
 		} catch (error) {
 			console.error('Failed to save interaction:', error);
 		}
 	}
-
-	let existingReaction = getExistingReaction();
-
-	const predefinedReactions = ['Nah', 'Love', 'Share'];
 </script>
 
+{#if data.reason}
+	<div class="container mx-auto flex items-center justify-center px-4 py-8">
+		<h2 class="text-2xl font-bold">{data.reason}</h2>
+	</div>
+{/if}
 <div class="container mx-auto px-4 py-8">
 	<iframe
 		title="Spotify podcast player"
@@ -69,22 +97,22 @@
 		loading="lazy"
 	></iframe>
 
-	<div class="mt-4 grid grid-cols-3 gap-4">
-		{#each predefinedReactions as reaction}
-			<Button
-				variant={existingReaction === reaction ? 'default' : 'outline'}
-				class="h-full w-full text-wrap p-3"
-				on:click={() => {
-					if (existingReaction !== reaction) {
-						saveInteraction(reaction);
-					}
-				}}
-			>
-				{reaction}
-				{#if existingReaction === reaction}
-					<span class="ml-2">✓</span>
-				{/if}
-			</Button>
-		{/each}
+	<div class="mt-4 grid gap-4">
+		<Button
+			on:click={handleNah}
+			variant={existingReaction === 'Nah' ? 'default' : 'outline'}
+			class="h-full w-full text-wrap p-3"
+			type="submit"
+		>
+			Nah
+		</Button>
+
+		<Button
+			variant={existingReaction === 'Love' ? 'default' : 'outline'}
+			class="h-full w-full text-wrap p-3"
+			on:click={() => saveReaction('Love')}
+		>
+			Love
+		</Button>
 	</div>
 </div>

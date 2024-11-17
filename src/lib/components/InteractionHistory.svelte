@@ -29,7 +29,9 @@
 			<div class="rounded-lg border p-4">
 				<div class="flex flex-col gap-2">
 					<div>
-						<h3 class="font-medium">{interaction.episodeTitle || ''}</h3>
+						<a href={`/reflect/${interaction.spotifyId}`}>
+							<h3 class="font-medium">{interaction.episodeTitle || ''}</h3>
+						</a>
 					</div>
 					<span class="inline-block w-fit py-1 text-primary">
 						"{interaction.reaction}"
