@@ -150,7 +150,6 @@
 	}
 
 	const flightId = crypto.randomUUID();
-	let chosenResultPath = `reflect/${encodeURIComponent('https://open.spotify.com/episode/0C1ZvZeyF1wntYzx64Bote')}?flight=${flightId}`;
 
 	// Start rating all episodes when results load
 	$: if (searchResults.length > 0 && !isProcessingQueue) {

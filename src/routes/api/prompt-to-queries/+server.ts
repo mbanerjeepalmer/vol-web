@@ -11,7 +11,6 @@ interface EpisodeInteraction {
     timestamp: number;
     episodeTitle?: string;
     episodeDescription?: string;
-    flightId?: string;
 }
 
 function formatInteractionContext(interactions: EpisodeInteraction[]): string {

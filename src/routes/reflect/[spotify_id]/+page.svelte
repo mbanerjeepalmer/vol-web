@@ -11,7 +11,6 @@
 		timestamp: number;
 		episodeTitle?: string;
 		episodeDescription?: string;
-		flightId?: string;
 	}
 
 	// Get existing reaction for this episode
