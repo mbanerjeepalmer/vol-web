@@ -366,7 +366,7 @@
 												</div>
 											{:else}
 												<div>
-													<p class="py-2 font-bold text-white">
+													<p class="animate-pulse py-2 font-bold text-white">
 														rating according to your goals, your level of expertise, episode quality
 														and freshness
 													</p>
