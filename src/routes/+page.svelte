@@ -1,19 +1,25 @@
 <script lang="ts">
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
+	import { onMount } from 'svelte';
+	import { llmStore, initializeModel } from '$lib/stores/llm';
 
 	let inputValue = '';
 	let inputElement: HTMLInputElement;
 
 	const predefinedPrompts = [
-		'I want to be like',
-		'I was just wondering about',
-		'My one weird skill is',
-		'I yap too much about'
+		'i want to be like',
+		"i can't stop thinking about",
+		'my one weird skill is',
+		'i yap too much about'
 	];
+
+	onMount(() => {
+		initializeModel();
+	});
 </script>
 
-<div class="mx-auto mb-24 mt-16">
+<div class="mx-auto mb-24 mt-14">
 	<div class="mx-auto mb-4 grid w-full max-w-lg grid-cols-1 gap-4 px-4 sm:grid-cols-2">
 		{#each predefinedPrompts as prompt}
 			<button
@@ -33,12 +39,34 @@
 				bind:this={inputElement}
 				name="prompt"
 				bind:value={inputValue}
-				class="w-full"
-				placeholder="I'm thinking about..."
+				class="h-16 w-full"
+				placeholder="take me on a journey with..."
 			/>
 			<Button type="submit" class="w-full sm:w-auto">Submit</Button>
 		</div>
 	</form>
 </div>
 
+<div class="fixed bottom-4 right-4 rounded-lg border bg-white p-2 shadow-lg">
+	<div class="flex items-center gap-2">
+		<div
+			class="h-2 w-2 rounded-full"
+			class:bg-yellow-400={$llmStore.status === 'loading'}
+			class:bg-green-500={$llmStore.status === 'ready'}
+			class:bg-red-500={$llmStore.status === 'error'}
+			class:bg-gray-300={$llmStore.status === 'idle'}
+		></div>
+		<span class="text-sm">
+			{#if $llmStore.status === 'loading'}
+				Loading LLM...
+			{:else if $llmStore.status === 'ready'}
+				{$llmStore.readyMessage}
+			{:else if $llmStore.status === 'error'}
+				Using Groq
+			{:else}
+				Initialising...
+			{/if}
+		</span>
+	</div>
+</div>
 <a href="/history" class="mx-auto block text-center underline">my vols</a>
