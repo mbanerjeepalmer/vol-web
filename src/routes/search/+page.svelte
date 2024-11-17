@@ -217,9 +217,9 @@
 
 	// Helper for rating color classes
 	function getRatingColor(rating: number): string {
-		if (rating >= 80) return 'text-green-600';
-		if (rating >= 60) return 'text-yellow-600';
-		if (rating >= 40) return 'text-red-600';
+		if (rating >= 80) return 'text-green-400';
+		if (rating >= 60) return 'text-orange-500';
+		if (rating >= 40) return 'text-pink-600';
 		return 'text-red-600';
 	}
 
@@ -276,28 +276,24 @@
 						{searchGroup.query}
 					</h2>
 
-					<div
-						class={cn(
-							'grid gap-6 rounded-lg p-4',
-							searchResults.indexOf(searchGroup) % 3 === 0 && 'bg-red-100',
-							searchResults.indexOf(searchGroup) % 3 === 1 && 'bg-blue-100',
-							searchResults.indexOf(searchGroup) % 3 === 2 && 'bg-green-100'
-						)}
-					>
+					<div class="grid gap-6 rounded-lg p-4">
 						{#each searchGroup.results.episodes.items.sort((a, b) => getAverageRating(b.ratings) - getAverageRating(a.ratings)) as episode}
-							<Card.Root class="flex overflow-hidden">
-								<div class="hidden sm:block">
-									<img
-										src={episode.images[1]?.url}
-										alt={episode.name}
-										class="h-[150px] w-[150px] object-cover"
-									/>
-								</div>
+							<Card.Root class="relative flex overflow-hidden">
+								{#if episode.images[1]?.url}
+									<div class="absolute inset-0">
+										<img
+											src={episode.images[1]?.url}
+											alt={episode.name}
+											class="h-full w-full object-cover"
+										/>
+										<div class="absolute inset-0 bg-gradient-to-t from-black/90 to-black/60"></div>
+									</div>
+								{/if}
 
-								<div class="flex flex-1 flex-col p-6">
+								<div class="relative z-10 flex flex-1 flex-col p-6 text-white">
 									<Card.Header class="pb-4">
-										<div class="flex items-center justify-between">
-											<Card.Title class="text-xl">
+										<div class="flex flex-col items-center justify-between">
+											<Card.Title class="text-4xl">
 												<a
 													href={episode.external_urls.spotify}
 													target="_blank"
@@ -307,23 +303,27 @@
 													{episode.name}
 												</a>
 											</Card.Title>
-
+											<span class="text-bold text-sm text-white/90">
+												{formatDuration(episode.duration_ms)}
+											</span>
 											{#if episode.ratings}
 												<div class="flex gap-2 text-sm font-medium">
 													<span class={getRatingColor(episode.ratings.goal)}
-														>G:{episode.ratings.goal}</span
+														>{episode.ratings.goal}</span
 													>
 													<span class={getRatingColor(episode.ratings.context)}
-														>C:{episode.ratings.context}</span
+														>{episode.ratings.context}</span
 													>
 													<span class={getRatingColor(episode.ratings.quality)}
-														>Q:{episode.ratings.quality}</span
+														>{episode.ratings.quality}</span
 													>
 													<span class={getRatingColor(episode.ratings.freshness)}
-														>F:{episode.ratings.freshness}</span
+														>{episode.ratings.freshness}</span
 													>
-													<span class={getRatingColor(getAverageRating(episode.ratings))}>
-														Avg:{getAverageRating(episode.ratings)}
+													<span
+														class={`font-black ${getRatingColor(getAverageRating(episode.ratings))}`}
+													>
+														{getAverageRating(episode.ratings)}
 													</span>
 												</div>
 											{:else}
@@ -337,34 +337,20 @@
 												</Button>
 											{/if}
 										</div>
-										<Card.Description class="line-clamp-2">
+										<Card.Description class="line-clamp-2 text-white/90">
 											{episode.description}
 										</Card.Description>
 									</Card.Header>
 
-									<Card.Footer class="mt-auto flex items-center justify-between pt-4">
-										<div class="flex items-center gap-2">
-											{#if episode.audio_preview_url}
-												<audio controls class="h-8 w-48">
-													<source src={episode.audio_preview_url} type="audio/mpeg" />
-												</audio>
-											{/if}
-											<span class="text-sm text-muted-foreground">
-												{formatDuration(episode.duration_ms)}
-											</span>
-										</div>
-
-										<Button variant="outline" size="sm" asChild>
-											<a
-												href={episode.external_urls.spotify}
-												target="_blank"
-												rel="noopener noreferrer"
-												class="flex items-center gap-2"
+									<Card.Footer class="mt-auto flex items-center justify-center pt-4">
+										{#if episode.audio_preview_url}
+											<audio
+												controls
+												class="h-8 w-64 rounded-full [&::-webkit-media-controls-current-time-display]:text-white [&::-webkit-media-controls-panel]:bg-black/40 [&::-webkit-media-controls-time-remaining-display]:text-white [&::-webkit-media-controls-timeline]:bg-white/20"
 											>
-												<Play class="h-4 w-4" />
-												<span>Listen on Spotify</span>
-											</a>
-										</Button>
+												<source src={episode.audio_preview_url} type="audio/mpeg" />
+											</audio>
+										{/if}
 									</Card.Footer>
 								</div>
 							</Card.Root>
