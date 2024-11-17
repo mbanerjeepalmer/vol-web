@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import Button from '$lib/components/ui/button/button.svelte';
-
+	export let data;
 	const spotifyId = $page.params.spotify_id;
 	const flightId = $page.url.searchParams.get('flight');
 
@@ -46,8 +46,8 @@
 				reaction,
 				timestamp: Date.now(),
 				flightId,
-				episodeTitle: episodeData?.title,
-				episodeDescription: episodeData?.description
+				episodeTitle: data.episodeTitle,
+				episodeDescription: data.episodeDescription
 			});
 
 			localStorage.setItem('vol-interactions', JSON.stringify(filteredInteractions));
@@ -57,26 +57,10 @@
 		}
 	}
 
-	// Track episode metadata
-	let episodeTitle: string | undefined;
-	let episodeDescription: string | undefined;
 	let existingReaction = getExistingReaction();
-
-	// Listen for episode metadata from the iframe
-	function handleMessage(event: MessageEvent) {
-		if (event.origin === 'https://open.spotify.com') {
-			const data = event.data;
-			if (data.type === 'episode_data') {
-				episodeTitle = data.title;
-				episodeDescription = data.description;
-			}
-		}
-	}
 
 	const predefinedReactions = ['Nah', 'Love', 'Share'];
 </script>
-
-<svelte:window on:message={handleMessage} />
 
 <div class="container mx-auto px-4 py-8">
 	<iframe
@@ -99,8 +83,8 @@
 				on:click={() => {
 					if (existingReaction !== reaction) {
 						saveInteraction(reaction, {
-							title: episodeTitle,
-							description: episodeDescription
+							title: data.episodeTitle,
+							description: data.episodeDescription
 						});
 					}
 				}}

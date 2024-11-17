@@ -2,18 +2,48 @@ import Groq from 'groq-sdk';
 import { GROQ_API_KEY } from '$env/static/private';
 
 const client = new Groq({
-    apiKey: GROQ_API_KEY, // This is the default and can be omitted
+    apiKey: GROQ_API_KEY,
 });
 
-async function generateSearchQueriesFromPrompt(prompt: string) {
-    const chatCompletion = await client.chat.completions.create({
+interface EpisodeInteraction {
+    spotifyId: string;
+    reaction: string;
+    timestamp: number;
+    episodeTitle?: string;
+    episodeDescription?: string;
+    flightId?: string;
+}
 
+function formatInteractionContext(interactions: EpisodeInteraction[]): string {
+    if (!interactions.length) return '';
+
+    const recentInteractions = interactions
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 5); // Only use 5 most recent for context
+
+    return `
+## Recent User Preferences
+The user has recently interacted with these podcasts:
+${recentInteractions.map(i => {
+        const title = i.episodeTitle || 'Unknown Episode';
+        const description = i.episodeDescription ? `: ${i.episodeDescription}` : '';
+        return `- Reaction "${i.reaction}" to "${title}"${description}`;
+    }).join('\n')}
+
+Consider these preferences when generating queries.`;
+}
+
+async function generateSearchQueriesFromPrompt(prompt: string, interactions: EpisodeInteraction[]) {
+    const interactionContext = formatInteractionContext(interactions);
+    console.log(interactionContext);
+
+    const chatCompletion = await client.chat.completions.create({
         "messages": [
             {
                 "role": "system",
                 "content": `Come up with five search queries. These will be used to search for podcasts that will help the user explore their topic of interest.
 - First think about topic of interest. List four avenues to pursue.
-- Second, situate these topics in the context of the user's level of expertise.
+- Second, situate these topics in the context of the user's level of expertise and preferences.
 - Finally, return the queries. Each query should be between <query> and </query>. Place these between <searchQueries> and </searchQueries>. Wrap this in a <pre> tag.
 
 Example:
@@ -30,7 +60,6 @@ Mark Zuckerberg is the founder of Meta.
 ## Contextualisation
 We don't have any context about this user's level of expertise. Their query is surface-level and doesn't evidence any depth of knowledge. Therefore we can assume that their expertise on all of these topics is basic.
 
-
 <pre>
 <searchQueries>
 <query>Mark Zuckerberg interview</query>
@@ -44,7 +73,9 @@ We don't have any context about this user's level of expertise. Their query is s
             },
             {
                 "role": "user",
-                "content": prompt
+                "content": `${interactionContext}
+User's immediate request:
+${prompt}`
             }
         ],
         "model": "llama-3.2-90b-text-preview",
@@ -63,7 +94,19 @@ export async function GET({ url }) {
         return new Response('No prompt provided', { status: 400 });
     }
 
-    const stream = await generateSearchQueriesFromPrompt(prompt);
+    // Parse interactions from URL params
+    let interactions: EpisodeInteraction[] = [];
+    try {
+        const encodedInteractions = url.searchParams.get('interactions');
+        if (encodedInteractions) {
+            interactions = JSON.parse(decodeURIComponent(encodedInteractions));
+        }
+    } catch (error) {
+        console.error('Failed to parse interactions:', error);
+        // Continue without interactions if parsing fails
+    }
+
+    const stream = await generateSearchQueriesFromPrompt(prompt, interactions);
 
     // Transform the stream into proper SSE format
     const transformedStream = new ReadableStream({

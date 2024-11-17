@@ -152,7 +152,43 @@
 		}
 	}
 
-	// Update onMount to handle cache errors gracefully
+	// Add these constants near the top of the script
+	const MAX_INTERACTIONS = 10; // Limit number of interactions
+	const MAX_URL_LENGTH = 2000; // Safe limit for most browsers
+
+	// Update the encoding helper function
+	function encodeInteractionHistory(interactions: EpisodeInteraction[]): string {
+		// Sort by timestamp (newest first) and take only recent interactions
+		const recentInteractions = [...interactions]
+			.sort((a, b) => b.timestamp - a.timestamp)
+			.slice(0, MAX_INTERACTIONS)
+			.map((i) => ({
+				spotifyId: i.spotifyId,
+				reaction: i.reaction,
+				timestamp: i.timestamp,
+				episodeTitle: i.episodeTitle,
+				episodeDescription: i.episodeDescription
+			}));
+
+		const encoded = encodeURIComponent(JSON.stringify(recentInteractions));
+
+		// If still too long, reduce further and remove descriptions
+		if (encoded.length > MAX_URL_LENGTH) {
+			const withoutDescriptions = recentInteractions.map(({ episodeDescription, ...rest }) => rest);
+			const encodedWithoutDescriptions = encodeURIComponent(JSON.stringify(withoutDescriptions));
+
+			// If still too long, reduce number of interactions
+			if (encodedWithoutDescriptions.length > MAX_URL_LENGTH) {
+				return encodeInteractionHistory(interactions.slice(0, MAX_INTERACTIONS / 2));
+			}
+
+			return encodedWithoutDescriptions;
+		}
+
+		return encoded;
+	}
+
+	// Update the onMount function to handle potential URL length issues
 	onMount(async () => {
 		try {
 			const thinkingCache = getFromCache(getCacheKey(data.prompt, 'thinking'));
@@ -168,10 +204,24 @@
 			console.warn('Cache read failed in onMount:', error);
 		}
 
-		// Proceed with normal flow if cache fails
-		const eventSource = new EventSource(
-			`/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`
-		);
+		// Get and encode interaction history with limits
+		const interactionHistory = getInteractionHistory();
+		const encodedHistory = encodeInteractionHistory(interactionHistory);
+
+		const params = new URLSearchParams({
+			prompt: data.prompt,
+			interactions: encodedHistory
+		});
+
+		// Create URL with fallback if too long
+		let url = `/api/prompt-to-queries?${params}`;
+		if (url.length > MAX_URL_LENGTH) {
+			// Fallback to just the prompt if URL is too long
+			url = `/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`;
+			console.warn('URL too long, falling back to prompt-only request');
+		}
+
+		const eventSource = new EventSource(url);
 
 		eventSource.onmessage = (event) => {
 			thinkingAboutQueries += event.data.replace(/\\n/g, '\n');
@@ -261,7 +311,7 @@
 		}
 	}
 
-	// Update the rateEpisode function
+	// Update the rateEpisode function to use the same limits
 	async function rateEpisode(episode: Episode) {
 		if (ratingInProgress.has(episode.id)) return;
 
@@ -281,7 +331,10 @@
 		ratingInProgress.add(episode.id);
 
 		try {
-			const interactionHistory = getInteractionHistory();
+			const interactionHistory = getInteractionHistory()
+				.sort((a, b) => b.timestamp - a.timestamp)
+				.slice(0, MAX_INTERACTIONS);
+
 			const response = await fetch('/api/rate-episode', {
 				method: 'POST',
 				headers: {
