@@ -40,7 +40,7 @@ async function generateSearchQueriesFromPrompt(prompt: string, interactions: Epi
         "messages": [
             {
                 "role": "system",
-                "content": `Come up with five search queries. These will be used to search for podcasts that will help the user explore their topic of interest.
+                "content": `Your job is to enhance people's lives by finding the podcasts that will drive their ambition and curiosity. Come up with five search queries. These will be used to search for podcasts that will help the user explore their topic of interest.
 - First think about topic of interest. List four avenues to pursue.
 - Second, situate these topics in the context of the user's level of expertise and preferences.
 - Finally, return the queries. Each query should be between <query> and </query>. Place these between <searchQueries> and </searchQueries>. Wrap this in a <pre> tag.

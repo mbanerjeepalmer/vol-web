@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
+	import InteractionHistory from '$lib/components/InteractionHistory.svelte';
 
 	const predefinedPrompts = [
 		'I want to be like Mark Zuckerberg',
@@ -32,3 +33,4 @@
 		<Button type="submit" class="w-full sm:w-auto">Submit</Button>
 	</div>
 </form>
+<InteractionHistory />

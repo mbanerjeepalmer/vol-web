@@ -27,10 +27,7 @@
 		}
 	}
 
-	function saveInteraction(
-		reaction: string,
-		episodeData?: { title?: string; description?: string }
-	) {
+	function saveInteraction(reaction: string) {
 		try {
 			const interactions: EpisodeInteraction[] = JSON.parse(
 				localStorage.getItem('vol-interactions') || '[]'
@@ -81,10 +78,7 @@
 				class="h-full w-full text-wrap p-3"
 				on:click={() => {
 					if (existingReaction !== reaction) {
-						saveInteraction(reaction, {
-							title: data.episodeTitle,
-							description: data.episodeDescription
-						});
+						saveInteraction(reaction);
 					}
 				}}
 			>
