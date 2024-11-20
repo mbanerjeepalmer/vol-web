@@ -15,7 +15,7 @@
 	];
 
 	onMount(() => {
-		initializeModel();
+		// initializeModel();
 	});
 </script>
 
@@ -47,7 +47,7 @@
 	</form>
 </div>
 
-<div class="fixed bottom-4 right-4 rounded-lg border bg-white p-2 shadow-lg">
+<!-- <div class="fixed bottom-4 right-4 rounded-lg border bg-white p-2 shadow-lg">
 	<div class="flex items-center gap-2">
 		<div
 			class="h-2 w-2 rounded-full"
@@ -68,5 +68,5 @@
 			{/if}
 		</span>
 	</div>
-</div>
+</div> -->
 <a href="/history" class="mx-auto block text-center underline">my vols</a>
