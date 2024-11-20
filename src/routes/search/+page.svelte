@@ -7,6 +7,7 @@
 	import type { PageData } from './$types';
 	import type { Episode as SpotifyEpisode } from '@spotify/web-api-ts-sdk';
 	import { saveInteraction, getStoredSearch } from '$lib/utils';
+	import { Badge } from '$lib/components/ui/badge';
 
 	export let data: PageData;
 
@@ -55,7 +56,6 @@
 		}
 	}
 
-	// Add at top of script
 	const MAX_INTERACTIONS = 10; // Limit number of interactions
 	const MAX_URL_LENGTH = 2000; // Safe limit for most browsers
 
@@ -91,7 +91,6 @@
 		return encoded;
 	}
 
-	// Update the onMount function
 	onMount(async () => {
 		// Check for existing search data first
 		const storedSearch = getStoredSearch(data.searchId);
@@ -103,7 +102,6 @@
 			return;
 		}
 
-		// Get and encode interaction history with limits
 		const interactionHistory = getInteractionHistory();
 		const encodedHistory = encodeInteractionHistory(interactionHistory);
 
@@ -151,7 +149,6 @@
 		localStorage.setItem(`vol-search-${data.searchId}`, JSON.stringify(searchData));
 	}
 
-	// Update fetchSearchResults with better error handling
 	async function fetchSearchResults(queryList: string[]) {
 		try {
 			const searchResponse = await fetch(
@@ -280,6 +277,16 @@
 		};
 		localStorage.setItem(`vol-search-${searchId}`, JSON.stringify(searchData));
 	}
+
+	// Add near the top with other reactive declarations
+	$: sortedEpisodes = searchResults
+		.flatMap((group) =>
+			group.results.episodes.items.map((episode) => ({
+				...episode,
+				sourceQuery: group.query
+			}))
+		)
+		.sort((a, b) => getAverageRating(b.ratings) - getAverageRating(a.ratings));
 </script>
 
 <div class="container mx-auto px-4 py-8">
@@ -292,108 +299,106 @@
 		<h2
 			class="mt-10 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors"
 		>
-			Search results
+			Search Results
 		</h2>
-		<ul class="mt-4 list-disc space-y-2 pl-6">
-			{#each queries as query}
-				<li>
-					<a href={`#${query.replace(/\s+/g, '-').toLowerCase()}`} class="hover:underline">
-						{query}
-					</a>
-				</li>
-			{/each}
-		</ul>
 
-		<div class="container mx-auto px-4 py-8">
-			{#each searchResults as searchGroup}
-				<div class="mb-12">
-					<h2
-						id={searchGroup.query.replace(/\s+/g, '-').toLowerCase()}
-						class="mb-6 scroll-m-20 text-2xl font-semibold tracking-tight"
-					>
-						{searchGroup.query}
-					</h2>
-
-					<div class="grid gap-6 rounded-lg p-4">
-						{#each searchGroup.results.episodes.items.sort((a, b) => getAverageRating(b.ratings) - getAverageRating(a.ratings)) as episode}
-							<Card.Root class="relative flex overflow-hidden">
-								{#if episode.images[1]?.url}
-									<div class="absolute inset-0">
-										<img
-											src={episode.images[1]?.url}
-											alt={episode.name}
-											class="h-full w-full object-cover"
-										/>
-										<div class="absolute inset-0 bg-gradient-to-t from-black/90 to-black/60"></div>
-									</div>
-								{/if}
-
-								<div class="relative z-10 flex flex-1 flex-col p-6 text-white">
-									<Card.Header class="pb-4">
-										<div class="flex flex-col items-center justify-between">
-											<Card.Title class="text-4xl">
-												<a
-													href={episode.external_urls.spotify}
-													target="_blank"
-													rel="noopener noreferrer"
-													class="hover:underline"
-												>
-													{episode.name}
-												</a>
-											</Card.Title>
-											<span class="text-bold text-sm text-white/90">
-												{formatDuration(episode.duration_ms)}
-											</span>
-											{#if episode.ratings}
-												<div class="flex gap-2 py-2 text-sm font-medium">
-													<span class={getRatingColor(episode.ratings.goal)}
-														>G{episode.ratings.goal}</span
-													>
-													<span class={getRatingColor(episode.ratings.context)}
-														>C{episode.ratings.context}</span
-													>
-													<span class={getRatingColor(episode.ratings.quality)}
-														>Q{episode.ratings.quality}</span
-													>
-													<span class={getRatingColor(episode.ratings.freshness)}
-														>F{episode.ratings.freshness}</span
-													>
-													<span
-														class={`ml-2 font-black ${getRatingColor(getAverageRating(episode.ratings))}`}
-													>
-														{getAverageRating(episode.ratings)}
-													</span>
-												</div>
-											{:else}
-												<div>
-													<p class="animate-pulse py-2 font-bold text-white">
-														rating according to your goals, your level of expertise, episode quality
-														and freshness
-													</p>
-												</div>
-											{/if}
-										</div>
-										<Card.Description class="line-clamp-2 text-white/90">
-											{episode.description}
-										</Card.Description>
-									</Card.Header>
-
-									<Card.Footer class="mt-auto flex items-center justify-center pt-4">
-										{#if episode.audio_preview_url}
-											<audio
-												controls
-												class="h-8 w-64 rounded-full [&::-webkit-media-controls-current-time-display]:text-white [&::-webkit-media-controls-panel]:bg-black/40 [&::-webkit-media-controls-time-remaining-display]:text-white [&::-webkit-media-controls-timeline]:bg-white/20"
-											>
-												<source src={episode.audio_preview_url} type="audio/mpeg" />
-											</audio>
-										{/if}
-									</Card.Footer>
+		<div class="container mx-auto max-w-lg px-4 py-8">
+			<div class="grid gap-6 rounded-lg p-4">
+				{#each sortedEpisodes as episode}
+					<div class="grid gap-4">
+						<!-- Episode Info Block -->
+						<Card.Root class="relative flex overflow-hidden">
+							{#if episode.images[1]?.url}
+								<div class="absolute inset-0">
+									<img
+										src={episode.images[1]?.url}
+										alt={episode.name}
+										class="h-full w-full object-cover"
+									/>
+									<div class="absolute inset-0 bg-gradient-to-t from-black/90 to-black/60" />
 								</div>
+							{/if}
+
+							<div class="relative z-10 flex flex-1 flex-col p-8 text-white">
+								<div class="flex flex-col gap-8">
+									<div class="flex items-start gap-2">
+										<Card.Title class="text-4xl">
+											<a
+												href={episode.external_urls.spotify}
+												target="_blank"
+												rel="noopener noreferrer"
+												class="hover:underline"
+											>
+												{episode.name}
+											</a>
+										</Card.Title>
+									</div>
+									<div class="flex w-full items-center justify-center gap-2">
+										<Badge
+											variant="secondary"
+											class="block max-w-64 truncate px-2 text-sm opacity-80"
+										>
+											{episode.sourceQuery}
+										</Badge>
+										<span class="block text-sm font-bold text-white/90">
+											{formatDuration(episode.duration_ms)}
+										</span>
+									</div>
+								</div>
+								<Card.Description class="mt-4 line-clamp-2 text-white/90">
+									{episode.description}
+								</Card.Description>
+							</div>
+						</Card.Root>
+
+						<!-- Ratings Block -->
+						<Card.Root class="bg-card p-4">
+							{#if episode.ratings}
+								<div class="flex gap-4 text-lg font-medium">
+									<div class="flex flex-col items-center">
+										<span class={getRatingColor(episode.ratings.goal)}>Goal</span>
+										<span class="text-2xl">{episode.ratings.goal}</span>
+									</div>
+									<div class="flex flex-col items-center">
+										<span class={getRatingColor(episode.ratings.context)}>Context</span>
+										<span class="text-2xl">{episode.ratings.context}</span>
+									</div>
+									<div class="flex flex-col items-center">
+										<span class={getRatingColor(episode.ratings.quality)}>Quality</span>
+										<span class="text-2xl">{episode.ratings.quality}</span>
+									</div>
+									<div class="flex flex-col items-center">
+										<span class={getRatingColor(episode.ratings.freshness)}>Freshness</span>
+										<span class="text-2xl">{episode.ratings.freshness}</span>
+									</div>
+									<div class="ml-auto flex flex-col items-center">
+										<span class="text-muted-foreground">Overall</span>
+										<span
+											class={`text-3xl font-black ${getRatingColor(getAverageRating(episode.ratings))}`}
+										>
+											{getAverageRating(episode.ratings)}
+										</span>
+									</div>
+								</div>
+							{:else}
+								<p class="animate-pulse text-center font-bold">Analyzing episode relevance...</p>
+							{/if}
+						</Card.Root>
+
+						<!-- Audio Preview Block -->
+						{#if episode.audio_preview_url}
+							<Card.Root class="bg-card p-4">
+								<audio
+									controls
+									class="w-full rounded-lg [&::-webkit-media-controls-panel]:bg-background"
+								>
+									<source src={episode.audio_preview_url} type="audio/mpeg" />
+								</audio>
 							</Card.Root>
-						{/each}
+						{/if}
 					</div>
-				</div>
-			{/each}
+				{/each}
+			</div>
 		</div>
 	{/if}
 
