@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 import type { TransitionConfig } from "svelte/transition";
+import type { EpisodeRatings } from "./types";
 
 const MAX_STORED_SEARCHES = 10;
 
@@ -142,4 +143,9 @@ export function cleanupStorage() {
 	} catch (error) {
 		console.error('Storage cleanup failed:', error);
 	}
+}
+
+export function getAverageRating(ratings?: EpisodeRatings): number {
+	if (!ratings) return 0;
+	return Math.round((ratings.goal + ratings.context + ratings.quality + ratings.freshness) / 4);
 }

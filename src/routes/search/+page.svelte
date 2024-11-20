@@ -3,12 +3,13 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { Play } from 'lucide-svelte';
 	import type { PageData } from './$types';
-	import type { Episode as SpotifyEpisode } from '@spotify/web-api-ts-sdk';
-	import { saveInteraction, getStoredSearch, cleanupStorage } from '$lib/utils';
+	import { saveInteraction, getStoredSearch, cleanupStorage, getAverageRating } from '$lib/utils';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Sheet from '$lib/components/ui/sheet';
+	import TopEpisode from '$lib/components/TopEpisode.svelte';
+	import type { Episode } from '$lib/types';
+	import Ratings from '$lib/components/Ratings.svelte';
 
 	export let data: PageData;
 
@@ -16,19 +17,6 @@
 	let isLoading = true;
 	let thinkingAboutQueries = '';
 	let queries: string[] = [];
-
-	// Add interface for ratings
-	interface EpisodeRatings {
-		goal: number;
-		context: number;
-		quality: number;
-		freshness: number;
-	}
-
-	interface Episode extends SpotifyEpisode {
-		ratings?: EpisodeRatings;
-	}
-
 	// Track which episodes are being rated
 	let ratingInProgress = new Set<string>();
 	let ratingQueue: Episode[] = [];
@@ -47,14 +35,6 @@
 		}
 
 		isProcessingQueue = false;
-	}
-
-	// Add episode to queue and start processing if needed
-	function queueEpisodeRating(episode: Episode) {
-		if (!episode.ratings && !ratingQueue.includes(episode)) {
-			ratingQueue.push(episode);
-			processRatingQueue();
-		}
 	}
 
 	const MAX_INTERACTIONS = 10; // Limit number of interactions
@@ -232,40 +212,12 @@
 		}
 	}
 
-	function getAverageRating(ratings?: EpisodeRatings): number {
-		if (!ratings) return 0;
-		return Math.round((ratings.goal + ratings.context + ratings.quality + ratings.freshness) / 4);
-	}
-
-	// Helper for rating color classes
-	function getRatingColor(rating: number): string {
-		if (rating >= 80) return 'text-green-400';
-		if (rating >= 60) return 'text-orange-500';
-		if (rating >= 40) return 'text-pink-600';
-		return 'text-red-600';
-	}
-
 	function parseQueries(content: string): string[] {
 		const queryRegex = /<query>(.*?)<\/query>/g;
 		const matches = [...content.matchAll(queryRegex)];
 		return matches.map((match) => match[1].trim());
 	}
 
-	function getBestEpisode(searchResults: any[]): Episode | null {
-		const allEpisodes = searchResults.flatMap((group) => group.results.episodes.items);
-
-		return (
-			allEpisodes
-				.filter((episode) => episode.ratings && getAverageRating(episode.ratings) > 50)
-				.sort((a, b) => getAverageRating(b.ratings!) - getAverageRating(a.ratings!))[0] || null
-		);
-	}
-
-	// Add this reactive statement to track the best episode
-	let bestEpisode: Episode | null = null;
-	$: bestEpisode = searchResults.length > 0 ? getBestEpisode(searchResults) : null;
-
-	// Add after searchResults declaration
 	let searchId = crypto.randomUUID();
 
 	// Add after searchResults are loaded
@@ -291,42 +243,54 @@
 		.sort((a, b) => getAverageRating(b.ratings) - getAverageRating(a.ratings));
 </script>
 
-<div class="container mx-auto max-w-xl px-4 py-8">
-	<h1
-		class="mx-auto mb-8 max-w-xl scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl"
-	>
+<div class="mx-auto max-w-xl px-2 py-8 lg:px-4">
+	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
 		{isLoading ? 'Thinking...' : data.prompt}
 	</h1>
-	<Sheet.Root>
-		<div class="flex w-full justify-end">
-			<Sheet.Trigger>
-				<Button variant="link" class="">explain yourself?</Button>
-			</Sheet.Trigger>
-		</div>
-		<Sheet.Content side="right" class="overflow-y-auto">
-			<Sheet.Header>
-				<Sheet.Title>what the ai was thinking</Sheet.Title>
-			</Sheet.Header>
-			<div class="py-8">
-				<Markdown content={thinkingAboutQueries} />
-			</div>
-		</Sheet.Content>
-	</Sheet.Root>
+
 	{#if searchResults.length > 0}
-		<div class="container mx-auto max-w-lg px-4 py-8">
-			<div class="grid gap-6 rounded-lg p-4">
-				{#each sortedEpisodes as episode}
-					<div class="grid gap-4">
-						<!-- Episode Info Block -->
-						<Card.Root class="relative flex overflow-hidden">
+		<!-- TODO -->
+		<!-- {#if data.reason}
+				<div class="container mx-auto flex items-center justify-center px-4 py-8">
+					<h2 class="text-2xl font-bold">{data.reason}</h2>
+				</div>
+			{/if} -->
+		<div class="grid gap-6">
+			{#each sortedEpisodes as episode, index}
+				{#if index === 0}
+					<TopEpisode
+						episodeTitle={episode.name}
+						episodeDescription={episode.description}
+						spotifyId={episode.id}
+						{searchId}
+						ratings={episode.ratings}
+					/>
+					<Sheet.Root>
+						<div class="flex w-full justify-end">
+							<Sheet.Trigger>
+								<Button variant="link" class="">explain yourself?</Button>
+							</Sheet.Trigger>
+						</div>
+						<Sheet.Content side="right" class="overflow-y-auto">
+							<Sheet.Header>
+								<Sheet.Title>what the ai was thinking</Sheet.Title>
+							</Sheet.Header>
+							<div class="py-8">
+								<Markdown content={thinkingAboutQueries} />
+							</div>
+						</Sheet.Content>
+					</Sheet.Root>
+				{:else}
+					<div class="">
+						<Card.Root class="relative overflow-hidden">
 							{#if episode.images[1]?.url}
 								<div class="absolute inset-0">
 									<img
 										src={episode.images[1]?.url}
 										alt={episode.name}
-										class="h-full w-full object-cover"
+										class="w-full overflow-hidden object-cover"
 									/>
-									<div class="absolute inset-0 bg-gradient-to-t from-black/90 to-black/60" />
+									<div class="absolute inset-0 bg-gradient-to-t from-black/90 to-black/60"></div>
 								</div>
 							{/if}
 
@@ -344,61 +308,33 @@
 											</a>
 										</Card.Title>
 									</div>
-									<div class="flex w-full items-center justify-center gap-2">
-										<Badge
-											variant="secondary"
-											class="block max-w-64 truncate px-2 text-sm opacity-80"
-										>
-											{episode.sourceQuery}
-										</Badge>
-										<span class="block text-sm font-bold text-white/90">
-											{formatDuration(episode.duration_ms)}
-										</span>
-									</div>
 								</div>
-								<Card.Description class="mt-4 line-clamp-2 text-white/90">
-									{episode.description}
+								<Card.Description class="mt-4 space-y-4  text-white/90">
+									<p class="line-clamp-3">{episode.description}</p>
+									<p class="block text-right text-sm font-bold text-white/90">
+										{formatDuration(episode.duration_ms)}
+									</p>
 								</Card.Description>
 							</div>
 						</Card.Root>
-
-						<!-- Ratings Block -->
-						<Card.Root class="bg-card p-4">
-							{#if episode.ratings}
-								<div class="flex gap-4 text-lg font-medium">
-									<div class="flex flex-col items-center">
-										<span class={getRatingColor(episode.ratings.goal)}>Goal</span>
-										<span class="text-2xl">{episode.ratings.goal}</span>
-									</div>
-									<div class="flex flex-col items-center">
-										<span class={getRatingColor(episode.ratings.context)}>Context</span>
-										<span class="text-2xl">{episode.ratings.context}</span>
-									</div>
-									<div class="flex flex-col items-center">
-										<span class={getRatingColor(episode.ratings.quality)}>Quality</span>
-										<span class="text-2xl">{episode.ratings.quality}</span>
-									</div>
-									<div class="flex flex-col items-center">
-										<span class={getRatingColor(episode.ratings.freshness)}>Freshness</span>
-										<span class="text-2xl">{episode.ratings.freshness}</span>
-									</div>
-									<div class="ml-auto flex flex-col items-center">
-										<span class="text-muted-foreground">Overall</span>
-										<span
-											class={`text-3xl font-black ${getRatingColor(getAverageRating(episode.ratings))}`}
-										>
-											{getAverageRating(episode.ratings)}
-										</span>
-									</div>
+						<Card.Root class="my-2 p-4">
+							<div class="flex flex-row items-center justify-between gap-2">
+								<div>
+									<Badge variant="outline" class="border-none text-sm font-light opacity-80">
+										{episode.sourceQuery}
+									</Badge>
 								</div>
-							{:else}
-								<p class="animate-pulse text-center font-bold">Analyzing episode relevance...</p>
-							{/if}
+								{#if episode.ratings}
+									<Ratings ratings={episode.ratings} />
+								{:else}
+									<p class="animate-pulse text-center font-bold">rating episode...</p>
+								{/if}
+							</div>
 						</Card.Root>
 
 						<!-- Audio Preview Block -->
 						{#if episode.audio_preview_url}
-							<Card.Root class="bg-card p-4">
+							<Card.Root class="my-2 border-none">
 								<audio
 									controls
 									class="w-full rounded-lg [&::-webkit-media-controls-panel]:bg-background"
@@ -408,17 +344,8 @@
 							</Card.Root>
 						{/if}
 					</div>
-				{/each}
-			</div>
-		</div>
-	{/if}
-
-	{#if bestEpisode}
-		<div class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
-			<Button class="shadow-lg" href={`/reflect/${bestEpisode.id}?searchId=${searchId}`}>
-				<Play class="mr-2 h-4 w-4" />
-				Listen to {bestEpisode.name}
-			</Button>
+				{/if}
+			{/each}
 		</div>
 	{/if}
 </div>
