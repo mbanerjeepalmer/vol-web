@@ -11,3 +11,11 @@ export interface EpisodeRatings {
 export interface Episode extends SpotifyEpisode {
     ratings?: EpisodeRatings;
 }
+
+export interface EpisodeInteraction {
+    spotifyId: string;
+    reaction: string;
+    timestamp: number;
+    episodeTitle?: string;
+    episodeDescription?: string;
+}

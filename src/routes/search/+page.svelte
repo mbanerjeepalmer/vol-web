@@ -8,7 +8,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import TopEpisode from '$lib/components/TopEpisode.svelte';
-	import type { Episode } from '$lib/types';
+	import type { Episode, EpisodeInteraction } from '$lib/types';
 	import Ratings from '$lib/components/Ratings.svelte';
 
 	export let data: PageData;
@@ -80,6 +80,14 @@
 			thinkingAboutQueries = storedSearch.thinking;
 			queries = storedSearch.queries || parseQueries(storedSearch.thinking);
 			searchResults = storedSearch.searchResults;
+
+			// Add this: Re-rate all episodes when returning from interaction
+			ratingQueue = searchResults
+				.flatMap((group) => group.results.episodes.items)
+				// Rate all episodes again, not just ones without ratings
+				.map((episode: Episode) => ({ ...episode, ratings: null }));
+
+			processRatingQueue();
 			isLoading = false;
 			return;
 		}
@@ -94,6 +102,7 @@
 
 		// Create URL with fallback if too long
 		let url = `/api/prompt-to-queries?${userContext}`;
+		console.debug('User context:', url);
 		if (url.length > MAX_URL_LENGTH) {
 			url = `/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`;
 			console.warn('URL too long, falling back to prompt-only request');
@@ -159,15 +168,6 @@
 			.flatMap((group) => group.results.episodes.items)
 			.filter((episode) => !episode.ratings);
 		processRatingQueue();
-	}
-
-	// Add near other interfaces
-	interface EpisodeInteraction {
-		spotifyId: string;
-		reaction: string;
-		timestamp: number;
-		episodeTitle?: string;
-		episodeDescription?: string;
 	}
 
 	// Add with other utility functions

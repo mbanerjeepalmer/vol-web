@@ -31,28 +31,13 @@
 	});
 	async function handleNext(reactionText: string) {
 		saveReaction(reactionText);
-		const interactions = getInteractionHistory();
 
-		console.log('Interactions:', interactions);
-		console.log('Search results:', searchResults);
+		// Get the original prompt from stored search
+		const storedSearch = getStoredSearch(searchId);
+		const originalPrompt = storedSearch?.prompt;
 
-		const filteredResults = searchResults?.results.map((group) => ({
-			query: group.query,
-			episodes: group.results.episodes.items.map((episode: Episode) => ({
-				id: episode.id,
-				name: episode.name,
-				// description: episode.description,
-				ratings: episode.ratings
-			}))
-		}));
-
-		const response = await fetch('/api/rerank', {
-			method: 'POST',
-			body: JSON.stringify({ searchResults: filteredResults, interactions })
-		});
-		const nextEpisode = await response.json();
-		console.log('Next episode:', nextEpisode);
-		window.location.href = `/reflect/${nextEpisode.spotifyId}?searchId=${searchId}&reason=${nextEpisode.reason}`;
+		// Redirect back to search page with same searchId and prompt
+		window.location.href = `/search?id=${searchId}&prompt=${encodeURIComponent(originalPrompt)}`;
 	}
 
 	function saveReaction(reactionText: string) {
@@ -93,7 +78,7 @@
 	></iframe>
 
 	<Ratings {ratings} />
-
+	<!-- 
 	<div class="mt-4 grid gap-4">
 		<Button
 			on:click={() => handleNext('Nah')}
@@ -111,5 +96,5 @@
 		>
 			Love
 		</Button>
-	</div>
+	</div> -->
 </div>
