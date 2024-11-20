@@ -3,6 +3,8 @@ import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 import type { TransitionConfig } from "svelte/transition";
 
+const MAX_STORED_SEARCHES = 10;
+
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
@@ -90,8 +92,15 @@ export function saveInteraction(params: Partial<Interaction>) {
 			episodeDescription: params.episodeDescription,
 		};
 
-		interactions.unshift(newInteraction);
-		localStorage.setItem('vol-interactions', JSON.stringify(interactions));
+		const filteredInteractions = interactions.filter(i =>
+			i.spotifyId !== newInteraction.spotifyId
+		);
+
+		filteredInteractions.unshift(newInteraction);
+
+		const trimmedInteractions = filteredInteractions.slice(0, 50);
+
+		localStorage.setItem('vol-interactions', JSON.stringify(trimmedInteractions));
 	} catch (error) {
 		console.error('Failed to save interaction:', error);
 	}
@@ -105,5 +114,32 @@ export function getStoredSearch(searchId: string) {
 	} catch (error) {
 		console.error('Failed to load stored search:', error);
 		return null;
+	}
+}
+
+export function cleanupStorage() {
+	try {
+		// Clean up old searches
+		const searchKeys = Object.keys(localStorage)
+			.filter(key => key.startsWith('vol-search-'))
+			.sort((a, b) => {
+				const timeA = JSON.parse(localStorage.getItem(a) || '{}').timestamp || 0;
+				const timeB = JSON.parse(localStorage.getItem(b) || '{}').timestamp || 0;
+				return timeA - timeB;
+			});
+
+		while (searchKeys.length >= MAX_STORED_SEARCHES) {
+			localStorage.removeItem(searchKeys.shift()!);
+		}
+
+		// Clean up interactions
+		const interactions = getInteractionHistory();
+		if (interactions.length > 50) {
+			localStorage.setItem('vol-interactions',
+				JSON.stringify(interactions.slice(0, 50))
+			);
+		}
+	} catch (error) {
+		console.error('Storage cleanup failed:', error);
 	}
 }

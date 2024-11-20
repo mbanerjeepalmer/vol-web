@@ -6,8 +6,9 @@
 	import { Play } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import type { Episode as SpotifyEpisode } from '@spotify/web-api-ts-sdk';
-	import { saveInteraction, getStoredSearch } from '$lib/utils';
+	import { saveInteraction, getStoredSearch, cleanupStorage } from '$lib/utils';
 	import { Badge } from '$lib/components/ui/badge';
+	import * as Sheet from '$lib/components/ui/sheet';
 
 	export let data: PageData;
 
@@ -92,6 +93,7 @@
 	}
 
 	onMount(async () => {
+		cleanupStorage();
 		// Check for existing search data first
 		const storedSearch = getStoredSearch(data.searchId);
 		if (storedSearch) {
@@ -289,19 +291,28 @@
 		.sort((a, b) => getAverageRating(b.ratings) - getAverageRating(a.ratings));
 </script>
 
-<div class="container mx-auto px-4 py-8">
-	<h1 class="mb-8 scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+<div class="container mx-auto max-w-xl px-4 py-8">
+	<h1
+		class="mx-auto mb-8 max-w-xl scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl"
+	>
 		{isLoading ? 'Thinking...' : data.prompt}
 	</h1>
-
-	<Markdown content={thinkingAboutQueries} />
+	<Sheet.Root>
+		<div class="flex w-full justify-end">
+			<Sheet.Trigger>
+				<Button variant="link" class="">explain yourself?</Button>
+			</Sheet.Trigger>
+		</div>
+		<Sheet.Content side="right" class="overflow-y-auto">
+			<Sheet.Header>
+				<Sheet.Title>what the ai was thinking</Sheet.Title>
+			</Sheet.Header>
+			<div class="py-8">
+				<Markdown content={thinkingAboutQueries} />
+			</div>
+		</Sheet.Content>
+	</Sheet.Root>
 	{#if searchResults.length > 0}
-		<h2
-			class="mt-10 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors"
-		>
-			Search Results
-		</h2>
-
 		<div class="container mx-auto max-w-lg px-4 py-8">
 			<div class="grid gap-6 rounded-lg p-4">
 				{#each sortedEpisodes as episode}
