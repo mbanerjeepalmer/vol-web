@@ -25,11 +25,11 @@
 		</a>
 	</div>
 	<ul class="mx-auto mb-6 mt-4 flex w-full max-w-lg flex-row justify-end gap-4 text-sm">
-		<li>
+		<!-- <li>
 			<a href="/history" class="mx-auto block text-center underline opacity-70 hover:opacity-100"
 				>my vols</a
 			>
-		</li>
+		</li> -->
 		<li>
 			<a href="/how-to" class="mx-auto block text-center underline opacity-70 hover:opacity-100"
 				>how to vol</a

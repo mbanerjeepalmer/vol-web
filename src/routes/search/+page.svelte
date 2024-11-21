@@ -30,6 +30,7 @@
 		while (ratingQueue.length > 0) {
 			const episode = ratingQueue.shift();
 			if (episode && !episode.ratings) {
+				console.debug('About to rate episode:', episode.name);
 				await rateEpisode(episode);
 			}
 		}
@@ -80,12 +81,10 @@
 			queries = storedSearch.queries || parseQueries(storedSearch.thinking);
 			searchResults = storedSearch.searchResults;
 
-			// Rate everything that doesn't have a rating
 			ratingQueue = searchResults
 				.flatMap((group) => group.results.episodes.items)
-				// Rate all episodes again, not just ones without ratings
-				.map((episode: Episode) => ({ ...episode, ratings: null }));
-			processRatingQueue();
+				.filter((episode) => !episode.ratings);
+			await processRatingQueue();
 			isLoading = false;
 			return;
 		}
@@ -165,7 +164,9 @@
 		ratingQueue = searchResults
 			.flatMap((group) => group.results.episodes.items)
 			.filter((episode) => !episode.ratings);
-		processRatingQueue();
+		void (async () => {
+			await processRatingQueue();
+		})();
 	}
 
 	// Add with other utility functions
@@ -178,7 +179,6 @@
 		}
 	}
 
-	// Update the rateEpisode function to use the same limits
 	async function rateEpisode(episode: Episode) {
 		if (ratingInProgress.has(episode.id)) return;
 		ratingInProgress.add(episode.id);
@@ -243,7 +243,27 @@
 	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
 		{isLoading ? 'thinking...' : data.prompt}
 	</h1>
-
+	<div class={`flex items-center justify-center ${isProcessingQueue ? 'visible' : 'invisible'}`}>
+		<span
+			class="inline-block animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text text-center font-bold text-transparent"
+			>rating episodes...</span
+		>
+	</div>
+	<Sheet.Root>
+		<div class="flex w-full justify-end">
+			<Sheet.Trigger>
+				<Button variant="link" class="">explain yourself?</Button>
+			</Sheet.Trigger>
+		</div>
+		<Sheet.Content side="right" class="overflow-y-auto">
+			<Sheet.Header>
+				<Sheet.Title>what the ai was thinking</Sheet.Title>
+			</Sheet.Header>
+			<div class="py-8">
+				<Markdown content={thinkingAboutQueries} />
+			</div>
+		</Sheet.Content>
+	</Sheet.Root>
 	{#if searchResults.length > 0}
 		<!-- TODO -->
 		<!-- {#if data.reason}
@@ -260,22 +280,8 @@
 						spotifyId={episode.id}
 						{searchId}
 						ratings={episode.ratings}
+						sourceQuery={episode.sourceQuery}
 					/>
-					<Sheet.Root>
-						<div class="flex w-full justify-end">
-							<Sheet.Trigger>
-								<Button variant="link" class="">explain yourself?</Button>
-							</Sheet.Trigger>
-						</div>
-						<Sheet.Content side="right" class="overflow-y-auto">
-							<Sheet.Header>
-								<Sheet.Title>what the ai was thinking</Sheet.Title>
-							</Sheet.Header>
-							<div class="py-8">
-								<Markdown content={thinkingAboutQueries} />
-							</div>
-						</Sheet.Content>
-					</Sheet.Root>
 				{:else}
 					<div class="">
 						<Card.Root class="relative overflow-hidden">

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Button from '$lib/components/ui/button/button.svelte';
+	import { Badge } from '$lib/components/ui/badge';
 	import type { EpisodeRatings } from '$lib/types';
 	import type { Interaction } from '$lib/utils';
 	import { getStoredSearch, getInteractionHistory } from '$lib/utils';
@@ -11,6 +12,7 @@
 	export let spotifyId: string;
 	export let searchId: string;
 	export let ratings: EpisodeRatings;
+	export let sourceQuery: string;
 	let existingReaction: string | null = null;
 	let searchResults: any = null;
 	onMount(async () => {
@@ -76,8 +78,14 @@
 		allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 		loading="lazy"
 	></iframe>
-
-	<Ratings {ratings} />
+	<div class="flex flex-row items-center justify-between gap-2 px-4">
+		<div>
+			<Badge variant="outline" class="border-none text-sm font-light opacity-80">
+				{sourceQuery}
+			</Badge>
+		</div>
+		<Ratings {ratings} />
+	</div>
 
 	<!-- <div class="mt-4 grid gap-4">
 		<Button
