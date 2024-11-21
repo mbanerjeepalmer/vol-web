@@ -1,9 +1,12 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/stores';
+	import { Button } from '$lib/components/ui/button';
 	import posthog from 'posthog-js';
 	import { browser } from '$app/environment';
 	import { beforeNavigate, afterNavigate } from '$app/navigation';
+	import Chat from '$lib/components/Chat.svelte';
+	let chatting = $state(false);
 	let { children } = $props();
 	if (browser) {
 		beforeNavigate(() => posthog.capture('$pageleave'));
@@ -36,3 +39,15 @@
 </header>
 
 {@render children()}
+
+{#if chatting}
+	<Chat />
+{:else}
+	<div
+		class={`my-8 flex items-center justify-center transition-opacity duration-200 ${chatting ? 'opacity-0' : 'opacity-100'}`}
+	>
+		<Button class="text-sm underline opacity-70" variant="link" on:click={() => (chatting = true)}
+			>feedback</Button
+		>
+	</div>
+{/if}
