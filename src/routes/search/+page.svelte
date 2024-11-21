@@ -245,7 +245,7 @@
 
 <div class="mx-auto max-w-xl px-2 py-8 lg:px-4">
 	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
-		{isLoading ? 'Thinking...' : data.prompt}
+		{isLoading ? 'thinking...' : data.prompt}
 	</h1>
 
 	{#if searchResults.length > 0}

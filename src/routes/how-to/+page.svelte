@@ -3,32 +3,36 @@
 </script>
 
 <article
-	class="prose prose-headings:text-center prose-headings:font-bold container mx-auto my-12 flex max-w-prose flex-col space-y-4"
+	class="prose prose-headings:text-center prose-headings:font-bold container mx-auto my-12 flex max-w-prose flex-col space-y-6"
 >
 	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
-		is better than you at finding podcasts
+		<span
+			class="mr-2 inline-block bg-gradient-to-r from-fuchsia-500 to-green-500 bg-clip-text text-transparent"
+			>vol</span
+		> is better than you at finding podcasts
 	</h1>
 
-	<p>
-		Let's say you want to be like Steve Jobs. Through podcasts you want to imbibe the same
-		ingredients that made him. What do you search for?
-	</p>
+	<p>Let's say you want to be like Steve Jobs.</p>
+	<p>You want to imbibe the same ingredients that made him.</p>
+	<p>What podcasts do you search for?</p>
 	<enhanced:img
 		src="/static/spotify-search-results.png"
 		alt="Spotify search results"
 		class="h-lg mx-auto my-4 block w-auto object-contain shadow-[5px_5px_10px_rgba(0,0,0,0.6)]"
 	/>
 	<p>Was Steve Jobs imbibing 'motivational speeches'?</p>
+	<p>No.</p>
 	<p>
-		No. He was imbibing calligraphy, electronics, English literature, psychedelics and Zen Buddhism.
+		He was imbibing calligraphy, electronics, English literature, psychedelics and Zen Buddhism.
 	</p>
-	<p class="my-8">
+
+	<h3 class="pt-12 text-lg font-semibold">
 		<span
-			class="mr-2 inline-block bg-gradient-to-r from-fuchsia-500 to-green-500 bg-clip-text text-lg font-bold text-transparent"
+			class="mr-2 inline-block bg-gradient-to-r from-fuchsia-500 to-green-500 bg-clip-text text-xl font-bold text-transparent"
 			>vol</span
-		><span class="font-semibold">thinks laterally</span> for you. It comes up with search terms you wouldn't
-		have thought of.
-	</p>
+		>thinks laterally for you
+	</h3>
+	<p class="">It comes up with search terms you wouldn't have thought of.</p>
 	<enhanced:img
 		src="/static/vol-steve-jobs.png"
 		alt="vol search results page"
