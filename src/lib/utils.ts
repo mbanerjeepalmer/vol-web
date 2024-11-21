@@ -91,6 +91,7 @@ export function saveInteraction(params: Partial<Interaction>) {
 			timestamp: Date.now(),
 			episodeTitle: params.episodeTitle,
 			episodeDescription: params.episodeDescription,
+			searchId: params.searchId || ''
 		};
 
 		const filteredInteractions = interactions.filter(i =>
@@ -118,7 +119,7 @@ export function getStoredSearch(searchId: string) {
 	}
 }
 
-export function cleanupStorage() {
+export function cleanUpStorage() {
 	try {
 		// Clean up old searches
 		const searchKeys = Object.keys(localStorage)

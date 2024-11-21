@@ -29,13 +29,25 @@
 			<div class="rounded-lg border p-4">
 				<div class="flex flex-col gap-2">
 					<div>
-						<a href={`/reflect/${interaction.spotifyId}`}>
-							<h3 class="font-medium">{interaction.episodeTitle || ''}</h3>
-						</a>
+						{#if interaction.searchId && interaction.spotifyId === ''}
+							<a
+								href={`/search?prompt=${encodeURIComponent(interaction.reaction)}&searchId=${interaction.searchId}`}
+							>
+								<h3 class="font-medium">{interaction.reaction || ''}</h3>
+							</a>
+						{:else if interaction.spotifyId !== ''}
+							<a href={`/reflect/${interaction.spotifyId}`}>
+								<h3 class="font-medium">{interaction.episodeTitle || ''}</h3>
+							</a>
+						{:else}
+							<h3 class="font-medium">{interaction.reaction}</h3>
+						{/if}
 					</div>
-					<span class="inline-block w-fit py-1 text-primary">
-						"{interaction.reaction}"
-					</span>
+					{#if interaction.spotifyId !== ''}
+						<span class="inline-block w-fit py-1 text-primary">
+							"{interaction.reaction}"
+						</span>
+					{/if}
 					<span class="w-fit self-end text-gray-500">
 						{new Date(interaction.timestamp).toLocaleString('en-GB', {
 							hour: '2-digit',

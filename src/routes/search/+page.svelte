@@ -73,7 +73,6 @@
 	}
 
 	onMount(async () => {
-		cleanupStorage();
 		// Check for existing search data first
 		const storedSearch = getStoredSearch(data.searchId);
 		if (storedSearch) {
@@ -81,12 +80,11 @@
 			queries = storedSearch.queries || parseQueries(storedSearch.thinking);
 			searchResults = storedSearch.searchResults;
 
-			// Add this: Re-rate all episodes when returning from interaction
+			// Rate everything that doesn't have a rating
 			ratingQueue = searchResults
 				.flatMap((group) => group.results.episodes.items)
 				// Rate all episodes again, not just ones without ratings
 				.map((episode: Episode) => ({ ...episode, ratings: null }));
-
 			processRatingQueue();
 			isLoading = false;
 			return;
@@ -108,7 +106,7 @@
 			console.warn('URL too long, falling back to prompt-only request');
 		}
 
-		saveInteraction({ reaction: data.prompt });
+		saveInteraction({ reaction: data.prompt, searchId: data.searchId });
 		const eventSource = new EventSource(url);
 
 		eventSource.onmessage = (event) => {
