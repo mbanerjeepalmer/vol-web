@@ -22,7 +22,8 @@
 		"i can't stop listening to anatolian rock",
 		'i want to be like steve jobs',
 		"i can't stop thinking about potatoes",
-		"i'm working on a novel about grasshoppers"
+		"i'm working on a novel about grasshoppers",
+		'potato'
 	];
 	let placeholder = placeholders[0];
 	let placeholderIndex = 0;
