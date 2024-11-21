@@ -3,7 +3,7 @@
 </script>
 
 <article
-	class="prose prose-headings:text-center prose-headings:font-bold container mx-auto flex max-w-prose flex-col space-y-4"
+	class="prose prose-headings:text-center prose-headings:font-bold container mx-auto my-12 flex max-w-prose flex-col space-y-4"
 >
 	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
 		is better than you at finding podcasts
@@ -16,20 +16,24 @@
 	<enhanced:img
 		src="/static/spotify-search-results.png"
 		alt="Spotify search results"
-		class="h-lg mx-auto my-4 block w-auto object-contain shadow-[5px_5px_10px_rgba(0,0,0,0.7)]"
+		class="h-lg mx-auto my-4 block w-auto object-contain shadow-[5px_5px_10px_rgba(0,0,0,0.6)]"
 	/>
 	<p>Was Steve Jobs imbibing 'motivational speeches'?</p>
 	<p>
 		No. He was imbibing calligraphy, electronics, English literature, psychedelics and Zen Buddhism.
 	</p>
-	<p>
+	<p class="my-8">
 		<span
 			class="mr-2 inline-block bg-gradient-to-r from-fuchsia-500 to-green-500 bg-clip-text text-lg font-bold text-transparent"
 			>vol</span
 		><span class="font-semibold">thinks laterally</span> for you. It comes up with search terms you wouldn't
 		have thought of.
 	</p>
-
+	<enhanced:img
+		src="/static/vol-steve-jobs.png"
+		alt="vol search results page"
+		class="h-lg mx-auto my-4 block w-auto object-contain shadow-[5px_5px_10px_rgba(0,0,0,0.6)]"
+	/>
 	<p>Then it rates the podcasts it finds according to:</p>
 	<ul class="ml-2 place-items-baseline">
 		<li><Compass class={`mr-2 inline h-4 w-4`} />alignment with your goal</li>
