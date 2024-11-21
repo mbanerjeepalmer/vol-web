@@ -65,7 +65,7 @@
 </script>
 
 <div class="py-8">
-	<!-- <iframe
+	<iframe
 		title="Spotify podcast player"
 		style="border-radius:12px"
 		src={`https://open.spotify.com/embed/episode/${spotifyId}`}
@@ -75,11 +75,11 @@
 		allowfullscreen
 		allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 		loading="lazy"
-	></iframe> -->
+	></iframe>
 
 	<Ratings {ratings} />
 
-	<div class="mt-4 grid gap-4">
+	<!-- <div class="mt-4 grid gap-4">
 		<Button
 			on:click={() => handleNext('Nah')}
 			variant={existingReaction === 'Nah' ? 'default' : 'outline'}
@@ -96,5 +96,5 @@
 		>
 			Love
 		</Button>
-	</div>
+	</div> -->
 </div>

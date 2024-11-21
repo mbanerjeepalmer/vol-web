@@ -6,6 +6,20 @@ const client = new Groq({
     apiKey: GROQ_API_KEY,
 });
 
+async function retryRequest<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await fn();
+        } catch (error: any) {
+            if (attempt === maxAttempts || error.status !== 503) throw error;
+
+            const delay = parseInt(error.headers?.['retry-after'] || '15') * 1000;
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+    throw new Error('Max retries reached');
+}
+
 async function llama3290bVisionRate(episode: any, prompt: string) {
     const chatCompletion = await client.chat.completions.create({
         messages: [
@@ -56,11 +70,12 @@ Example: {"goal": 85, "context": 70, "quality": 90, "freshness": 65}`
 }
 
 async function llama323BRate(episode: any, prompt: string) {
-    const chatCompletion = await client.chat.completions.create({
-        messages: [
-            {
-                role: "system",
-                content: `You are an expert podcast curator. Rate this podcast episode on how well it matches the user's learning goals.
+    return retryRequest(async () => {
+        const completion = await client.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: `You are an expert podcast curator. Rate this podcast episode on how well it matches the user's learning goals.
                 
 Rate each category from 1-100:
 - Goal: A high score means this aligns well with our understanding of what the user wants.
@@ -70,26 +85,25 @@ Rate each category from 1-100:
 
 Return only a JSON object with these four numeric ratings.
 Example: {"goal": 85, "context": 70, "quality": 90, "freshness": 65}`
-            },
-            {
-                role: "user",
-                content: JSON.stringify({
-                    userGoal: prompt,
-                    episode: {
-                        title: episode.name,
-                        description: episode.description,
-                        publishDate: episode.release_date
-                    }
-                })
-            }
-        ],
-        model: "llama-3.2-3b-preview",
-        temperature: 0.7,
-        max_tokens: 150,
+                },
+                {
+                    role: "user",
+                    content: JSON.stringify({
+                        userGoal: prompt,
+                        episode: {
+                            title: episode.name,
+                            description: episode.description,
+                            publishDate: episode.release_date
+                        }
+                    })
+                }
+            ],
+            model: "llama-3.1-8b-instant",
+            temperature: 1.0,
+            max_tokens: 150,
+        });
+        return JSON.parse(completion.choices[0]?.message?.content || '');
     });
-
-    const response = chatCompletion.choices[0]?.message?.content || '';
-    return JSON.parse(response);
 }
 
 export async function POST({ request }) {
