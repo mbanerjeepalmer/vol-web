@@ -14,7 +14,7 @@
 </script>
 
 {#if ratings}
-	<ul class="flex flex-row items-center justify-center gap-3 py-4">
+	<!-- <ul class="flex flex-row items-center justify-center gap-3 py-4">
 		<li><Compass class={`mr-1 inline h-4 w-4 ${getRatingColour(ratings.goal)}`} /></li>
 		<li><GraduationCap class={`mr-1 inline h-4 w-4 ${getRatingColour(ratings.context)}`} /></li>
 		<li><Gem class={`mr-1 inline h-4 w-4 ${getRatingColour(ratings.quality)}`} /></li>
@@ -24,7 +24,7 @@
 				{getAverageRating(ratings)}
 			</span>
 		</li>
-	</ul>
+	</ul> -->
 {:else}
 	<p>rating this episode</p>
 {/if}

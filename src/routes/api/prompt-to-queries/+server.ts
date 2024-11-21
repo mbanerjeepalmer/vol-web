@@ -49,7 +49,7 @@ async function generateSearchQueriesFromPrompt(prompt: string, interactions: Int
             {
                 "role": "system",
                 "content": `Your job is to enhance people's lives by finding the podcasts that will drive their ambition and curiosity. Come up with five search queries. These will be used to search for podcasts that will help the user explore their topic of interest.
-- First think about topic of interest. List four avenues to pursue.
+- First think about topics of interest. List four avenues to pursue. The first should be obvious, but after that you need to start thinking laterally, more deeply, with more specificity. Think about the abstract concepts and historical examples.
 - Second, situate these topics in the context of the user's level of expertise and preferences.
 - Finally, return the queries. Each query should be between <query> and </query>. Place these between <searchQueries> and </searchQueries>. Wrap this in a <pre> tag.
 
@@ -85,7 +85,7 @@ User's immediate request:
 ${prompt}`
             }
         ],
-        "model": "llama-3.2-90b-text-preview",
+        "model": "llama-3.1-8b-instant",
         "temperature": 1,
         "max_tokens": 1024,
         "top_p": 1,

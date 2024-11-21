@@ -309,8 +309,8 @@
 										</Card.Title>
 									</div>
 								</div>
-								<Card.Description class="mt-4 space-y-4  text-white/90">
-									<p class="line-clamp-3">{episode.description}</p>
+								<Card.Description class="mt-4  space-y-4 text-white/90">
+									<!-- <p class="line-clamp-3 overflow-hidden">{episode.description}</p> -->
 									<p class="block text-right text-sm font-bold text-white/90">
 										{formatDuration(episode.duration_ms)}
 									</p>
