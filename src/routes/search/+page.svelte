@@ -4,7 +4,7 @@
 	import Markdown from '$lib/components/Markdown.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import type { PageData } from './$types';
-	import { saveInteraction, getStoredSearch, cleanupStorage, getAverageRating } from '$lib/utils';
+	import { saveInteraction, getStoredSearch, getAverageRating } from '$lib/utils';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import TopEpisode from '$lib/components/TopEpisode.svelte';
@@ -218,7 +218,6 @@
 
 	let searchId = crypto.randomUUID();
 
-	// Add after searchResults are loaded
 	$: if (searchResults.length > 0) {
 		const searchData = {
 			id: searchId,
@@ -230,10 +229,9 @@
 		localStorage.setItem(`vol-search-${searchId}`, JSON.stringify(searchData));
 	}
 
-	// Add near the top with other reactive declarations
 	$: sortedEpisodes = searchResults
 		.flatMap((group) =>
-			group.results.episodes.items.map((episode) => ({
+			group.results.episodes.items.map((episode: Episode) => ({
 				...episode,
 				sourceQuery: group.query
 			}))

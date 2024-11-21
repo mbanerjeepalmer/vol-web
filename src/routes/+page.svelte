@@ -2,7 +2,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { onMount } from 'svelte';
-	import { llmStore, initializeModel } from '$lib/stores/llm';
 
 	let inputValue = '';
 	let inputElement: HTMLInputElement;
@@ -36,10 +35,6 @@
 		}, 2000);
 
 		return () => clearInterval(interval);
-	});
-
-	onMount(() => {
-		// initializeModel();
 	});
 </script>
 

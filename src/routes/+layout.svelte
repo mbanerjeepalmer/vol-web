@@ -1,10 +1,17 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/stores';
+	import posthog from 'posthog-js';
+	import { browser } from '$app/environment';
+	import { beforeNavigate, afterNavigate } from '$app/navigation';
 	let { children } = $props();
+	if (browser) {
+		beforeNavigate(() => posthog.capture('$pageleave'));
+		afterNavigate(() => posthog.capture('$pageview'));
+	}
 </script>
 
-<header class="container mx-auto p-4">
+<header class="container mx-auto p-4 lg:mt-8">
 	<div class="flex items-center justify-center">
 		<a href="/">
 			<h1
@@ -27,7 +34,5 @@
 		</li>
 	</ul>
 </header>
-
-<!-- Status indicator -->
 
 {@render children()}
