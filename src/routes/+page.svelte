@@ -10,7 +10,7 @@
 	const predefinedPrompts = [
 		'i want to be like',
 		"i can't stop thinking about",
-		'my one weird skill is',
+		"i'm working on",
 		'i yap too much about'
 	];
 
@@ -40,7 +40,7 @@
 				name="prompt"
 				bind:value={inputValue}
 				class="h-16 w-full"
-				placeholder="take me on a journey with..."
+				placeholder="take me on a journey..."
 			/>
 			<Button type="submit" class="text-md h-16 w-full sm:w-auto">Submit</Button>
 		</div>
@@ -69,4 +69,11 @@
 		</span>
 	</div>
 </div> -->
-<a href="/history" class="mx-auto block text-center underline">my vols</a>
+<ul>
+	<li>
+		<a href="/history" class="mx-auto block text-center underline">my vols</a>
+	</li>
+	<li>
+		<a href="/how-to" class="mx-auto block text-center underline">how to vol</a>
+	</li>
+</ul>

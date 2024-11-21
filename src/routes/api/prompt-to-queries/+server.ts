@@ -69,7 +69,6 @@ We don't have any context about this user's level of expertise. Their query is s
 
 <pre>
 <searchQueries>
-<query>Mark Zuckerberg interview</query>
 <query>Facebook founding story and history</query>
 <query>Introduction to psychology</query>
 <query>Leaders of ancient Rome</query>
