@@ -1,8 +1,9 @@
 import { PostHog } from 'posthog-node';
+const POSTHOG_PUBLIC_KEY = "phc_Eqr43zfrULZGw5AcrMYg2hUpgQr6xlu4CHQ2PBC5pfW"
 
 export const load = async ({ url }) => {
     const posthog = new PostHog(
-        "phc_MkQ0SSZnuS5iaKyFEL7ihq2hnykzHM3wbSjgT6flKCR",
+        POSTHOG_PUBLIC_KEY,
         { host: "https://eu.i.posthog.com" },
     );
     posthog.capture({
