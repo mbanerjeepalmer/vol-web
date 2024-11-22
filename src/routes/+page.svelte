@@ -2,6 +2,8 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { onMount } from 'svelte';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Turtle } from 'lucide-svelte';
 
 	let inputValue = '';
 	let inputElement: HTMLInputElement;
@@ -39,6 +41,11 @@
 	});
 </script>
 
+<Alert.Root class="mx-auto max-w-md" variant="destructive">
+	<Turtle class="h-4 w-4" />
+	<Alert.Title>Go slow</Alert.Title>
+	<Alert.Description>vol is overhwhelmed. I'm working on scaling it up.</Alert.Description>
+</Alert.Root>
 <div class="mx-auto my-8">
 	<div class="mx-auto mb-4 grid w-full max-w-lg grid-cols-1 gap-4 px-4 sm:grid-cols-2">
 		{#each predefinedPrompts as prompt}
