@@ -22,57 +22,6 @@
 	let ratingQueue: Episode[] = [];
 	let isProcessingQueue = false;
 
-	// Process the rating queue
-	async function processRatingQueue() {
-		if (isProcessingQueue) return;
-		isProcessingQueue = true;
-
-		while (ratingQueue.length > 0) {
-			const episode = ratingQueue.shift();
-			if (episode && !episode.ratings) {
-				console.debug('About to rate episode:', episode.name);
-				await rateEpisode(episode);
-			}
-		}
-
-		isProcessingQueue = false;
-	}
-
-	const MAX_INTERACTIONS = 10; // Limit number of interactions
-	const MAX_URL_LENGTH = 2000; // Safe limit for most browsers
-
-	// Update the encoding helper function
-	function encodeInteractionHistory(interactions: EpisodeInteraction[]): string {
-		// Sort by timestamp (newest first) and take only recent interactions
-		const recentInteractions = [...interactions]
-			.sort((a, b) => b.timestamp - a.timestamp)
-			.slice(0, MAX_INTERACTIONS)
-			.map((i) => ({
-				spotifyId: i.spotifyId,
-				reaction: i.reaction,
-				timestamp: i.timestamp,
-				episodeTitle: i.episodeTitle,
-				episodeDescription: i.episodeDescription
-			}));
-
-		const encoded = encodeURIComponent(JSON.stringify(recentInteractions));
-
-		// If still too long, reduce further and remove descriptions
-		if (encoded.length > MAX_URL_LENGTH) {
-			const withoutDescriptions = recentInteractions.map(({ episodeDescription, ...rest }) => rest);
-			const encodedWithoutDescriptions = encodeURIComponent(JSON.stringify(withoutDescriptions));
-
-			// If still too long, reduce number of interactions
-			if (encodedWithoutDescriptions.length > MAX_URL_LENGTH) {
-				return encodeInteractionHistory(interactions.slice(0, MAX_INTERACTIONS / 2));
-			}
-
-			return encodedWithoutDescriptions;
-		}
-
-		return encoded;
-	}
-
 	onMount(async () => {
 		// Check for existing search data first
 		const storedSearch = getStoredSearch(data.searchId);
@@ -123,6 +72,57 @@
 			}
 		};
 	});
+
+	// Process the rating queue
+	async function processRatingQueue() {
+		if (isProcessingQueue) return;
+		isProcessingQueue = true;
+
+		try {
+			while (ratingQueue.length > 0) {
+				// Process episodes in batches of 10
+				const batch = ratingQueue.splice(0, 10);
+				await rateEpisodes(batch);
+			}
+		} finally {
+			isProcessingQueue = false;
+		}
+	}
+
+	const MAX_INTERACTIONS = 10; // Limit number of interactions
+	const MAX_URL_LENGTH = 2000; // Safe limit for most browsers
+
+	// Update the encoding helper function
+	function encodeInteractionHistory(interactions: EpisodeInteraction[]): string {
+		// Sort by timestamp (newest first) and take only recent interactions
+		const recentInteractions = [...interactions]
+			.sort((a, b) => b.timestamp - a.timestamp)
+			.slice(0, MAX_INTERACTIONS)
+			.map((i) => ({
+				spotifyId: i.spotifyId,
+				reaction: i.reaction,
+				timestamp: i.timestamp,
+				episodeTitle: i.episodeTitle,
+				episodeDescription: i.episodeDescription
+			}));
+
+		const encoded = encodeURIComponent(JSON.stringify(recentInteractions));
+
+		// If still too long, reduce further and remove descriptions
+		if (encoded.length > MAX_URL_LENGTH) {
+			const withoutDescriptions = recentInteractions.map(({ episodeDescription, ...rest }) => rest);
+			const encodedWithoutDescriptions = encodeURIComponent(JSON.stringify(withoutDescriptions));
+
+			// If still too long, reduce number of interactions
+			if (encodedWithoutDescriptions.length > MAX_URL_LENGTH) {
+				return encodeInteractionHistory(interactions.slice(0, MAX_INTERACTIONS / 2));
+			}
+
+			return encodedWithoutDescriptions;
+		}
+
+		return encoded;
+	}
 
 	// Save search data whenever we have results
 	$: if (searchResults.length > 0) {
@@ -179,34 +179,53 @@
 		}
 	}
 
-	async function rateEpisode(episode: Episode) {
-		if (ratingInProgress.has(episode.id)) return;
-		ratingInProgress.add(episode.id);
+	async function rateEpisodes(episodes: Episode[]) {
+		// Filter out episodes that are already being rated or have ratings
+		const episodesToRate = episodes.filter((ep) => !ratingInProgress.has(ep.id) && !ep.ratings);
+		if (episodesToRate.length === 0) return;
+
+		// Mark all episodes as in progress
+		episodesToRate.forEach((ep) => ratingInProgress.add(ep.id));
 
 		try {
 			const interactionHistory = getInteractionHistory()
 				.sort((a, b) => b.timestamp - a.timestamp)
 				.slice(0, MAX_INTERACTIONS);
-
-			const response = await fetch('/api/rate-episode', {
+			const body = {
+				episodes: episodesToRate,
+				prompt: data.prompt,
+				interactionHistory
+			};
+			console.debug('About to rate', body);
+			const response = await fetch('/api/rate-episodes', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({
-					episode,
-					prompt: data.prompt,
-					interactionHistory
-				})
+				body: JSON.stringify(body)
 			});
 
 			const { ratings } = await response.json();
-			episode.ratings = ratings;
+
+			// Update ratings for each episode
+			if (ratings?.ratings) {
+				// Match the server response structure
+				ratings.ratings.forEach((rating: any) => {
+					console.debug(`Updating ratings for ${rating.id}`);
+					const episode = episodesToRate.find((ep) => ep.id === rating.id);
+					if (episode) {
+						episode.ratings = rating.ratings;
+					}
+				});
+			}
+
+			// Trigger reactivity
 			searchResults = [...searchResults];
 		} catch (error) {
 			console.error('Rating request failed:', error);
 		} finally {
-			ratingInProgress.delete(episode.id);
+			// Clear in-progress status
+			episodesToRate.forEach((ep) => ratingInProgress.delete(ep.id));
 		}
 	}
 
