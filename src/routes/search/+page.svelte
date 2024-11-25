@@ -14,7 +14,7 @@
 	export let data: PageData;
 
 	let searchResults: any[] = [];
-	let isLoading = true;
+	let isThinking = true;
 	let thinkingAboutQueries = '';
 	let queries: string[] = [];
 	// Track which episodes are being rated
@@ -34,7 +34,7 @@
 				.flatMap((group) => group.results.episodes.items)
 				.filter((episode) => !episode.ratings);
 			await processRatingQueue();
-			isLoading = false;
+			isThinking = false;
 			return;
 		}
 
@@ -80,8 +80,7 @@
 
 		try {
 			while (ratingQueue.length > 0) {
-				// Process episodes in batches of 10
-				const batch = ratingQueue.splice(0, 10);
+				const batch = ratingQueue.splice(0, 20);
 				await rateEpisodes(batch);
 			}
 		} finally {
@@ -89,7 +88,7 @@
 		}
 	}
 
-	const MAX_INTERACTIONS = 10; // Limit number of interactions
+	const MAX_INTERACTIONS = 10;
 	const MAX_URL_LENGTH = 2000; // Safe limit for most browsers
 
 	// Update the encoding helper function
@@ -148,7 +147,7 @@
 			console.error('Search request failed:', error);
 			searchResults = [];
 		} finally {
-			isLoading = false;
+			isThinking = false;
 		}
 	}
 
@@ -260,29 +259,36 @@
 
 <div class="mx-auto max-w-xl px-2 py-8 lg:px-4">
 	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
-		{isLoading ? 'thinking...' : data.prompt}
+		{data.prompt}
 	</h1>
-	<div class={`flex items-center justify-center ${isProcessingQueue ? 'visible' : 'invisible'}`}>
-		<span
-			class="inline-block animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text text-center font-bold text-transparent"
-			>rating episodes...</span
-		>
-	</div>
-	<Sheet.Root>
-		<div class="flex w-full justify-end">
-			<Sheet.Trigger>
-				<Button variant="link" class="">explain yourself?</Button>
-			</Sheet.Trigger>
-		</div>
-		<Sheet.Content side="right" class="overflow-y-auto">
-			<Sheet.Header>
-				<Sheet.Title>what the ai was thinking</Sheet.Title>
-			</Sheet.Header>
-			<div class="py-8">
-				<Markdown content={thinkingAboutQueries} />
-			</div>
-		</Sheet.Content>
-	</Sheet.Root>
+	<ol class="flex flex-row items-center justify-center gap-4 text-sm">
+		<li>
+			{#if isThinking}<span
+					class="animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text font-bold text-transparent"
+					>1. thinking about search queries</span
+				>{:else}
+				<Sheet.Root>
+					<Sheet.Trigger>
+						<Button variant="link" class="underline">1. thought of search queries</Button>
+					</Sheet.Trigger>
+					<Sheet.Content side="right" class="overflow-y-auto">
+						<Sheet.Header>
+							<Sheet.Title>what the ai was thinking</Sheet.Title>
+						</Sheet.Header>
+						<div class="py-8">
+							<Markdown content={thinkingAboutQueries} />
+						</div>
+					</Sheet.Content>
+				</Sheet.Root>
+			{/if}
+		</li>
+		<li>
+			{#if isProcessingQueue}<span
+					class="animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text font-bold text-transparent"
+					>2. ranking episodes</span
+				>{:else}2. ranked episodes{/if}
+		</li>
+	</ol>
 	{#if searchResults.length > 0}
 		<!-- TODO -->
 		<!-- {#if data.reason}

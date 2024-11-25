@@ -30,24 +30,31 @@
 				>my vols</a
 			>
 		</li> -->
-		<li>
-			<a href="/how-to" class="mx-auto block text-center underline opacity-70 hover:opacity-100"
-				>how to vol</a
-			>
-		</li>
 	</ul>
 </header>
 
 {@render children()}
 
-{#if chatting}
-	<Chat />
-{:else}
-	<div
-		class={`my-8 flex items-center justify-center transition-opacity duration-200 ${chatting ? 'opacity-0' : 'opacity-100'}`}
-	>
-		<Button class="text-sm underline opacity-70" variant="link" on:click={() => (chatting = true)}
-			>feedback</Button
-		>
-	</div>
-{/if}
+<footer class="container mx-auto mt-16 max-w-lg p-4">
+	<ul class="flex flex-col justify-center gap-4">
+		<li class="text-center text-sm opacity-70">vol searches and ranks podcasts for you</li>
+		<li>
+			{#if chatting}
+				<Chat />
+			{:else}
+				<Button
+					class="mx-auto block text-sm underline opacity-70"
+					variant="link"
+					on:click={() => (chatting = true)}>feedback</Button
+				>
+			{/if}
+		</li>
+		<li>
+			<a
+				href="/how-to"
+				class="mx-auto block text-center text-sm underline opacity-70 hover:opacity-100"
+				>how to vol</a
+			>
+		</li>
+	</ul>
+</footer>
