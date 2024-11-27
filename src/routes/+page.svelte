@@ -17,7 +17,7 @@
 	const placeholders = [
 		'take me on a journey...',
 		"i'm obsessed by potatoes, both in cuisine and culture",
-		"i can't stop thinking about the Roman Empire",
+		"i can't stop thinking about the roman empire",
 		"i'm working on media recommendations",
 		'i want to be like maya angelou',
 		"i've just started learning about safavid persia",
