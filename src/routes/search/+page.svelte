@@ -1,15 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import * as Card from '$lib/components/ui/card/index.js';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import type { PageData } from './$types';
 	import { saveInteraction, getStoredSearch, getAverageRating } from '$lib/utils';
-	import { Badge } from '$lib/components/ui/badge';
 	import * as Sheet from '$lib/components/ui/sheet';
-	import TopEpisode from '$lib/components/TopEpisode.svelte';
 	import type { Episode, EpisodeInteraction } from '$lib/types';
-	import Ratings from '$lib/components/Ratings.svelte';
 	import EpisodePreview from '$lib/components/EpisodePreview.svelte';
 
 	export let data: PageData;
@@ -150,12 +146,6 @@
 		} finally {
 			isThinking = false;
 		}
-	}
-
-	function formatDuration(ms: number): string {
-		const minutes = Math.floor(ms / 60000);
-		const seconds = Math.floor((ms % 60000) / 1000);
-		return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 	}
 
 	// Start rating all episodes when results load

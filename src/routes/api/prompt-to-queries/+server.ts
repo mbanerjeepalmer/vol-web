@@ -50,7 +50,7 @@ async function generateSearchQueriesFromPrompt(prompt: string, interactions: Int
                 "role": "system",
                 "content": `Your job is to enhance people's lives by finding the podcasts that will drive their ambition and curiosity. Come up with five search queries. These will be used to search for podcasts that will help the user explore their topic of interest.
 - First think about topics of interest. List four avenues to pursue. The first should be obvious, but after that you need to start thinking laterally, more deeply, with more specificity. Think about the abstract concepts and historical examples.
-- Second, situate these topics in the context of the user's level of expertise and preferences.
+- Second, situate these topics in the context of the user's level of expertise and preferences. Their past activity may or may not be relevant.
 - Finally, return the queries. Each query should be between <query> and </query>. Place these between <searchQueries> and </searchQueries>. Wrap this in a <pre> tag.
 
 Example:
@@ -79,7 +79,9 @@ We don't have any context about this user's level of expertise. Their query is s
             },
             {
                 "role": "user",
-                "content": `${interactionContext}
+                "content": `User's past activity:
+${interactionContext}
+
 User's immediate request:
 ${prompt}`
             }
