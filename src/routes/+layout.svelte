@@ -37,17 +37,21 @@
 
 <footer class="container mx-auto mt-16 max-w-lg p-4">
 	<ul class="flex flex-col justify-center gap-4">
-		<li class="text-center text-sm opacity-70">vol searches and ranks podcasts for you</li>
-		<li>
+		<li class="text-center text-sm opacity-80">vol searches and ranks podcasts for you</li>
+		<li class="mx-auto flex w-fit flex-row items-center gap-2 text-sm">
 			{#if chatting}
 				<Chat />
 			{:else}
 				<Button
-					class="mx-auto block text-sm underline opacity-70"
+					class="m-0 p-0 font-normal underline opacity-70 hover:opacity-100"
 					variant="link"
-					on:click={() => (chatting = true)}>feedback</Button
+					on:click={() => (chatting = true)}>give feedback</Button
 				>
 			{/if}
+			<span>or</span>
+			<a href="https://tally.so/r/mJVbb7" class="underline opacity-70 hover:opacity-100"
+				>stay in touch</a
+			>
 		</li>
 		<li>
 			<a
