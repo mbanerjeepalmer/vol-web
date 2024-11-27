@@ -102,7 +102,7 @@ Rate each category from 1-100:
 - Quality: A high score means this has good production value, original research, and/or reputation.
 - Freshness: a high score means it's evergreen or recent.
 
-Return ONLY the JSON object. The object MUST have only one key, 'ratings', whose value is the array of episode ratings.
+Return ONLY the JSON object. YOU MUST NOT RETURN ANY PREAMBLE. YOU MUST ONLY RETURN VALID JSON. The object MUST have only one key, 'ratings', whose value is the array of episode ratings.
 Example:
 {"ratings": [{"id": "12345", ratings: {"goal": 85, "context": 70, "quality": 90, "freshness": 65}}, {"id": "54321", ratings: {"goal": 25, "context": 40, "quality": 40, "freshness": 45}}]}`
                 },
@@ -118,11 +118,39 @@ Example:
             max_tokens: 2048,
         });
         console.debug('LLM RATING RESPONSE', completion.choices[0]?.message?.content);
-        return JSON.parse(completion.choices[0]?.message?.content || '');
+        return parseRatingResponse(completion.choices[0]?.message?.content || '');
     });
 }
 
-export async function POST({ request }) {
+function extractJson(text: string): any {
+    // Try to match anything between curly braces, including newlines
+    const pattern = /({[\s\S]*})/;
+    const match = text.match(pattern);
+
+    if (match) {
+        try {
+            return JSON.parse(match[1]);
+        } catch (error) {
+            console.error('Failed to parse extracted JSON', error);
+            // Could add additional JSON cleaning/fixing here if needed
+            return null;
+        }
+    }
+
+    console.warn('No JSON found in text:', text);
+    return null;
+}
+
+function parseRatingResponse(response: string) {
+    try {
+        return JSON.parse(response);
+    } catch (error) {
+        console.error('Error parsing rating response directly, attempting extraction', error);
+        return extractJson(response);
+    }
+}
+
+export async function POST({ request }: { request: Request }) {
     const { episodes, prompt } = await request.json();
     const ratings = await llamaTextRate(episodes, prompt);
     return json({ ratings });
