@@ -85,7 +85,7 @@ async function llamaTextRate(episodes: Episode[], prompt: string) {
             return {
                 id: episode.id,
                 title: episode.name,
-                description: episode.description,
+                description: episode.description?.substring(0, 200),
                 publishDate: episode.release_date
             }
         })

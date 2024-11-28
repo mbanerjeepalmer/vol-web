@@ -24,9 +24,7 @@ function formatInteractionContext(interactions: Interaction[]): string {
         })
         .slice(0, 5); // Only use 5 most recent for context
 
-    return `
-## Recent User Preferences
-${uniqueInteractions.map(i => {
+    return `${uniqueInteractions.map(i => {
         if (i.spotifyId) {
             // This is a podcast episode interaction
             const description = i.episodeDescription ? `: ${i.episodeDescription}` : '';
@@ -36,8 +34,7 @@ ${uniqueInteractions.map(i => {
             return `- Search: "${i.reaction}"`;
         }
     }).join('\n')}
-
-Consider these preferences when generating queries.`;
+`;
 }
 
 async function generateSearchQueriesFromPrompt(prompt: string, interactions: Interaction[]) {
