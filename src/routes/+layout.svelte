@@ -32,6 +32,15 @@
 		</li> -->
 	</ul>
 </header>
+<div>
+	<p>
+		<a
+			href="/how-to"
+			class="mx-auto mb-12 block text-center text-sm underline opacity-70 hover:opacity-100"
+			>how to vol</a
+		>
+	</p>
+</div>
 
 {@render children()}
 
@@ -51,13 +60,6 @@
 			<span>or</span>
 			<a href="https://tally.so/r/mJVbb7" class="underline opacity-70 hover:opacity-100"
 				>stay in touch</a
-			>
-		</li>
-		<li>
-			<a
-				href="/how-to"
-				class="mx-auto block text-center text-sm underline opacity-70 hover:opacity-100"
-				>how to vol</a
 			>
 		</li>
 	</ul>
