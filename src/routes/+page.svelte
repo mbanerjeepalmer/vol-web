@@ -2,8 +2,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { onMount } from 'svelte';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Turtle } from 'lucide-svelte';
 
 	let inputValue = '';
 	let inputElement: HTMLInputElement;
