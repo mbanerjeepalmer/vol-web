@@ -57,7 +57,7 @@ Example: {"goal": 85, "context": 70, "quality": 90, "freshness": 65}`
                 },
                 ]
             }],
-        model: "llama-3.2-90b-vision-preview",
+        model: "llama-3.3-70b-versatile",
         response_format: {
             type: "json_object"
         },
@@ -98,7 +98,7 @@ Example: {"goal": 85, "context": 70, "quality": 90, "freshness": 65}`
                     })
                 }
             ],
-            model: "llama-3.1-8b-instant",
+            model: "llama-3.3-70b-versatile",
             temperature: 1.0,
             max_tokens: 150,
         });

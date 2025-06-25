@@ -34,7 +34,7 @@ ${JSON.stringify(searchResults)}
         }, {
             role: 'user', content: userPrompt
         }],
-        model: 'llama-3.2-11b-text-preview',
+        model: 'llama-3.3-70b-versatile',
         "response_format": {
             "type": "json_object"
         },

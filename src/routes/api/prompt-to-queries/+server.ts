@@ -83,7 +83,7 @@ User's immediate request:
 ${prompt}`
             }
         ],
-        "model": "llama-3.1-8b-instant",
+        "model": "llama-3.3-70b-versatile",
         "temperature": 1,
         "max_tokens": 1024,
         "top_p": 1,
