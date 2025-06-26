@@ -40,18 +40,6 @@
 </script>
 
 <div class="mx-auto my-8">
-	<div class="mx-auto mb-4 grid w-full max-w-lg grid-cols-1 gap-4 px-4 sm:grid-cols-2">
-		{#each predefinedPrompts as prompt}
-			<button
-				type="button"
-				on:click={() => {
-					inputValue = prompt + ' ';
-				}}
-				class="h-full w-full text-wrap rounded-md border border-input p-3 hover:bg-accent hover:text-accent-foreground"
-				>{prompt}</button
-			>
-		{/each}
-	</div>
 	<form method="POST" class="mx-auto w-full max-w-lg px-4">
 		<div class="flex flex-col gap-2 sm:flex-row">
 			<Input
@@ -66,6 +54,18 @@
 			<Button type="submit" class="text-md w-full sm:h-16 sm:w-auto">Submit</Button>
 		</div>
 	</form>
+	<div class="mx-auto my-8 grid w-full max-w-lg grid-cols-1 gap-4 px-4 sm:grid-cols-2">
+		{#each predefinedPrompts as prompt}
+			<button
+				type="button"
+				on:click={() => {
+					inputValue = prompt + ' ';
+				}}
+				class="h-full w-full text-wrap rounded-md border border-input p-3 hover:bg-accent hover:text-accent-foreground"
+				>{prompt}</button
+			>
+		{/each}
+	</div>
 </div>
 
 <!-- <div class="fixed bottom-4 right-4 rounded-lg border bg-white p-2 shadow-lg">
