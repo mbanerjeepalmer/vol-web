@@ -39,8 +39,10 @@
 		const encodedHistory = encodeInteractionHistory(interactionHistory);
 
 		const userContext = new URLSearchParams({
-			prompt: data.prompt,
-			interactions: encodedHistory
+			prompt: data.prompt
+			// 2025-06-26 TEMPORARY
+			// Remove history. It's a bit unexpected behaviour.
+			// interactions: encodedHistory
 		});
 
 		// Create URL with fallback if too long
