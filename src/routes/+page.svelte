@@ -46,7 +46,7 @@
 				autofocus
 				accept="text/plain"
 				name="prompt"
-				bind:this={inputElement}
+				bind:thisElement={inputElement}
 				bind:value={inputValue}
 				class="h-16 w-full"
 				{placeholder}
@@ -60,9 +60,10 @@
 				type="button"
 				on:click={() => {
 					inputValue = prompt + ' ';
+					inputElement.focus();
 				}}
 				class="h-full w-full text-wrap rounded-md border border-input p-3 hover:bg-accent hover:text-accent-foreground"
-				>{prompt}</button
+				>{prompt}...</button
 			>
 		{/each}
 	</div>
