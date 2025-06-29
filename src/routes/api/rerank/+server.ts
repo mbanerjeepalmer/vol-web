@@ -34,7 +34,7 @@ ${JSON.stringify(searchResults)}
         }, {
             role: 'user', content: userPrompt
         }],
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama3-70b-8192',
         "response_format": {
             "type": "json_object"
         },
