@@ -69,14 +69,25 @@
 		};
 	});
 
-	// Process the rating queue
 	async function processRatingQueue() {
-		if (isProcessingQueue) return;
+		if (isProcessingQueue) {
+			console.debug('Already processing queue');
+			return;
+		}
+
+		// Get episodes that actually need rating (don't have ratings and aren't in progress)
+		const episodesToRate = searchResults.filter(
+			(item) => !item.ratings && !ratingInProgress.has(item.id)
+		);
+
+		if (episodesToRate.length === 0) return;
+
 		isProcessingQueue = true;
-		// ratingQueue is every item in searchResults without a ratings key
+
 		try {
-			while (ratingQueue.length > 0) {
-				const batch = ratingQueue.splice(0, 10);
+			// Process in batches of 10
+			for (let i = 0; i < episodesToRate.length; i += 10) {
+				const batch = episodesToRate.slice(i, i + 10);
 				await rateEpisodes(batch);
 			}
 		} finally {
@@ -133,7 +144,6 @@
 	}
 
 	async function fetchSearchResults(queryList: string[]) {
-		// TODO prefer to make this more functional instead of of relying on component-level variables
 		try {
 			const searchResponse = await fetch(
 				`/api/spotify-search?queries=${encodeURIComponent(queryList.join(','))}`
@@ -141,6 +151,11 @@
 			const searchResponseJson = await searchResponse.json();
 			console.debug('Search response:', searchResponseJson);
 			searchResults = searchResponseJson.searchResults;
+
+			// Process ratings once after search results load
+			if (searchResults.length > 0) {
+				await processRatingQueue();
+			}
 		} catch (error) {
 			console.error('Search request failed:', error);
 			searchResults = [];
@@ -168,25 +183,25 @@
 	}
 
 	async function rateEpisodes(episodes: Episode[]) {
-		// Filter out episodes that are already being rated or have ratings
-		// const episodesToRate = episodes.filter((ep) => !ratingInProgress.has(ep.id) && !ep.ratings);
-		// if (episodesToRate.length === 0) return;
+		// Filter out episodes that already have ratings or are being processed
+		const episodesToRate = episodes.filter((ep) => !ep.ratings && !ratingInProgress.has(ep.id));
 
-		// Mark all episodes as in progress
-		episodes.forEach((ep) => ratingInProgress.add(ep.id));
+		if (episodesToRate.length === 0) {
+			console.debug('No episodes to rate in this batch');
+			return;
+		}
+
+		// Mark episodes as in progress
+		episodesToRate.forEach((ep) => ratingInProgress.add(ep.id));
 
 		try {
-			// TEMP 2025-06-26
-			// Removing interaction history for now
-			// const interactionHistory = getInteractionHistory()
-			// 	.sort((a, b) => b.timestamp - a.timestamp)
-			// 	.slice(0, MAX_INTERACTIONS);
 			const body = {
-				episodes,
+				episodes: episodesToRate, // Only send episodes that need rating
 				prompt: data.prompt
-				// interactionHistory
 			};
+
 			console.debug('About to rate', body);
+
 			const response = await fetch('/api/rate-episodes', {
 				method: 'POST',
 				headers: {
@@ -199,23 +214,23 @@
 
 			// Update ratings for each episode
 			if (ratings?.ratings) {
-				// Match the server response structure
 				ratings.ratings.forEach((rating: any) => {
 					console.debug(`Updating ratings for ${rating.id}`);
 					const episode = searchResults.find((ep) => ep.id === rating.id);
-					if (episode) {
+					if (episode && !episode.ratings) {
+						// Only update if no ratings exist
 						episode.ratings = rating.ratings;
 					}
 				});
-			}
 
-			// Trigger reactivity
-			searchResults = [...searchResults];
+				// Trigger reactivity
+				searchResults = [...searchResults];
+			}
 		} catch (error) {
 			console.error('Rating request failed:', error);
 		} finally {
 			// Clear in-progress status
-			episodes.forEach((ep) => ratingInProgress.delete(ep.id));
+			episodesToRate.forEach((ep) => ratingInProgress.delete(ep.id));
 		}
 	}
 
