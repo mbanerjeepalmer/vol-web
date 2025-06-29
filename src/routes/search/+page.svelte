@@ -253,14 +253,9 @@
 		localStorage.setItem(`vol-search-${searchId}`, JSON.stringify(searchData));
 	}
 
-	$: sortedEpisodes = searchResults;
-	// .flatMap((group) =>
-	// 	group.results.episodes.items.map((episode: Episode) => ({
-	// 		...episode,
-	// 		sourceQuery: group.query
-	// 	}))
-	// )
-	// .sort((a, b) => getAverageRating(b.ratings) - getAverageRating(a.ratings));
+	$: sortedEpisodes = searchResults.sort(
+		(a, b) => getAverageRating(b.ratings) - getAverageRating(a.ratings)
+	);
 </script>
 
 <div class="mx-auto max-w-xl px-2 py-8 lg:px-4">
