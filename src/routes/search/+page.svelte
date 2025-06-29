@@ -16,7 +16,7 @@
 	let queries: string[] = [];
 	// Track which episodes are being rated
 	let ratingInProgress = new Set<string>();
-	let ratingQueue: Episode[] = [];
+	$: ratingQueue = searchResults.filter((item) => !item.ratings);
 	let isProcessingQueue = false;
 
 	onMount(async () => {
@@ -27,9 +27,6 @@
 			queries = storedSearch.queries || parseQueries(storedSearch.thinking);
 			searchResults = storedSearch.searchResults;
 
-			ratingQueue = searchResults
-				.flatMap((group) => group.results.episodes.items)
-				.filter((episode) => !episode.ratings);
 			await processRatingQueue();
 			isThinking = false;
 			return;
@@ -76,10 +73,10 @@
 	async function processRatingQueue() {
 		if (isProcessingQueue) return;
 		isProcessingQueue = true;
-
+		// ratingQueue is every item in searchResults without a ratings key
 		try {
 			while (ratingQueue.length > 0) {
-				const batch = ratingQueue.splice(0, 20);
+				const batch = ratingQueue.splice(0, 10);
 				await rateEpisodes(batch);
 			}
 		} finally {
@@ -155,10 +152,6 @@
 	// Start rating all episodes when results load
 	// TODO convert to Svelte 5
 	$: if (searchResults.length > 0 && !isProcessingQueue) {
-		// Flatten all episodes into a single queue
-		ratingQueue = searchResults
-			.flatMap((group) => group.results.episodes.items)
-			.filter((episode) => !episode.ratings);
 		void (async () => {
 			await processRatingQueue();
 		})();
@@ -176,20 +169,22 @@
 
 	async function rateEpisodes(episodes: Episode[]) {
 		// Filter out episodes that are already being rated or have ratings
-		const episodesToRate = episodes.filter((ep) => !ratingInProgress.has(ep.id) && !ep.ratings);
-		if (episodesToRate.length === 0) return;
+		// const episodesToRate = episodes.filter((ep) => !ratingInProgress.has(ep.id) && !ep.ratings);
+		// if (episodesToRate.length === 0) return;
 
 		// Mark all episodes as in progress
-		episodesToRate.forEach((ep) => ratingInProgress.add(ep.id));
+		episodes.forEach((ep) => ratingInProgress.add(ep.id));
 
 		try {
-			const interactionHistory = getInteractionHistory()
-				.sort((a, b) => b.timestamp - a.timestamp)
-				.slice(0, MAX_INTERACTIONS);
+			// TEMP 2025-06-26
+			// Removing interaction history for now
+			// const interactionHistory = getInteractionHistory()
+			// 	.sort((a, b) => b.timestamp - a.timestamp)
+			// 	.slice(0, MAX_INTERACTIONS);
 			const body = {
-				episodes: episodesToRate,
-				prompt: data.prompt,
-				interactionHistory
+				episodes,
+				prompt: data.prompt
+				// interactionHistory
 			};
 			console.debug('About to rate', body);
 			const response = await fetch('/api/rate-episodes', {
@@ -207,7 +202,7 @@
 				// Match the server response structure
 				ratings.ratings.forEach((rating: any) => {
 					console.debug(`Updating ratings for ${rating.id}`);
-					const episode = episodesToRate.find((ep) => ep.id === rating.id);
+					const episode = searchResults.find((ep) => ep.id === rating.id);
 					if (episode) {
 						episode.ratings = rating.ratings;
 					}
@@ -220,7 +215,7 @@
 			console.error('Rating request failed:', error);
 		} finally {
 			// Clear in-progress status
-			episodesToRate.forEach((ep) => ratingInProgress.delete(ep.id));
+			episodes.forEach((ep) => ratingInProgress.delete(ep.id));
 		}
 	}
 
@@ -243,14 +238,14 @@
 		localStorage.setItem(`vol-search-${searchId}`, JSON.stringify(searchData));
 	}
 
-	$: sortedEpisodes = searchResults
-		.flatMap((group) =>
-			group.results.episodes.items.map((episode: Episode) => ({
-				...episode,
-				sourceQuery: group.query
-			}))
-		)
-		.sort((a, b) => getAverageRating(b.ratings) - getAverageRating(a.ratings));
+	$: sortedEpisodes = searchResults;
+	// .flatMap((group) =>
+	// 	group.results.episodes.items.map((episode: Episode) => ({
+	// 		...episode,
+	// 		sourceQuery: group.query
+	// 	}))
+	// )
+	// .sort((a, b) => getAverageRating(b.ratings) - getAverageRating(a.ratings));
 </script>
 
 <div class="mx-auto max-w-xl px-2 py-8 lg:px-4">
