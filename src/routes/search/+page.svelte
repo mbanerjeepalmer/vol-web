@@ -136,12 +136,14 @@
 	}
 
 	async function fetchSearchResults(queryList: string[]) {
+		// TODO prefer to make this more functional instead of of relying on component-level variables
 		try {
 			const searchResponse = await fetch(
 				`/api/spotify-search?queries=${encodeURIComponent(queryList.join(','))}`
 			);
-			const json = await searchResponse.json();
-			searchResults = json.searchResults;
+			const searchResponseJson = await searchResponse.json();
+			console.debug('Search response:', searchResponseJson);
+			searchResults = searchResponseJson.searchResults;
 		} catch (error) {
 			console.error('Search request failed:', error);
 			searchResults = [];
@@ -151,6 +153,7 @@
 	}
 
 	// Start rating all episodes when results load
+	// TODO convert to Svelte 5
 	$: if (searchResults.length > 0 && !isProcessingQueue) {
 		// Flatten all episodes into a single queue
 		ratingQueue = searchResults
