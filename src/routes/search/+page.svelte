@@ -5,12 +5,13 @@
 	import type { PageData } from './$types';
 	import { getStoredSearch, getAverageRating } from '$lib/utils';
 	import * as Sheet from '$lib/components/ui/sheet';
-	import type { Episode, EpisodeInteraction } from '$lib/types';
+	import type { Episode, EpisodeInteraction, JSONFeedItem } from '$lib/types';
 	import EpisodePreview from '$lib/components/EpisodePreview.svelte';
+	import { json } from '@sveltejs/kit';
 
 	export let data: PageData;
 
-	let searchResults: any[] = [];
+	let searchResults: JSONFeedItem[] = [];
 	let isThinking = true;
 	let thinkingAboutQueries = '';
 	let queries: string[] = [];
@@ -289,33 +290,16 @@
 				>{:else}2. ranked episodes{/if}
 		</li>
 	</ol>
-	{#if searchResults.length > 0}
-		<!-- TODO -->
-		<!-- {#if data.reason}
-				<div class="container mx-auto flex items-center justify-center px-4 py-8">
-					<h2 class="text-2xl font-bold">{data.reason}</h2>
-				</div>
-			{/if} -->
+	{#if sortedEpisodes.length > 0}
 		<div class="grid gap-6">
 			{#each sortedEpisodes as episode, index}
-				{#if index === 0}
-					<EpisodePreview
-						episodeDescription={episode.description}
-						spotifyId={episode.id}
-						audio_preview_url={episode.audio_preview_url}
-						ratings={episode.ratings}
-						sourceQuery={episode.sourceQuery}
-						embedHeight={352}
-					/>
-				{:else}
-					<EpisodePreview
-						episodeDescription={episode.description}
-						spotifyId={episode.id}
-						audio_preview_url={episode.audio_preview_url}
-						ratings={episode.ratings}
-						sourceQuery={episode.sourceQuery}
-					/>
-				{/if}
+				<EpisodePreview
+					{episode}
+					episodeDescription={episode.description}
+					audio_preview_url={episode.audio_preview_url}
+					ratings={episode.ratings}
+					sourceQuery={episode.sourceQuery}
+				/>
 			{/each}
 		</div>
 	{/if}

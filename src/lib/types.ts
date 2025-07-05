@@ -19,3 +19,26 @@ export interface EpisodeInteraction {
     episodeTitle?: string;
     episodeDescription?: string;
 }
+
+
+export interface JSONFeedItem {
+    id: string;
+    title: string;
+    summary: string;
+    url: string;
+    image: string;
+    content_html: string;
+    date_published: string;
+    attachments: Array<{
+        url: string;
+        mime_type: string;
+        title: string;
+        size_in_bytes: number;
+        duration_in_seconds?: number;
+    }>;
+    authors: Array<{
+        name: string;
+        url?: string;
+    }>;
+    sourceQuery?: string;
+}

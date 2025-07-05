@@ -1,14 +1,13 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
-	import type { EpisodeRatings } from '$lib/types';
+	import type { EpisodeRatings, JSONFeedItem } from '$lib/types';
 	import { onMount } from 'svelte';
 	import Ratings from './Ratings.svelte';
-	export let spotifyId: string;
+	export let episode: JSONFeedItem;
 	export let episodeDescription: string;
 	export let audio_preview_url: string;
 	export let ratings: EpisodeRatings;
 	export let sourceQuery: string;
-	export let embedHeight = 152;
 
 	let expanded = false;
 	let hasMore = false;
@@ -26,17 +25,7 @@
 </script>
 
 <div class="my-12 flex flex-col gap-4 rounded-xl border border-border">
-	<iframe
-		title="Spotify podcast player"
-		style="border-radius:12px"
-		src={`https://open.spotify.com/embed/episode/${spotifyId}`}
-		width="100%"
-		height={embedHeight}
-		frameBorder="0"
-		allowfullscreen
-		allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-		loading="lazy"
-	></iframe>
+	{episode.title}
 	<div class="flex flex-row items-center justify-between gap-2 px-4">
 		<div>
 			<Badge variant="outline" class="border-none text-sm font-light opacity-80">
