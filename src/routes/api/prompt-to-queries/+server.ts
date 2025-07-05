@@ -1,45 +1,11 @@
 import Groq from 'groq-sdk';
 import { GROQ_API_KEY } from '$env/static/private';
-import type { Interaction } from '$lib/utils';
 const client = new Groq({
     apiKey: GROQ_API_KEY,
 });
 
 
-
-function formatInteractionContext(interactions: Interaction[]): string {
-    if (!interactions.length) return '';
-
-    // Deduplicate search queries while keeping the most recent occurrence
-    const seenSearchQueries = new Set<string>();
-    const uniqueInteractions = interactions
-        .sort((a, b) => b.timestamp - a.timestamp)
-        .filter(i => {
-            if (!i.spotifyId) {
-                // For search queries, only keep the first occurrence
-                if (seenSearchQueries.has(i.reaction)) return false;
-                seenSearchQueries.add(i.reaction);
-            }
-            return true;
-        })
-        .slice(0, 5); // Only use 5 most recent for context
-
-    return `${uniqueInteractions.map(i => {
-        if (i.spotifyId) {
-            // This is a podcast episode interaction
-            const description = i.episodeDescription ? `: ${i.episodeDescription}` : '';
-            return `- Reaction "${i.reaction}" to "${i.episodeTitle}"${description}`;
-        } else {
-            // This is a search query
-            return `- Search: "${i.reaction}"`;
-        }
-    }).join('\n')}
-`;
-}
-
-async function generateSearchQueriesFromPrompt(prompt: string, interactions: Interaction[]) {
-    const interactionContext = formatInteractionContext(interactions);
-    console.log(interactionContext);
+async function generateSearchQueriesFromPrompt(prompt: string) {
 
     const chatCompletion = await client.chat.completions.create({
         "messages": [
@@ -76,10 +42,7 @@ We don't have any context about this user's level of expertise. Their query is s
             },
             {
                 "role": "user",
-                "content": `User's past activity:
-${interactionContext}
-
-User's immediate request:
+                "content": `User's query:
 ${prompt}`
             }
         ],
@@ -99,19 +62,7 @@ export async function GET({ url }) {
         return new Response('No prompt provided', { status: 400 });
     }
 
-    // Parse interactions from URL params
-    let interactions: EpisodeInteraction[] = [];
-    try {
-        const encodedInteractions = url.searchParams.get('interactions');
-        if (encodedInteractions) {
-            interactions = JSON.parse(decodeURIComponent(encodedInteractions));
-        }
-    } catch (error) {
-        console.error('Failed to parse interactions:', error);
-        // Continue without interactions if parsing fails
-    }
-
-    const stream = await generateSearchQueriesFromPrompt(prompt, interactions);
+    const stream = await generateSearchQueriesFromPrompt(prompt);
 
     // Transform the stream into proper SSE format
     const transformedStream = new ReadableStream({
