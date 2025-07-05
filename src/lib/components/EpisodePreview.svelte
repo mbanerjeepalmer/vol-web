@@ -4,7 +4,6 @@
 	import { onMount } from 'svelte';
 	import Ratings from './Ratings.svelte';
 	export let episode: JSONFeedItem;
-	export let episodeDescription: string;
 	export let ratings: EpisodeRatings;
 	export let sourceQuery: string;
 

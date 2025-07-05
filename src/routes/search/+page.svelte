@@ -291,15 +291,9 @@
 		</li>
 	</ol>
 	{#if sortedEpisodes.length > 0}
-		<div class="grid gap-6">
+		<div class="my-8 grid gap-6">
 			{#each sortedEpisodes as episode, index}
-				<EpisodePreview
-					{episode}
-					episodeDescription={episode.description}
-					audio_preview_url={episode.audio_preview_url}
-					ratings={episode.ratings}
-					sourceQuery={episode.sourceQuery}
-				/>
+				<EpisodePreview {episode} ratings={episode.ratings} sourceQuery={episode.sourceQuery} />
 			{/each}
 		</div>
 	{/if}
