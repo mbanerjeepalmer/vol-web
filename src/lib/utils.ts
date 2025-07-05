@@ -64,50 +64,6 @@ export const flyAndScale = (
 	};
 };
 
-export interface Interaction {
-	spotifyId?: string;
-	reaction: string;
-	timestamp: number;
-	episodeTitle?: string;
-	episodeDescription?: string;
-	searchId?: string;
-}
-
-export function getInteractionHistory(): Interaction[] {
-	try {
-		return JSON.parse(localStorage.getItem('vol-interactions') || '[]');
-	} catch (error) {
-		console.error('Failed to load interaction history:', error);
-		return [];
-	}
-}
-
-export function saveInteraction(params: Partial<Interaction>) {
-	try {
-		const interactions = getInteractionHistory();
-		const newInteraction: Interaction = {
-			spotifyId: params.spotifyId || '',
-			reaction: params.reaction!,
-			timestamp: Date.now(),
-			episodeTitle: params.episodeTitle,
-			episodeDescription: params.episodeDescription,
-			searchId: params.searchId || ''
-		};
-
-		const filteredInteractions = interactions.filter(i =>
-			i.spotifyId !== newInteraction.spotifyId
-		);
-
-		filteredInteractions.unshift(newInteraction);
-
-		const trimmedInteractions = filteredInteractions.slice(0, 50);
-
-		localStorage.setItem('vol-interactions', JSON.stringify(trimmedInteractions));
-	} catch (error) {
-		console.error('Failed to save interaction:', error);
-	}
-}
-
 
 export function getStoredSearch(searchId: string) {
 	try {
@@ -134,13 +90,6 @@ export function cleanUpStorage() {
 			localStorage.removeItem(searchKeys.shift()!);
 		}
 
-		// Clean up interactions
-		const interactions = getInteractionHistory();
-		if (interactions.length > 50) {
-			localStorage.setItem('vol-interactions',
-				JSON.stringify(interactions.slice(0, 50))
-			);
-		}
 	} catch (error) {
 		console.error('Storage cleanup failed:', error);
 	}

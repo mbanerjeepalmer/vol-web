@@ -3,7 +3,7 @@
 	import Markdown from '$lib/components/Markdown.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import type { PageData } from './$types';
-	import { saveInteraction, getStoredSearch, getAverageRating } from '$lib/utils';
+	import { getStoredSearch, getAverageRating } from '$lib/utils';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import type { Episode, EpisodeInteraction } from '$lib/types';
 	import EpisodePreview from '$lib/components/EpisodePreview.svelte';
@@ -50,7 +50,6 @@
 			console.warn('URL too long, falling back to prompt-only request');
 		}
 
-		saveInteraction({ reaction: data.prompt, searchId: data.searchId });
 		const eventSource = new EventSource(url);
 
 		eventSource.onmessage = (event) => {
