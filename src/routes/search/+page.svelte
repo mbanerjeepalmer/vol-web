@@ -145,7 +145,7 @@
 	async function fetchSearchResults(queryList: string[]) {
 		try {
 			const searchResponse = await fetch(
-				`/api/spotify-search?queries=${encodeURIComponent(queryList.join(','))}`
+				`/api/podcast-search?queries=${encodeURIComponent(queryList.join(','))}`
 			);
 			const searchResponseJson = await searchResponse.json();
 			console.debug('Search response:', searchResponseJson);
