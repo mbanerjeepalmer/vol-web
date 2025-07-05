@@ -30,6 +30,11 @@ export async function GET({ url }) {
         }
         const resultJSON = await result.json();
         if (resultJSON.items && resultJSON.items.length > 0) {
+            // Set sourceQuery for each item to the current query
+            resultJSON.items.forEach(item => {
+                item.sourceQuery = query;
+            });
+
             // Extend the search results with the items from this query
             searchResults.push(...resultJSON.items)
             console.log(`Found ${resultJSON.items.length} results for query: ${query}`);
