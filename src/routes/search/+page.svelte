@@ -7,7 +7,7 @@
 	import * as Sheet from '$lib/components/ui/sheet';
 	import type { Episode, EpisodeInteraction, JSONFeedItem } from '$lib/types';
 	import EpisodePreview from '$lib/components/EpisodePreview.svelte';
-	import { json } from '@sveltejs/kit';
+	import Badge from '$lib/components/ui/badge/badge.svelte';
 
 	export let data: PageData;
 
@@ -33,23 +33,14 @@
 			return;
 		}
 
-		const interactionHistory = getInteractionHistory();
-		const encodedHistory = encodeInteractionHistory(interactionHistory);
+		// 2025-06-26 TEMPORARY
+		// Remove history. The behaviour is a bit unexpected.
+		// const userContext = new URLSearchParams({
+		// 	prompt: data.prompt
+		// interactions: encodedHistory
+		// });
 
-		const userContext = new URLSearchParams({
-			prompt: data.prompt
-			// 2025-06-26 TEMPORARY
-			// Remove history. It's a bit unexpected behaviour.
-			// interactions: encodedHistory
-		});
-
-		// Create URL with fallback if too long
-		let url = `/api/prompt-to-queries?${userContext}`;
-		console.debug('User context:', url);
-		if (url.length > MAX_URL_LENGTH) {
-			url = `/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`;
-			console.warn('URL too long, falling back to prompt-only request');
-		}
+		let url = `/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`;
 
 		const eventSource = new EventSource(url);
 
@@ -93,41 +84,6 @@
 		} finally {
 			isProcessingQueue = false;
 		}
-	}
-
-	const MAX_INTERACTIONS = 10;
-	const MAX_URL_LENGTH = 2000; // Safe limit for most browsers
-
-	// Update the encoding helper function
-	function encodeInteractionHistory(interactions: EpisodeInteraction[]): string {
-		// Sort by timestamp (newest first) and take only recent interactions
-		const recentInteractions = [...interactions]
-			.sort((a, b) => b.timestamp - a.timestamp)
-			.slice(0, MAX_INTERACTIONS)
-			.map((i) => ({
-				spotifyId: i.spotifyId,
-				reaction: i.reaction,
-				timestamp: i.timestamp,
-				episodeTitle: i.episodeTitle,
-				episodeDescription: i.episodeDescription
-			}));
-
-		const encoded = encodeURIComponent(JSON.stringify(recentInteractions));
-
-		// If still too long, reduce further and remove descriptions
-		if (encoded.length > MAX_URL_LENGTH) {
-			const withoutDescriptions = recentInteractions.map(({ episodeDescription, ...rest }) => rest);
-			const encodedWithoutDescriptions = encodeURIComponent(JSON.stringify(withoutDescriptions));
-
-			// If still too long, reduce number of interactions
-			if (encodedWithoutDescriptions.length > MAX_URL_LENGTH) {
-				return encodeInteractionHistory(interactions.slice(0, MAX_INTERACTIONS / 2));
-			}
-
-			return encodedWithoutDescriptions;
-		}
-
-		return encoded;
 	}
 
 	// Save search data whenever we have results
@@ -266,7 +222,7 @@
 		<li>
 			{#if isThinking}<span
 					class="animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text font-bold text-transparent"
-					>1. thinking about search queries</span
+					>1. thinking</span
 				>{:else}
 				<Sheet.Root>
 					<Sheet.Trigger>
@@ -290,6 +246,11 @@
 				>{:else}2. ranked episodes{/if}
 		</li>
 	</ol>
+	<div class="my-4 w-full text-center leading-8">
+		{#each queries as query}
+			<Badge variant="secondary">{query}</Badge>
+		{/each}
+	</div>
 	{#if sortedEpisodes.length > 0}
 		<div class="my-8 grid gap-6">
 			{#each sortedEpisodes as episode, index}
