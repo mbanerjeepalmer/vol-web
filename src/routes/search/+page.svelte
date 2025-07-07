@@ -5,7 +5,7 @@
 	import type { PageData } from './$types';
 	import { getStoredSearch, getAverageRating } from '$lib/utils';
 	import * as Sheet from '$lib/components/ui/sheet';
-	import type { Episode, EpisodeInteraction, JSONFeedItem } from '$lib/types';
+	import type { Episode, JSONFeedItem } from '$lib/types';
 	import EpisodePreview from '$lib/components/EpisodePreview.svelte';
 	import Badge from '$lib/components/ui/badge/badge.svelte';
 
@@ -126,16 +126,6 @@
 		void (async () => {
 			await processRatingQueue();
 		})();
-	}
-
-	// Add with other utility functions
-	function getInteractionHistory(): EpisodeInteraction[] {
-		try {
-			return JSON.parse(localStorage.getItem('vol-interactions') || '[]');
-		} catch (error) {
-			console.error('Failed to load interaction history:', error);
-			return [];
-		}
 	}
 
 	async function rateEpisodes(episodes: Episode[]) {
