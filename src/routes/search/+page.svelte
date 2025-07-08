@@ -16,9 +16,9 @@
 
 	let errorText = '';
 	let relevantFeedID = '';
-	let relevantEpisodes: JSONFeedItem[] = [];
+	let relevantEpisodes: JSONFeedItem[] | null = null;
 	let everythingElseFeedID = '';
-	let everythingElseEpisodes: JSONFeedItem[] = [];
+	let everythingElseEpisodes: JSONFeedItem[] | null = null;
 	let isThinking = true;
 	let thinkingAboutQueries = '';
 	let queries: string[] = [];
@@ -180,11 +180,11 @@
 
 	// Start rating all episodes when results load
 	// TODO convert to Svelte 5
-	$: if (relevantEpisodes.length > 0 && !isProcessingQueue) {
-		void (async () => {
-			await fetchRelevant();
-		})();
-	}
+	// $: if (relevantEpisodes.length > 0 && !isProcessingQueue) {
+	// 	void (async () => {
+	// 		await fetchRelevant();
+	// 	})();
+	// }
 
 	function parseQueries(content: string): string[] {
 		const queryRegex = /<query>(.*?)<\/query>/g;
@@ -231,20 +231,64 @@
 			<Badge variant="secondary">{query}</Badge>
 		{/each}
 	</div>
-	<p>chosen for you</p>
-	{#if relevantEpisodes.length > 0}
+
+	{#if relevantEpisodes === null}
+		<EpisodePreview
+			episode={{
+				title: '',
+				attachments: [],
+				content_html: '',
+				image: '',
+				authors: [],
+				date_published: '',
+				id: '',
+				url: '',
+				summary: ''
+			}}
+			sourceQuery=""
+		/>
+	{:else if relevantEpisodes.length === 0}
+		<div class="flex h-48 w-full items-center justify-center p-4">
+			<p class="">no episodes chosen</p>
+		</div>
+	{:else if relevantEpisodes.length > 0}
+		0
 		<div class="my-8 grid gap-6">
 			{#each relevantEpisodes as episode, index}
-				<EpisodePreview {episode} ratings={episode.ratings} sourceQuery={episode.sourceQuery} />
+				<EpisodePreview {episode} sourceQuery="TODO" />
 			{/each}
 		</div>
 	{/if}
-	<button on:click={async () => fetchEverythingElse()}>see everything else</button>
-	{#if everythingElseEpisodes.length > 0}
-		<div class="my-8 grid gap-6">
-			{#each everythingElseEpisodes as episode}
-				<EpisodePreview {episode} sourceQuery="TODO source" />
-			{/each}
-		</div>
-	{/if}
+	<div class="mt-12 opacity-80 hover:opacity-100">
+		{#if everythingElseEpisodes === null}
+			<Button
+				class="mx-auto w-full underline underline-offset-4"
+				variant="link"
+				on:click={async () => fetchEverythingElse()}>everything else... ⏷</Button
+			>
+		{:else if everythingElseEpisodes.length > 0}
+			<div class="my-8 grid gap-6">
+				{#each everythingElseEpisodes as episode}
+					<EpisodePreview {episode} sourceQuery="TODO source" />
+				{/each}
+			</div>
+		{:else}
+			<div class="my-8 grid gap-6">
+				<EpisodePreview
+					episode={{
+						title: 'blah',
+						attachments: [],
+						content_html: '',
+						image: '',
+						authors: [],
+						date_published: '',
+						id: '',
+						url: '',
+						summary: ''
+					}}
+					sourceQuery="TODO source"
+				/>
+			</div>
+		{/if}
+	</div>
 </div>
