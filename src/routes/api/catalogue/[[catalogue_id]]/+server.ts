@@ -22,6 +22,11 @@ export async function GET({ params }) {
             }
         }
     )
+    if (megaCatalogueError) {
+        if (megaCatalogueError)
+            console.error(`Error fetching Catalogue`, JSON.stringify(megaCatalogueError))
+        throw error(500, "The server broke when trying to get this catalogue")
+    }
 
     return json(megaCatalogueData)
 }

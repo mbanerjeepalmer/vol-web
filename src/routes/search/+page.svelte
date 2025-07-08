@@ -10,7 +10,7 @@
 	import Badge from '$lib/components/ui/badge/badge.svelte';
 	import createClient from 'openapi-fetch';
 	import { PUBLIC_ZACUSCA_API_BASE } from '$env/static/public';
-	import type { paths } from '$lib/zacusca_api_types';
+	import type { components, paths } from '$lib/zacusca_api_types';
 
 	export let data: PageData;
 
@@ -41,10 +41,18 @@
 		// Check for existing search data first
 		if (data.catalogue_id) {
 			const megaCatalogueResponse = await fetch(`/api/catalogue/${data.catalogue_id}`);
-			const megaCatalogueJSON = await megaCatalogueResponse.json();
-			data.prompt = megaCatalogueJSON.title;
+			const megaCatalogueJSON: components['schemas']['MegaCatalogueResponse'] =
+				await megaCatalogueResponse.json();
+			data.prompt = megaCatalogueJSON.catalogue.name;
+			megaCatalogueJSON.output_feeds.forEach((f) => {
+				if (f.title === 'Everything else') {
+					everythingElseFeedID = f.id;
+				} else {
+					relevantFeedID = f.id;
+				}
+			});
 
-			// await fetchFeeds();
+			await fetchRelevant();
 			return;
 		} else if (data.prompt) {
 			// 2025-06-26 TEMPORARY
@@ -76,7 +84,7 @@
 		}
 	});
 
-	async function fetchFeeds() {
+	async function fetchRelevant() {
 		// if (isProcessingQueue) {
 		// 	console.debug('Already processing queue');
 		// 	return;
@@ -84,7 +92,7 @@
 
 		try {
 			isProcessingQueue = true;
-			const { data: relevantEpisodesData, error: relevantEpisodesError } = await client.GET(
+			const { data: relevant, error: relevantEpisodesError } = await client.GET(
 				'/feed/{feed_id}/json',
 				{
 					params: {
@@ -94,11 +102,41 @@
 					}
 				}
 			);
+			relevantEpisodes = relevant.items;
+
 			if (relevantEpisodesError) {
 				console.error(relevantEpisodesError);
 				errorText = 'Something broke when fetching feeds';
 			}
-			relevantEpisodes = await relevantEpisodesData.json();
+			isProcessingQueue = false;
+		} finally {
+			isProcessingQueue = false;
+		}
+	}
+	async function fetchEverythingElse() {
+		// if (isProcessingQueue) {
+		// 	console.debug('Already processing queue');
+		// 	return;
+		// }
+
+		try {
+			const { data: everythingElse, error: everythingElseError } = await client.GET(
+				'/feed/{feed_id}/json',
+				{
+					params: {
+						path: {
+							feed_id: everythingElseFeedID
+						}
+					}
+				}
+			);
+
+			everythingElseEpisodes = everythingElse.items;
+
+			if (everythingElseError) {
+				console.error(everythingElseError);
+				errorText = 'Something broke when fetching feeds';
+			}
 			isProcessingQueue = false;
 		} finally {
 			isProcessingQueue = false;
@@ -144,60 +182,8 @@
 	// TODO convert to Svelte 5
 	$: if (relevantEpisodes.length > 0 && !isProcessingQueue) {
 		void (async () => {
-			await fetchFeeds();
+			await fetchRelevant();
 		})();
-	}
-
-	async function rateEpisodes(episodes: Episode[]) {
-		// Filter out episodes that already have ratings or are being processed
-		const episodesToRate = episodes.filter((ep) => !ep.ratings && !ratingInProgress.has(ep.id));
-
-		if (episodesToRate.length === 0) {
-			console.debug('No episodes to rate in this batch');
-			return;
-		}
-
-		// Mark episodes as in progress
-		episodesToRate.forEach((ep) => ratingInProgress.add(ep.id));
-
-		try {
-			const body = {
-				episodes: episodesToRate, // Only send episodes that need rating
-				prompt: data.prompt
-			};
-
-			console.debug('About to rate', body);
-
-			const response = await fetch('/api/rate-episodes', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(body)
-			});
-
-			const { ratings } = await response.json();
-
-			// Update ratings for each episode
-			if (ratings?.ratings) {
-				ratings.ratings.forEach((rating: any) => {
-					console.debug(`Updating ratings for ${rating.id}`);
-					const episode = relevantEpisodes.find((ep) => ep.id === rating.id);
-					if (episode && !episode.ratings) {
-						// Only update if no ratings exist
-						episode.ratings = rating.ratings;
-					}
-				});
-
-				// Trigger reactivity
-				relevantEpisodes = [...relevantEpisodes];
-			}
-		} catch (error) {
-			console.error('Rating request failed:', error);
-		} finally {
-			// Clear in-progress status
-			episodesToRate.forEach((ep) => ratingInProgress.delete(ep.id));
-		}
 	}
 
 	function parseQueries(content: string): string[] {
@@ -205,23 +191,6 @@
 		const matches = [...content.matchAll(queryRegex)];
 		return matches.map((match) => match[1].trim());
 	}
-
-	let searchId = crypto.randomUUID();
-
-	$: if (relevantEpisodes.length > 0) {
-		const searchData = {
-			id: searchId,
-			results: relevantEpisodes,
-			thinking: thinkingAboutQueries,
-			prompt: data.prompt,
-			timestamp: Date.now()
-		};
-		localStorage.setItem(`vol-search-${searchId}`, JSON.stringify(searchData));
-	}
-
-	$: sortedEpisodes = relevantEpisodes.sort(
-		(a, b) => getAverageRating(b.ratings) - getAverageRating(a.ratings)
-	);
 </script>
 
 <div class="mx-auto max-w-xl px-2 py-8 lg:px-4">
@@ -262,10 +231,19 @@
 			<Badge variant="secondary">{query}</Badge>
 		{/each}
 	</div>
-	{#if sortedEpisodes.length > 0}
+	<p>chosen for you</p>
+	{#if relevantEpisodes.length > 0}
 		<div class="my-8 grid gap-6">
-			{#each sortedEpisodes as episode, index}
+			{#each relevantEpisodes as episode, index}
 				<EpisodePreview {episode} ratings={episode.ratings} sourceQuery={episode.sourceQuery} />
+			{/each}
+		</div>
+	{/if}
+	<button on:click={async () => fetchEverythingElse()}>see everything else</button>
+	{#if everythingElseEpisodes.length > 0}
+		<div class="my-8 grid gap-6">
+			{#each everythingElseEpisodes as episode}
+				<EpisodePreview {episode} sourceQuery="TODO source" />
 			{/each}
 		</div>
 	{/if}

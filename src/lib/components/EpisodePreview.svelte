@@ -2,9 +2,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import type { EpisodeRatings, JSONFeedItem } from '$lib/types';
 	import { onMount } from 'svelte';
-	import Ratings from './Ratings.svelte';
 	export let episode: JSONFeedItem;
-	export let ratings: EpisodeRatings;
 	export let sourceQuery: string;
 
 	let expanded = false;
@@ -48,11 +46,6 @@
 				{sourceQuery}
 			</Badge>
 		</div>
-		{#if ratings}
-			<Ratings {ratings} />
-		{:else}
-			<p class="animate-pulse text-center font-bold opacity-80">rating episode...</p>
-		{/if}
 	</div>
 	{#if episode.attachments?.length > 0}
 		{#each episode.attachments as attachment}
