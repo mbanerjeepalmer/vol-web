@@ -11,6 +11,7 @@
 	import createClient from 'openapi-fetch';
 	import { PUBLIC_ZACUSCA_API_BASE } from '$env/static/public';
 	import type { components, paths } from '$lib/zacusca_api_types';
+	import { Input } from '$lib/components/ui/input';
 
 	export let data: PageData;
 
@@ -231,7 +232,29 @@
 			<Badge variant="secondary">{query}</Badge>
 		{/each}
 	</div>
-
+	<div
+		class="mx-auto my-4 flex max-w-lg flex-col gap-y-6 rounded-md border border-border px-2 py-6"
+	>
+		<h2 class="px-2 text-lg font-medium tracking-tight">Subscribe to these results as a podcast</h2>
+		<div class="flex h-12 flex-row justify-between gap-x-6 align-middle">
+			<!-- copy on click, cursor should be pointer -->
+			<div class="flex flex-row gap-x-1">
+				<Input class="h-full" value={`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`} />
+				<Button
+					on:click={() =>
+						navigator.clipboard.writeText(`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`)}
+					class="h-full"
+					variant="outline">Copy</Button
+				>
+			</div>
+			<img
+				class=""
+				src="/assets/US-UK_Apple_Podcasts_Listen_Badge_RGB_062023.svg"
+				alt="Apple Podcasts badge"
+			/>
+		</div>
+		<p>Copy the RSS feed URL. Paste it into your podcast player.</p>
+	</div>
 	{#if relevantEpisodes === null}
 		<EpisodePreview
 			episode={{
@@ -252,7 +275,6 @@
 			<p class="">no episodes chosen</p>
 		</div>
 	{:else if relevantEpisodes.length > 0}
-		0
 		<div class="my-8 grid gap-6">
 			{#each relevantEpisodes as episode, index}
 				<EpisodePreview {episode} sourceQuery="TODO" />
