@@ -12,6 +12,8 @@
 	import { PUBLIC_ZACUSCA_API_BASE } from '$env/static/public';
 	import type { components, paths } from '$lib/zacusca_api_types';
 	import { Input } from '$lib/components/ui/input';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	export let data: PageData;
 
@@ -23,8 +25,6 @@
 	let isThinking = true;
 	let thinkingAboutQueries = '';
 	let queries: string[] = [];
-	// Track which episodes are being rated
-	let ratingInProgress = new Set<string>();
 
 	let isProcessingQueue = false;
 
@@ -37,32 +37,29 @@
 	// 	// Probably need to adjust the mega endpoint or something
 	// 	const {data: catalogueData, error: catalogueEror} = client.
 	// }
+	async function fetchMegaCatalogue(catalogue_id: string) {
+		const megaCatalogueResponse = await fetch(`/api/catalogue/${catalogue_id}`);
+		const megaCatalogueJSON: components['schemas']['MegaCatalogueResponse'] =
+			await megaCatalogueResponse.json();
+		data.prompt = megaCatalogueJSON.catalogue.name;
+		megaCatalogueJSON.output_feeds.forEach((f) => {
+			if (f.title === 'Everything else') {
+				everythingElseFeedID = f.id;
+			} else {
+				relevantFeedID = f.id;
+			}
+		});
+	}
 
 	onMount(async () => {
 		// Check for existing search data first
 		if (data.catalogue_id) {
-			const megaCatalogueResponse = await fetch(`/api/catalogue/${data.catalogue_id}`);
-			const megaCatalogueJSON: components['schemas']['MegaCatalogueResponse'] =
-				await megaCatalogueResponse.json();
-			data.prompt = megaCatalogueJSON.catalogue.name;
-			megaCatalogueJSON.output_feeds.forEach((f) => {
-				if (f.title === 'Everything else') {
-					everythingElseFeedID = f.id;
-				} else {
-					relevantFeedID = f.id;
-				}
-			});
-
+			console.debug(`Loading an existing catalogue`, data.catalogue_id);
+			await fetchMegaCatalogue(data.catalogue_id);
 			await fetchRelevant();
 			return;
 		} else if (data.prompt) {
-			// 2025-06-26 TEMPORARY
-			// Remove history. The behaviour is a bit unexpected.
-			// const userContext = new URLSearchParams({
-			// 	prompt: data.prompt
-			// interactions: encodedHistory
-			// });
-
+			console.debug(`No existing catalogue_id so creating one`);
 			let url = `/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`;
 
 			const eventSource = new EventSource(url);
@@ -75,11 +72,11 @@
 				eventSource.close();
 				queries = parseQueries(thinkingAboutQueries);
 				if (queries.length > 0) {
-					fetchSearchResults(queries);
+					createCatalogueFromQueries(queries);
 				} else {
 					// What is this?
 					queries = data.queries;
-					fetchSearchResults(queries);
+					createCatalogueFromQueries(queries);
 				}
 			};
 		}
@@ -157,7 +154,7 @@
 	// 	localStorage.setItem(`vol-search-${data.searchId}`, JSON.stringify(searchData));
 	// }
 
-	async function fetchSearchResults(queryList: string[]) {
+	async function createCatalogueFromQueries(queryList: string[]) {
 		try {
 			const catalogueResponse = await fetch('/api/catalogue', {
 				method: 'POST',
@@ -170,22 +167,16 @@
 			});
 			const catalogueResponseJSON = await catalogueResponse.json();
 			console.debug('catalogueResponseJSON', catalogueResponseJSON);
+			const newURL = new URL($page.url);
+			newURL.searchParams.set('catalogue_id', catalogueResponseJSON.catalogue.catalogue_id);
+			goto(newURL);
 		} catch (error) {
 			console.error('Search request failed:', error);
 			errorText = 'The server broke.';
-			relevantEpisodes = [];
 		} finally {
 			isThinking = false;
 		}
 	}
-
-	// Start rating all episodes when results load
-	// TODO convert to Svelte 5
-	// $: if (relevantEpisodes.length > 0 && !isProcessingQueue) {
-	// 	void (async () => {
-	// 		await fetchRelevant();
-	// 	})();
-	// }
 
 	function parseQueries(content: string): string[] {
 		const queryRegex = /<query>(.*?)<\/query>/g;
@@ -233,9 +224,10 @@
 		{/each}
 	</div>
 	<div
-		class="mx-auto my-4 flex max-w-lg flex-col gap-y-6 rounded-md border border-border px-2 py-6"
+		class="mx-auto my-4 flex max-w-lg flex-col gap-y-6 rounded-md border border-border px-3 py-6"
+		class:opacity-30={!relevantEpisodes || relevantEpisodes.length === 0}
 	>
-		<h2 class="px-2 text-lg font-medium tracking-tight">Subscribe to these results as a podcast</h2>
+		<h2 class="px-1 text-lg font-medium tracking-tight">Subscribe to these results as a podcast</h2>
 		<div class="flex h-12 flex-row justify-between gap-x-6 align-middle">
 			<!-- copy on click, cursor should be pointer -->
 			<div class="flex flex-row gap-x-1">
@@ -248,7 +240,7 @@
 				>
 			</div>
 			<img
-				class=""
+				class="p-1"
 				src="/assets/US-UK_Apple_Podcasts_Listen_Badge_RGB_062023.svg"
 				alt="Apple Podcasts badge"
 			/>
@@ -256,23 +248,55 @@
 		<p>Copy the RSS feed URL. Paste it into your podcast player.</p>
 	</div>
 	{#if relevantEpisodes === null}
-		<EpisodePreview
-			episode={{
-				title: '',
-				attachments: [],
-				content_html: '',
-				image: '',
-				authors: [],
-				date_published: '',
-				id: '',
-				url: '',
-				summary: ''
-			}}
-			sourceQuery=""
-		/>
+		<div class="opacity-50">
+			<EpisodePreview
+				episode={{
+					title: '',
+					attachments: [],
+					content_html: '',
+					image: '',
+					authors: [],
+					date_published: '',
+					id: '',
+					url: '',
+					summary: ''
+				}}
+				sourceQuery=""
+			/>
+		</div>
 	{:else if relevantEpisodes.length === 0}
-		<div class="flex h-48 w-full items-center justify-center p-4">
-			<p class="">no episodes chosen</p>
+		<div class="flex w-full flex-col items-center justify-center p-4">
+			<div class="w-full opacity-50">
+				<EpisodePreview
+					episode={{
+						title: '',
+						attachments: [],
+						content_html: '',
+						image: '',
+						authors: [],
+						date_published: '',
+						id: '',
+						url: '',
+						summary: ''
+					}}
+					sourceQuery=""
+				/>
+				<EpisodePreview
+					episode={{
+						title: '',
+						attachments: [],
+						content_html: '',
+						image: '',
+						authors: [],
+						date_published: '',
+						id: '',
+						url: '',
+						summary: ''
+					}}
+					sourceQuery=""
+				/>
+			</div>
+			<p class="text-xl font-medium">no episodes chosen yet</p>
 		</div>
 	{:else if relevantEpisodes.length > 0}
 		<div class="my-8 grid gap-6">
