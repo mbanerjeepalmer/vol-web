@@ -265,7 +265,8 @@
 			/>
 		</div>
 	{:else if relevantEpisodes.length === 0}
-		<div class="flex w-full flex-col items-center justify-center p-4">
+		<div class="flex w-full flex-col items-center justify-center gap-8 p-4">
+			<p class="text-xl font-medium">no episodes chosen yet</p>
 			<div class="w-full opacity-50">
 				<EpisodePreview
 					episode={{
@@ -296,7 +297,6 @@
 					sourceQuery=""
 				/>
 			</div>
-			<p class="text-xl font-medium">no episodes chosen yet</p>
 		</div>
 	{:else if relevantEpisodes.length > 0}
 		<div class="my-8 grid gap-6">
