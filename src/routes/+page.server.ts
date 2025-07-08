@@ -16,9 +16,7 @@ export const load = async () => {
 export const actions = {
     default: async ({ request }: { request: Request }) => {
         const form = await superValidate(request, zod(promptSchema));
-        const searchId = randomUUID();
 
-        // Redirect to search with both prompt and searchId
-        throw redirect(303, `/search?prompt=${encodeURIComponent(form.data.prompt)}&searchId=${searchId}`);
+        throw redirect(303, `/search?prompt=${encodeURIComponent(form.data.prompt)}`);
     }
 };

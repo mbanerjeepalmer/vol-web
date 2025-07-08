@@ -3,9 +3,8 @@
 	import Markdown from '$lib/components/Markdown.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import type { PageData } from './$types';
-	import { getStoredSearch, getAverageRating } from '$lib/utils';
 	import * as Sheet from '$lib/components/ui/sheet';
-	import type { Episode, JSONFeedItem } from '$lib/types';
+	import type { JSONFeedItem } from '$lib/types';
 	import EpisodePreview from '$lib/components/EpisodePreview.svelte';
 	import Badge from '$lib/components/ui/badge/badge.svelte';
 	import createClient from 'openapi-fetch';

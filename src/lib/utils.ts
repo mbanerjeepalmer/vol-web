@@ -2,7 +2,6 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 import type { TransitionConfig } from "svelte/transition";
-import type { EpisodeRatings } from "./types";
 
 const MAX_STORED_SEARCHES = 10;
 
@@ -63,39 +62,3 @@ export const flyAndScale = (
 		easing: cubicOut
 	};
 };
-
-
-export function getStoredSearch(searchId: string) {
-	try {
-		const stored = localStorage.getItem(`vol-search-${searchId}`);
-		return stored ? JSON.parse(stored) : null;
-	} catch (error) {
-		console.error('Failed to load stored search:', error);
-		return null;
-	}
-}
-
-export function cleanUpStorage() {
-	try {
-		// Clean up old searches
-		const searchKeys = Object.keys(localStorage)
-			.filter(key => key.startsWith('vol-search-'))
-			.sort((a, b) => {
-				const timeA = JSON.parse(localStorage.getItem(a) || '{}').timestamp || 0;
-				const timeB = JSON.parse(localStorage.getItem(b) || '{}').timestamp || 0;
-				return timeA - timeB;
-			});
-
-		while (searchKeys.length >= MAX_STORED_SEARCHES) {
-			localStorage.removeItem(searchKeys.shift()!);
-		}
-
-	} catch (error) {
-		console.error('Storage cleanup failed:', error);
-	}
-}
-
-export function getAverageRating(ratings?: EpisodeRatings): number {
-	if (!ratings) return 0;
-	return Math.round((ratings.goal + ratings.context + ratings.quality + ratings.freshness) / 4);
-}
