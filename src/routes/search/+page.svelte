@@ -8,113 +8,133 @@
 	import type { Episode, JSONFeedItem } from '$lib/types';
 	import EpisodePreview from '$lib/components/EpisodePreview.svelte';
 	import Badge from '$lib/components/ui/badge/badge.svelte';
+	import createClient from 'openapi-fetch';
+	import { PUBLIC_ZACUSCA_API_BASE } from '$env/static/public';
+	import type { paths } from '$lib/zacusca_api_types';
 
 	export let data: PageData;
 
-	let searchResults: JSONFeedItem[] = [];
+	let errorText = '';
+	let relevantFeedID = '';
+	let relevantEpisodes: JSONFeedItem[] = [];
+	let everythingElseFeedID = '';
+	let everythingElseEpisodes: JSONFeedItem[] = [];
 	let isThinking = true;
 	let thinkingAboutQueries = '';
 	let queries: string[] = [];
 	// Track which episodes are being rated
 	let ratingInProgress = new Set<string>();
-	$: ratingQueue = searchResults.filter((item) => !item.ratings);
+
 	let isProcessingQueue = false;
+
+	const client = createClient<paths>({
+		baseUrl: PUBLIC_ZACUSCA_API_BASE
+	});
+
+	// async function fetchCatalogueFeeds(catalogue_id: string){
+	// 	// TODO not sure if this is the correct level of granularity
+	// 	// Probably need to adjust the mega endpoint or something
+	// 	const {data: catalogueData, error: catalogueEror} = client.
+	// }
 
 	onMount(async () => {
 		// Check for existing search data first
-		const storedSearch = getStoredSearch(data.searchId);
-		if (storedSearch) {
-			thinkingAboutQueries = storedSearch.thinking;
-			queries = storedSearch.queries || parseQueries(storedSearch.thinking);
-			searchResults = storedSearch.searchResults;
+		if (data.catalogue_id) {
+			const megaCatalogueResponse = await fetch(`/api/catalogue/${data.catalogue_id}`);
+			const megaCatalogueJSON = await megaCatalogueResponse.json();
+			data.prompt = megaCatalogueJSON.title;
 
-			await processRatingQueue();
-			isThinking = false;
+			// await fetchFeeds();
 			return;
+		} else if (data.prompt) {
+			// 2025-06-26 TEMPORARY
+			// Remove history. The behaviour is a bit unexpected.
+			// const userContext = new URLSearchParams({
+			// 	prompt: data.prompt
+			// interactions: encodedHistory
+			// });
+
+			let url = `/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`;
+
+			const eventSource = new EventSource(url);
+
+			eventSource.onmessage = (event) => {
+				thinkingAboutQueries += event.data.replace(/\\n/g, '\n');
+			};
+
+			eventSource.onerror = () => {
+				eventSource.close();
+				queries = parseQueries(thinkingAboutQueries);
+				if (queries.length > 0) {
+					fetchSearchResults(queries);
+				} else {
+					// What is this?
+					queries = data.queries;
+					fetchSearchResults(queries);
+				}
+			};
 		}
-
-		// 2025-06-26 TEMPORARY
-		// Remove history. The behaviour is a bit unexpected.
-		// const userContext = new URLSearchParams({
-		// 	prompt: data.prompt
-		// interactions: encodedHistory
-		// });
-
-		let url = `/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`;
-
-		const eventSource = new EventSource(url);
-
-		eventSource.onmessage = (event) => {
-			thinkingAboutQueries += event.data.replace(/\\n/g, '\n');
-		};
-
-		eventSource.onerror = () => {
-			eventSource.close();
-			queries = parseQueries(thinkingAboutQueries);
-			if (queries.length > 0) {
-				fetchSearchResults(queries);
-			} else {
-				queries = data.queries;
-				fetchSearchResults(queries);
-			}
-		};
 	});
 
-	async function processRatingQueue() {
-		if (isProcessingQueue) {
-			console.debug('Already processing queue');
-			return;
-		}
-
-		// Get episodes that actually need rating (don't have ratings and aren't in progress)
-		const episodesToRate = searchResults.filter(
-			(item) => !item.ratings && !ratingInProgress.has(item.id)
-		);
-
-		if (episodesToRate.length === 0) return;
-
-		isProcessingQueue = true;
+	async function fetchFeeds() {
+		// if (isProcessingQueue) {
+		// 	console.debug('Already processing queue');
+		// 	return;
+		// }
 
 		try {
-			// Process in batches of 10
-			for (let i = 0; i < episodesToRate.length; i += 10) {
-				const batch = episodesToRate.slice(i, i + 10);
-				await rateEpisodes(batch);
+			isProcessingQueue = true;
+			const { data: relevantEpisodesData, error: relevantEpisodesError } = await client.GET(
+				'/feed/{feed_id}/json',
+				{
+					params: {
+						path: {
+							feed_id: relevantFeedID
+						}
+					}
+				}
+			);
+			if (relevantEpisodesError) {
+				console.error(relevantEpisodesError);
+				errorText = 'Something broke when fetching feeds';
 			}
+			relevantEpisodes = await relevantEpisodesData.json();
+			isProcessingQueue = false;
 		} finally {
 			isProcessingQueue = false;
 		}
 	}
 
 	// Save search data whenever we have results
-	$: if (searchResults.length > 0) {
-		const searchData = {
-			id: data.searchId,
-			prompt: data.prompt,
-			queries,
-			searchResults,
-			thinking: thinkingAboutQueries,
-			timestamp: Date.now()
-		};
-		localStorage.setItem(`vol-search-${data.searchId}`, JSON.stringify(searchData));
-	}
+	// $: if (relevantEpisodes.length > 0) {
+	// 	const searchData = {
+	// 		id: data.searchId,
+	// 		prompt: data.prompt,
+	// 		queries,
+	// 		searchResults: relevantEpisodes,
+	// 		thinking: thinkingAboutQueries,
+	// 		timestamp: Date.now()
+	// 	};
+	// 	localStorage.setItem(`vol-search-${data.searchId}`, JSON.stringify(searchData));
+	// }
 
 	async function fetchSearchResults(queryList: string[]) {
 		try {
-			const searchResponse = await fetch(
-				`/api/podcast-search?queries=${encodeURIComponent(queryList.join(','))}`
-			);
-			const searchResponseJson = await searchResponse.json();
-			console.debug('Search response:', searchResponseJson);
-			searchResults = searchResponseJson.searchResults;
-
-			// Process ratings once after search results load
-			if (searchResults.length > 0) {
-				await processRatingQueue();
-			}
+			const catalogueResponse = await fetch('/api/catalogue', {
+				method: 'POST',
+				body: JSON.stringify({
+					prompt: data.prompt,
+					queries: queryList,
+					// TODO: improve this prompt
+					criteria: `Episodes which align with the aspiration: '${data.prompt}''`
+				})
+			});
+			const catalogueResponseJSON = await catalogueResponse.json();
+			console.debug('catalogueResponseJSON', catalogueResponseJSON);
 		} catch (error) {
 			console.error('Search request failed:', error);
-			searchResults = [];
+			errorText = 'The server broke.';
+			relevantEpisodes = [];
 		} finally {
 			isThinking = false;
 		}
@@ -122,9 +142,9 @@
 
 	// Start rating all episodes when results load
 	// TODO convert to Svelte 5
-	$: if (searchResults.length > 0 && !isProcessingQueue) {
+	$: if (relevantEpisodes.length > 0 && !isProcessingQueue) {
 		void (async () => {
-			await processRatingQueue();
+			await fetchFeeds();
 		})();
 	}
 
@@ -162,7 +182,7 @@
 			if (ratings?.ratings) {
 				ratings.ratings.forEach((rating: any) => {
 					console.debug(`Updating ratings for ${rating.id}`);
-					const episode = searchResults.find((ep) => ep.id === rating.id);
+					const episode = relevantEpisodes.find((ep) => ep.id === rating.id);
 					if (episode && !episode.ratings) {
 						// Only update if no ratings exist
 						episode.ratings = rating.ratings;
@@ -170,7 +190,7 @@
 				});
 
 				// Trigger reactivity
-				searchResults = [...searchResults];
+				relevantEpisodes = [...relevantEpisodes];
 			}
 		} catch (error) {
 			console.error('Rating request failed:', error);
@@ -188,10 +208,10 @@
 
 	let searchId = crypto.randomUUID();
 
-	$: if (searchResults.length > 0) {
+	$: if (relevantEpisodes.length > 0) {
 		const searchData = {
 			id: searchId,
-			results: searchResults,
+			results: relevantEpisodes,
 			thinking: thinkingAboutQueries,
 			prompt: data.prompt,
 			timestamp: Date.now()
@@ -199,7 +219,7 @@
 		localStorage.setItem(`vol-search-${searchId}`, JSON.stringify(searchData));
 	}
 
-	$: sortedEpisodes = searchResults.sort(
+	$: sortedEpisodes = relevantEpisodes.sort(
 		(a, b) => getAverageRating(b.ratings) - getAverageRating(a.ratings)
 	);
 </script>
@@ -236,6 +256,7 @@
 				>{:else}2. ranked episodes{/if}
 		</li>
 	</ol>
+	<p class="text-red-600">{errorText}</p>
 	<div class="my-4 w-full text-center leading-8">
 		{#each queries as query}
 			<Badge variant="secondary">{query}</Badge>

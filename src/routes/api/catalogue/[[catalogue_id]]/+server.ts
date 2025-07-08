@@ -4,6 +4,27 @@ import type { paths } from "$lib/zacusca_api_types";
 import { ZACUSCA_API_KEY } from "$env/static/private";
 import { PUBLIC_ZACUSCA_API_BASE } from "$env/static/public"
 
+const client = createClient<paths>({
+    baseUrl: PUBLIC_ZACUSCA_API_BASE,
+    headers: {
+        'Authorization': `Bearer ${ZACUSCA_API_KEY}`
+    }
+})
+
+export async function GET({ params }) {
+    if (!params.catalogue_id) {
+        throw error(404, "No catalogue ID provided.")
+    }
+    const { data: megaCatalogueData, error: megaCatalogueError } = await client.GET("/catalogue-mega/{catalogue_id}",
+        {
+            params: {
+                path: { catalogue_id: params.catalogue_id }
+            }
+        }
+    )
+
+    return json(megaCatalogueData)
+}
 
 export async function POST({ request }) {
 
@@ -13,23 +34,13 @@ export async function POST({ request }) {
         prompt: string, queries: string[],
         criteria: string
     } = requestJSON
-    const client = createClient<paths>({
-        baseUrl: PUBLIC_ZACUSCA_API_BASE,
-        headers: {
-            'Authorization': `Bearer ${ZACUSCA_API_KEY}`
-        }
-    })
     const input_feeds = queries.map(query => ({
-
-
         "href": `${PUBLIC_ZACUSCA_API_BASE}/search/podchaser?query=${encodeURI(query)}&format=rss`,
         "link": `${PUBLIC_ZACUSCA_API_BASE}/search/podchaser?query=${encodeURI(query)}&format=rss`,
         "feed_type": "input",
         "title": query,
         "description": `vol podcast search for '${query}', prompted by '${prompt}'`,
         "polling_available": "manual"
-
-
     }))
     const { data: catalogueData, error: catalogueError } = await client.POST("/catalogue-mega-async",
         {
