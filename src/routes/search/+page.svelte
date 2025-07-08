@@ -254,10 +254,10 @@
 		{/each}
 	</div>
 	<div
-		class="mx-auto my-4 flex max-w-lg flex-col gap-y-6 rounded-md border border-border px-3 py-6"
+		class="mx-auto my-12 flex max-w-lg flex-col gap-y-6 rounded-md border border-border px-3 py-6"
 		class:opacity-30={!relevantEpisodes || relevantEpisodes.length === 0}
 	>
-		<h2 class="px-1 text-lg font-medium tracking-tight">Subscribe to these results as a podcast</h2>
+		<h2 class="px-1 text-lg font-medium tracking-tight">subscribe to these results as a podcast</h2>
 		<div class="flex h-12 flex-row justify-between gap-x-6 align-middle">
 			<!-- copy on click, cursor should be pointer -->
 			<div class="flex flex-row gap-x-1">
@@ -266,7 +266,7 @@
 					on:click={() =>
 						navigator.clipboard.writeText(`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`)}
 					class="h-full"
-					variant="outline">Copy</Button
+					variant="outline">copy</Button
 				>
 			</div>
 			<img
@@ -275,11 +275,11 @@
 				alt="Apple Podcasts badge"
 			/>
 		</div>
-		<p>Copy the RSS feed URL. Paste it into your podcast player.</p>
+		<p>copy the RSS feed URL. paste it into your podcast player.</p>
 	</div>
 	{#if relevantEpisodes === null || relevantEpisodes.length === 0}
 		<div class="flex w-full flex-col items-center justify-center gap-4 p-4">
-			<p class="text-xl font-medium">no episodes chosen yet</p>
+			<p class="text-xl font-medium">no episodes yet</p>
 			<div class="flex w-full flex-col gap-6 opacity-50">
 				<EpisodePreview
 					episode={{
