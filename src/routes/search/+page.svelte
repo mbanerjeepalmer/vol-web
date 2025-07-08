@@ -14,6 +14,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { fade } from 'svelte/transition';
 
 	export let data: PageData;
 
@@ -22,9 +23,10 @@
 	let relevantEpisodes: JSONFeedItem[] | null = null;
 	let everythingElseFeedID = '';
 	let everythingElseEpisodes: JSONFeedItem[] | null = null;
-	let isThinking = true;
+	let isThinking: boolean | null = null;
 	let thinkingAboutQueries = '';
 	let queries: string[] = [];
+	let intervalId: NodeJS.Timeout;
 
 	let isProcessingQueue = false;
 
@@ -32,11 +34,6 @@
 		baseUrl: PUBLIC_ZACUSCA_API_BASE
 	});
 
-	// async function fetchCatalogueFeeds(catalogue_id: string){
-	// 	// TODO not sure if this is the correct level of granularity
-	// 	// Probably need to adjust the mega endpoint or something
-	// 	const {data: catalogueData, error: catalogueEror} = client.
-	// }
 	async function fetchMegaCatalogue(catalogue_id: string) {
 		const megaCatalogueResponse = await fetch(`/api/catalogue/${catalogue_id}`);
 		const megaCatalogueJSON: components['schemas']['MegaCatalogueResponse'] =
@@ -52,11 +49,10 @@
 	}
 
 	onMount(async () => {
-		// Check for existing search data first
 		if (data.catalogue_id) {
 			console.debug(`Loading an existing catalogue`, data.catalogue_id);
 			await fetchMegaCatalogue(data.catalogue_id);
-			await fetchRelevant();
+			await pollRelevantEpisodesFeed();
 			return;
 		} else if (data.prompt) {
 			console.debug(`No existing catalogue_id so creating one`);
@@ -83,11 +79,10 @@
 	});
 
 	async function fetchRelevant() {
-		// if (isProcessingQueue) {
-		// 	console.debug('Already processing queue');
-		// 	return;
-		// }
-
+		if (!relevantFeedID) {
+			console.info(`No relevantFeedID`);
+			return;
+		}
 		try {
 			isProcessingQueue = true;
 			const { data: relevant, error: relevantEpisodesError } = await client.GET(
@@ -100,23 +95,27 @@
 					}
 				}
 			);
-			relevantEpisodes = relevant.items;
 
 			if (relevantEpisodesError) {
 				console.error(relevantEpisodesError);
-				errorText = 'Something broke when fetching feeds';
+				if (relevantEpisodesError.detail) {
+					errorText = `oh no! tried to fetch feeds but, error: ${relevantEpisodesError.detail[0].msg}`;
+				} else {
+					errorText = `uh oh. unexpected, unknown error trying to fetch feeds`;
+				}
+				return;
 			}
-			isProcessingQueue = false;
+			if (relevant.items) {
+				relevantEpisodes = relevant.items;
+			}
+		} catch (err) {
+			console.error(`Error when fetching the relevant feed`, err);
 		} finally {
 			isProcessingQueue = false;
 		}
 	}
-	async function fetchEverythingElse() {
-		// if (isProcessingQueue) {
-		// 	console.debug('Already processing queue');
-		// 	return;
-		// }
 
+	async function fetchEverythingElse() {
 		try {
 			const { data: everythingElse, error: everythingElseError } = await client.GET(
 				'/feed/{feed_id}/json',
@@ -129,11 +128,17 @@
 				}
 			);
 
-			everythingElseEpisodes = everythingElse.items;
-
 			if (everythingElseError) {
 				console.error(everythingElseError);
-				errorText = 'Something broke when fetching feeds';
+				if (everythingElseError.detail) {
+					errorText = `oh no! fetching the 'everything else' feed broke`;
+				} else {
+					errorText = `uh oh. something broke in the 'everything else' feed`;
+				}
+				return;
+			}
+			if (everythingElse.hasOwnProperty('length')) {
+				everythingElseEpisodes = everythingElse.items;
 			}
 			isProcessingQueue = false;
 		} finally {
@@ -141,21 +146,44 @@
 		}
 	}
 
-	// Save search data whenever we have results
-	// $: if (relevantEpisodes.length > 0) {
-	// 	const searchData = {
-	// 		id: data.searchId,
-	// 		prompt: data.prompt,
-	// 		queries,
-	// 		searchResults: relevantEpisodes,
-	// 		thinking: thinkingAboutQueries,
-	// 		timestamp: Date.now()
-	// 	};
-	// 	localStorage.setItem(`vol-search-${data.searchId}`, JSON.stringify(searchData));
-	// }
+	let consecutiveFeedChecks = 0;
+	let previousFeedItemCount = 0;
+	let isPolling = false;
+
+	async function pollRelevantEpisodesFeed() {
+		if (isPolling) return;
+		isPolling = true;
+
+		intervalId = setInterval(async () => {
+			try {
+				await fetchRelevant();
+				if (relevantEpisodes === null) {
+					console.debug(`relevantEpisodes was`, relevantEpisodes);
+					return;
+				}
+				console.log(`Feed item count: ${relevantEpisodes.length}`);
+
+				if (relevantEpisodes.length === previousFeedItemCount) {
+					consecutiveFeedChecks++;
+					console.log(`Consecutive feed checks: ${consecutiveFeedChecks}`);
+
+					if (consecutiveFeedChecks >= 5) {
+						clearInterval(intervalId);
+						isPolling = false;
+					}
+				} else {
+					consecutiveFeedChecks = 0;
+				}
+				previousFeedItemCount = relevantEpisodes.length;
+			} catch (error) {
+				console.error(error);
+			}
+		}, 2000);
+	}
 
 	async function createCatalogueFromQueries(queryList: string[]) {
 		try {
+			isThinking = false;
 			const catalogueResponse = await fetch('/api/catalogue', {
 				method: 'POST',
 				body: JSON.stringify({
@@ -168,8 +196,9 @@
 			const catalogueResponseJSON = await catalogueResponse.json();
 			console.debug('catalogueResponseJSON', catalogueResponseJSON);
 			const newURL = new URL($page.url);
-			newURL.searchParams.set('catalogue_id', catalogueResponseJSON.catalogue.catalogue_id);
+			newURL.searchParams.set('catalogue_id', catalogueResponseJSON.catalogue.id);
 			goto(newURL);
+			console.debug(`wahey we're still here`);
 		} catch (error) {
 			console.error('Search request failed:', error);
 			errorText = 'The server broke.';
@@ -191,13 +220,14 @@
 	</h1>
 	<ol class="flex flex-row items-center justify-center gap-4 text-sm">
 		<li>
-			{#if isThinking}<span
+			{#if isThinking === null}<span class="">1. thinking</span>
+			{:else if isThinking}<span
 					class="animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text font-bold text-transparent"
 					>1. thinking</span
 				>{:else}
 				<Sheet.Root>
 					<Sheet.Trigger>
-						<Button variant="link" class="underline">1. thought of search queries</Button>
+						<Button variant="link" class="underline">1. thought (click to see)</Button>
 					</Sheet.Trigger>
 					<Sheet.Content side="right" class="overflow-y-auto">
 						<Sheet.Header>
@@ -214,7 +244,7 @@
 			{#if isProcessingQueue}<span
 					class="animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text font-bold text-transparent"
 					>2. ranking episodes</span
-				>{:else}2. ranked episodes{/if}
+				>{:else}<span>2. ranked episodes</span>{/if}
 		</li>
 	</ol>
 	<p class="text-red-600">{errorText}</p>
@@ -247,27 +277,10 @@
 		</div>
 		<p>Copy the RSS feed URL. Paste it into your podcast player.</p>
 	</div>
-	{#if relevantEpisodes === null}
-		<div class="opacity-50">
-			<EpisodePreview
-				episode={{
-					title: '',
-					attachments: [],
-					content_html: '',
-					image: '',
-					authors: [],
-					date_published: '',
-					id: '',
-					url: '',
-					summary: ''
-				}}
-				sourceQuery=""
-			/>
-		</div>
-	{:else if relevantEpisodes.length === 0}
-		<div class="flex w-full flex-col items-center justify-center gap-8 p-4">
+	{#if relevantEpisodes === null || relevantEpisodes.length === 0}
+		<div class="flex w-full flex-col items-center justify-center gap-4 p-4">
 			<p class="text-xl font-medium">no episodes chosen yet</p>
-			<div class="w-full opacity-50">
+			<div class="flex w-full flex-col gap-6 opacity-50">
 				<EpisodePreview
 					episode={{
 						title: '',
@@ -322,7 +335,7 @@
 			<div class="my-8 grid gap-6">
 				<EpisodePreview
 					episode={{
-						title: 'blah',
+						title: '',
 						attachments: [],
 						content_html: '',
 						image: '',
