@@ -27,6 +27,8 @@
 	let thinkingAboutQueries = '';
 	let queries: string[] = [];
 	let intervalId: NodeJS.Timeout;
+	// TODO toast library
+	let hasCopied = false;
 
 	let isProcessingQueue = false;
 
@@ -263,10 +265,12 @@
 			<div class="flex flex-row gap-x-1">
 				<Input class="h-full" value={`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`} />
 				<Button
-					on:click={() =>
-						navigator.clipboard.writeText(`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`)}
+					on:click={() => {
+						navigator.clipboard.writeText(`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`);
+						hasCopied = true;
+					}}
 					class="h-full"
-					variant="outline">copy</Button
+					variant="outline">{hasCopied ? 'copied' : 'copy'}</Button
 				>
 			</div>
 			<img
@@ -332,22 +336,7 @@
 				{/each}
 			</div>
 		{:else}
-			<div class="my-8 grid gap-6">
-				<EpisodePreview
-					episode={{
-						title: '',
-						attachments: [],
-						content_html: '',
-						image: '',
-						authors: [],
-						date_published: '',
-						id: '',
-						url: '',
-						summary: ''
-					}}
-					sourceQuery="TODO source"
-				/>
-			</div>
+			<div class="w-full text-center"><p>nothing else.</p></div>
 		{/if}
 	</div>
 </div>
