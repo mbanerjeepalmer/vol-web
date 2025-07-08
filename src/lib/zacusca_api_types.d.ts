@@ -917,8 +917,8 @@ export interface components {
          * @enum {string}
          */
         FeedFormat: "data" | "rss" | "atom" | "json_feed";
-        /** FeedResponse */
-        FeedResponse: {
+        /** FeedItemsResponse */
+        FeedItemsResponse: {
             /**
              * Id
              * Format: uuid
@@ -941,6 +941,29 @@ export interface components {
             publisher_updated_at?: string | null;
             /** Items */
             items?: components["schemas"]["Item"][] | null;
+        };
+        /** FeedResponse */
+        FeedResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Href */
+            href: string;
+            /** Link */
+            link?: string | null;
+            /** Title */
+            title: string;
+            /** Description */
+            description?: string | null;
+            /** Logo */
+            logo?: string | null;
+            feed_type: components["schemas"]["FeedType"];
+            /** Last Polled */
+            last_polled?: string | null;
+            /** Publisher Updated At */
+            publisher_updated_at?: string | null;
         };
         /**
          * FeedType
@@ -982,30 +1005,48 @@ export interface components {
             /** Item Ids */
             item_ids: string[];
         };
+        /** ItemWithOutputFeeds */
+        ItemWithOutputFeeds: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Title */
+            title: string;
+            /** Link */
+            link: string;
+            /** Type */
+            type: string;
+            /** Published At */
+            published_at: string | null;
+            /** Publisher Summary */
+            publisher_summary: string | null;
+            /** Preview Image */
+            preview_image: string | null;
+            /** Output Feed Ids */
+            output_feed_ids: string[] | null;
+        };
         /** ItemsResponse */
         ItemsResponse: {
             /** Items */
-            items: components["schemas"]["Item"][];
+            items: components["schemas"]["ItemWithOutputFeeds"][];
         };
         /**
          * MegaCatalogueResponse
          * @description Catalogue, its sub entities
          */
         MegaCatalogueResponse: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /**
-             * User Id
-             * Format: uuid
-             */
-            user_id: string;
-            /** Feeds */
-            feeds: components["schemas"]["FeedResponse"][];
+            catalogue: components["schemas"]["Catalogue"];
+            /** Input Feeds */
+            input_feeds: components["schemas"]["FeedResponse"][];
+            /** Output Feeds */
+            output_feeds: components["schemas"]["FeedResponse"][];
         };
         /**
          * OPMLContent
@@ -1293,7 +1334,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FeedResponse"][];
+                    "application/json": components["schemas"]["FeedItemsResponse"][];
                 };
             };
             /** @description Validation Error */
@@ -1517,7 +1558,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FeedResponse"];
+                    "application/json": components["schemas"]["FeedItemsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1720,7 +1761,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FeedResponse"];
+                    "application/json": components["schemas"]["FeedItemsResponse"];
                 };
             };
             /** @description Validation Error */
