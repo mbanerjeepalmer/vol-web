@@ -13,7 +13,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { fade } from 'svelte/transition';
 
 	export let data: PageData;
 
@@ -65,15 +64,15 @@
 				thinkingAboutQueries += event.data.replace(/\\n/g, '\n');
 			};
 
-			eventSource.onerror = () => {
+			eventSource.onerror = async () => {
 				eventSource.close();
 				queries = parseQueries(thinkingAboutQueries);
 				if (queries.length > 0) {
-					createCatalogueFromQueries(queries);
+					await createCatalogueFromQueries(queries);
 				} else {
 					// What is this?
 					queries = data.queries;
-					createCatalogueFromQueries(queries);
+					await createCatalogueFromQueries(queries);
 				}
 			};
 		}

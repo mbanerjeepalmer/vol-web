@@ -62,7 +62,7 @@
 					inputValue = prompt + ' ';
 					inputElement.focus();
 				}}
-				class="h-full w-full text-wrap rounded-md border border-input p-3 hover:bg-accent hover:text-accent-foreground"
+				class="h-full w-full text-wrap rounded-md border border-input p-3 text-xs hover:bg-accent hover:text-accent-foreground"
 				>{prompt}...</button
 			>
 		{/each}
