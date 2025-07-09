@@ -49,6 +49,7 @@ export async function POST({ request }) {
     }))
     const { data: catalogueData, error: catalogueError } = await client.POST("/catalogue-mega-async",
         {
+            params: { query: { after: "2000-01-01T00:00:00+00:00" } },
             body: {
                 catalogue: {
                     name: prompt

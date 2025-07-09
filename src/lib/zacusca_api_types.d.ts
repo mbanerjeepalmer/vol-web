@@ -1418,6 +1418,7 @@ export interface operations {
         parameters: {
             query?: {
                 everything_else?: boolean;
+                after?: string | null;
             };
             header?: never;
             path?: never;
@@ -2029,7 +2030,9 @@ export interface operations {
     };
     trigger_classify_catalogue_catalogue__catalogue_id__classified_trigger_post: {
         parameters: {
-            query?: never;
+            query?: {
+                after?: string | null;
+            };
             header?: never;
             path: {
                 catalogue_id: string;
