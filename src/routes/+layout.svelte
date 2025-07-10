@@ -33,6 +33,7 @@
 	</ul>
 </header>
 <div>
+	<p class="mb-2 text-center text-lg opacity-100">vol is better than you at finding podcasts</p>
 	<p>
 		<a
 			href="/how-to"
@@ -46,7 +47,6 @@
 
 <footer class="container mx-auto mt-16 max-w-lg p-4">
 	<ul class="flex flex-col justify-center gap-4">
-		<li class="text-center text-sm opacity-80">vol searches and ranks podcasts for you</li>
 		<li class="mx-auto flex w-fit flex-row items-center gap-2 text-sm">
 			{#if chatting}
 				<Chat />
