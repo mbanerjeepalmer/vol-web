@@ -7,36 +7,33 @@
 	let inputElement: HTMLInputElement;
 
 	const predefinedPrompts = [
-		'i want to be like',
-		"i can't stop thinking about",
-		"i'm working on",
-		'i yap too much about'
+		'i want to be like olivia rodrigo',
+		"i can't stop thinking about stablecoins",
+		"i'm working on linear regressions",
+		'i yap too much about artisanal cutlery'
 	];
-	const placeholders = [
-		'take me on a journey...',
-		"i'm obsessed by potatoes, both in cuisine and culture",
-		"i can't stop thinking about the roman empire",
-		"i'm working on media recommendations",
-		'i want to be like maya angelou',
-		"i've just started learning about safavid persia",
-		"i can't stop listening to anatolian rock",
-		'i want to be like steve jobs',
-		"i can't stop thinking about potatoes",
-		"i'm working on a novel about grasshoppers",
-		'potato'
-	];
-	let placeholder = placeholders[0];
-	let placeholderIndex = 0;
+	// const placeholders = [
+	// 	"i can't stop thinking about the roman empire",
+	// 	"i'm working on media recommendations",
+	// 	"i'm obsessed by potatoes, both in cuisine and culture",
+	// 	'i want to be like maya angelou',
+	// 	"i've just started learning about safavid persia",
+	// 	"i can't stop listening to anatolian rock",
+	// 	'i want to be like steve jobs',
+	// 	"i'm working on a novel about grasshoppers"
+	// ];
+	// let placeholder = placeholders[0];
+	// let placeholderIndex = 0;
 
-	// Set up placeholder rotation
-	onMount(() => {
-		const interval = setInterval(() => {
-			placeholderIndex = (placeholderIndex + 1) % placeholders.length;
-			placeholder = placeholders[placeholderIndex];
-		}, 2000);
+	// // Set up placeholder rotation
+	// onMount(() => {
+	// 	const interval = setInterval(() => {
+	// 		placeholderIndex = (placeholderIndex + 1) % placeholders.length;
+	// 		placeholder = placeholders[placeholderIndex];
+	// 	}, 2000);
 
-		return () => clearInterval(interval);
-	});
+	// 	return () => clearInterval(interval);
+	// });
 </script>
 
 <div class="mx-auto my-8">
@@ -49,12 +46,12 @@
 				bind:thisElement={inputElement}
 				bind:value={inputValue}
 				class="h-16 w-full"
-				{placeholder}
+				placeholder="what's on your mind?"
 			/>
 			<Button type="submit" class="text-md w-full sm:h-16 sm:w-auto">Submit</Button>
 		</div>
 	</form>
-	<div class="mx-auto my-8 grid w-full max-w-lg grid-cols-1 gap-4 px-4 sm:grid-cols-2">
+	<div class="mx-auto my-8 grid w-full max-w-xl grid-cols-1 gap-4 px-4 sm:grid-cols-2">
 		{#each predefinedPrompts as prompt}
 			<button
 				type="button"
@@ -62,7 +59,7 @@
 					inputValue = prompt + ' ';
 					inputElement.focus();
 				}}
-				class="h-full w-full text-wrap rounded-md border border-input p-3 text-xs hover:bg-accent hover:text-accent-foreground"
+				class="h-full w-full text-wrap rounded-md border border-input bg-slate-50 p-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
 				>{prompt}...</button
 			>
 		{/each}
