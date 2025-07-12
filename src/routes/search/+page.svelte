@@ -293,9 +293,17 @@
 			<Badge variant="secondary">{query}</Badge>
 		{/each}
 	</div>
-	{#if relevantEpisodes === null || relevantEpisodes.length === 0}
+	{#if relevantEpisodes === null}
+		<div class="mx-auto flex h-64 flex-col justify-center text-center align-middle text-2xl">
+			<p
+				class="animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text font-bold text-transparent"
+			>
+				finding episodes for you
+			</p>
+		</div>
+	{:else if relevantEpisodes.length === 0}
 		<div class="flex w-full flex-col items-center justify-center gap-4 p-4">
-			<p class="text-xl font-medium">no episodes yet</p>
+			<p class="text-xl font-medium">no episodes</p>
 			<div class="flex w-full flex-col gap-6 opacity-50">
 				<EpisodePreview
 					episode={{
@@ -336,7 +344,7 @@
 	{/if}
 	<div
 		class="mx-auto my-12 flex max-w-lg flex-col gap-y-6 rounded-md border border-border px-3 py-6"
-		class:opacity-30={!relevantEpisodes || relevantEpisodes.length === 0}
+		class:opacity-0={!relevantEpisodes || relevantEpisodes.length === 0}
 	>
 		<h2 class="px-1 text-lg font-medium tracking-tight">subscribe to these results as a podcast</h2>
 		<div class="flex h-12 flex-row justify-between gap-x-6 align-middle">
@@ -361,7 +369,7 @@
 		<p>copy the RSS feed URL. paste it into your podcast player.</p>
 	</div>
 	<div class="mt-12 opacity-80 hover:opacity-100">
-		{#if everythingElseEpisodes === null}
+		{#if relevantEpisodes === null}{:else if everythingElseEpisodes === null}
 			<Button
 				class="mx-auto w-full underline underline-offset-4"
 				variant="link"
