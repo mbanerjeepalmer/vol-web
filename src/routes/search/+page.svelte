@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import type { PageData } from './$types';
@@ -24,9 +24,12 @@
 	let isThinking: boolean | null = null;
 	let thinkingAboutQueries = '';
 	let queries: string[] = [];
-	let intervalId: NodeJS.Timeout;
+	let intervalId: NodeJS.Timeout | null;
 	// TODO toast library
 	let hasCopied = false;
+	let nextPollTime: number;
+	let timeUntilNextPoll: number;
+	let countdownInterval: NodeJS.Timeout;
 
 	let isProcessingQueue = false;
 
@@ -35,14 +38,17 @@
 	});
 
 	async function fetchMegaCatalogue(catalogue_id: string) {
+		console.debug(`fetching Mega Catalogue ${catalogue_id}`);
 		const megaCatalogueResponse = await fetch(`/api/catalogue/${catalogue_id}`);
 		const megaCatalogueJSON: components['schemas']['MegaCatalogueResponse'] =
 			await megaCatalogueResponse.json();
 		data.prompt = megaCatalogueJSON.catalogue.name;
 		megaCatalogueJSON.output_feeds.forEach((f) => {
 			if (f.title === 'Everything else') {
+				console.debug(`Found 'Everything else' feed:  ${f.id}`);
 				everythingElseFeedID = f.id;
 			} else {
+				console.debug(`Found relevant feed: ${f.id}`);
 				relevantFeedID = f.id;
 			}
 		});
@@ -75,6 +81,19 @@
 					await createCatalogueFromQueries(queries);
 				}
 			};
+		} else {
+			console.error(`Strange state with neither catalogue_id nor prompt`);
+		}
+	});
+
+	onDestroy(() => {
+		if (intervalId) {
+			clearInterval(intervalId);
+			intervalId = null;
+		}
+		if (countdownInterval) {
+			clearInterval(countdownInterval);
+			countdownInterval = null;
 		}
 	});
 
@@ -85,6 +104,7 @@
 		}
 		try {
 			isProcessingQueue = true;
+			console.debug(`Fetching relevant feed: ${relevantFeedID}`);
 			const { data: relevant, error: relevantEpisodesError } = await client.GET(
 				'/feed/{feed_id}/json',
 				{
@@ -106,6 +126,7 @@
 				return;
 			}
 			if (relevant.items) {
+				console.debug(`Relevant feed has ${relevant.items.length} items`);
 				relevantEpisodes = relevant.items;
 			}
 		} catch (err) {
@@ -151,9 +172,12 @@
 	let isPolling = false;
 
 	async function pollRelevantEpisodesFeed() {
-		if (isPolling) return;
+		if (isPolling) {
+			console.debug(`Already polling`);
+			return;
+		}
 		isPolling = true;
-
+		console.debug(`Starting polling`);
 		intervalId = setInterval(async () => {
 			try {
 				await fetchRelevant();
@@ -167,8 +191,9 @@
 					consecutiveFeedChecks++;
 					console.log(`Consecutive feed checks: ${consecutiveFeedChecks}`);
 
-					if (consecutiveFeedChecks >= 5) {
+					if (consecutiveFeedChecks >= 5 && intervalId) {
 						clearInterval(intervalId);
+						intervalId = null;
 						isPolling = false;
 					}
 				} else {
@@ -177,8 +202,15 @@
 				previousFeedItemCount = relevantEpisodes.length;
 			} catch (error) {
 				console.error(error);
+			} finally {
+				nextPollTime = Date.now() + 20000;
 			}
-		}, 2000);
+		}, 20000);
+		countdownInterval = setInterval(() => {
+			const now = Date.now();
+			const remaining = nextPollTime - now;
+			timeUntilNextPoll = Math.max(0, Math.floor(remaining / 1000));
+		}, 1000);
 	}
 
 	async function createCatalogueFromQueries(queryList: string[]) {
@@ -220,6 +252,7 @@
 	</h1>
 	<ol class="flex flex-row items-center justify-center gap-4 text-sm">
 		<li>
+			<!-- the if is for a whole element because previously both the styling and text were different depending on state -->
 			{#if isThinking === null}<span class="">1. thinking</span>
 			{:else if isThinking}<span
 					class="animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text font-bold text-transparent"
@@ -243,10 +276,17 @@
 		<li>
 			{#if isProcessingQueue}<span
 					class="animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text font-bold text-transparent"
-					>2. ranking episodes</span
-				>{:else}<span>2. ranked episodes</span>{/if}
+					>2. searching</span
+				>{:else}<span>2. searching</span>{/if}
 		</li>
 	</ol>
+
+	<p
+		class={`mx-auto text-center text-xs opacity-70 transition-all ease-in-out ${!intervalId || !timeUntilNextPoll ? 'invisible' : ''}`}
+	>
+		checking again in {timeUntilNextPoll}
+	</p>
+
 	<p class="text-red-600">{errorText}</p>
 	<div class="my-4 w-full text-center leading-8">
 		{#each queries as query}
@@ -325,7 +365,7 @@
 			<Button
 				class="mx-auto w-full underline underline-offset-4"
 				variant="link"
-				on:click={async () => fetchEverythingElse()}>everything else... ⏷</Button
+				on:click={async () => await fetchEverythingElse()}>everything else... ⏷</Button
 			>
 		{:else if everythingElseEpisodes.length > 0}
 			<div class="my-8 grid gap-6">
