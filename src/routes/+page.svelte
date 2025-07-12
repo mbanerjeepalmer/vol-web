@@ -37,6 +37,14 @@
 </script>
 
 <div class="mx-auto my-8">
+	<div class="mx-auto my-16 max-w-lg">
+		<h1 class="text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
+			<span
+				class="mr-2 inline-block bg-gradient-to-r from-fuchsia-500 to-green-500 bg-clip-text text-transparent"
+				>vol</span
+			> is better than you at finding podcasts
+		</h1>
+	</div>
 	<form method="POST" class="mx-auto w-full max-w-lg px-4">
 		<div class="flex flex-col gap-2 sm:flex-row">
 			<Input
