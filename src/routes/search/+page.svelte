@@ -293,32 +293,6 @@
 			<Badge variant="secondary">{query}</Badge>
 		{/each}
 	</div>
-	<div
-		class="mx-auto my-12 flex max-w-lg flex-col gap-y-6 rounded-md border border-border px-3 py-6"
-		class:opacity-30={!relevantEpisodes || relevantEpisodes.length === 0}
-	>
-		<h2 class="px-1 text-lg font-medium tracking-tight">subscribe to these results as a podcast</h2>
-		<div class="flex h-12 flex-row justify-between gap-x-6 align-middle">
-			<!-- copy on click, cursor should be pointer -->
-			<div class="flex flex-row gap-x-1">
-				<Input class="h-full" value={`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`} />
-				<Button
-					on:click={() => {
-						navigator.clipboard.writeText(`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`);
-						hasCopied = true;
-					}}
-					class="h-full"
-					variant="outline">{hasCopied ? 'copied' : 'copy'}</Button
-				>
-			</div>
-			<img
-				class="p-1"
-				src="/assets/US-UK_Apple_Podcasts_Listen_Badge_RGB_062023.svg"
-				alt="Apple Podcasts badge"
-			/>
-		</div>
-		<p>copy the RSS feed URL. paste it into your podcast player.</p>
-	</div>
 	{#if relevantEpisodes === null || relevantEpisodes.length === 0}
 		<div class="flex w-full flex-col items-center justify-center gap-4 p-4">
 			<p class="text-xl font-medium">no episodes yet</p>
@@ -360,6 +334,32 @@
 			{/each}
 		</div>
 	{/if}
+	<div
+		class="mx-auto my-12 flex max-w-lg flex-col gap-y-6 rounded-md border border-border px-3 py-6"
+		class:opacity-30={!relevantEpisodes || relevantEpisodes.length === 0}
+	>
+		<h2 class="px-1 text-lg font-medium tracking-tight">subscribe to these results as a podcast</h2>
+		<div class="flex h-12 flex-row justify-between gap-x-6 align-middle">
+			<!-- copy on click, cursor should be pointer -->
+			<div class="flex flex-row gap-x-1">
+				<Input class="h-full" value={`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`} />
+				<Button
+					on:click={() => {
+						navigator.clipboard.writeText(`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`);
+						hasCopied = true;
+					}}
+					class="h-full"
+					variant="outline">{hasCopied ? 'copied' : 'copy'}</Button
+				>
+			</div>
+			<img
+				class="p-1"
+				src="/assets/US-UK_Apple_Podcasts_Listen_Badge_RGB_062023.svg"
+				alt="Apple Podcasts badge"
+			/>
+		</div>
+		<p>copy the RSS feed URL. paste it into your podcast player.</p>
+	</div>
 	<div class="mt-12 opacity-80 hover:opacity-100">
 		{#if everythingElseEpisodes === null}
 			<Button
