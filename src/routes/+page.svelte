@@ -56,7 +56,7 @@
 				class="h-16 w-full"
 				placeholder="what's on your mind?"
 			/>
-			<Button type="submit" class="text-md w-full sm:h-16 sm:w-auto">Submit</Button>
+			<Button type="submit" class="text-md w-full sm:h-16 sm:w-auto">go</Button>
 		</div>
 	</form>
 	<div class="mx-auto my-8 grid w-full max-w-xl grid-cols-1 gap-4 px-4 sm:grid-cols-2">
