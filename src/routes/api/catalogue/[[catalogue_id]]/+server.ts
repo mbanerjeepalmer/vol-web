@@ -40,8 +40,8 @@ export async function POST({ request }) {
         criteria: string
     } = requestJSON
     const input_feeds = queries.map(query => ({
-        "href": `${PUBLIC_ZACUSCA_API_BASE}/search/podchaser?query=${encodeURI(query)}&format=rss`,
-        "link": `${PUBLIC_ZACUSCA_API_BASE}/search/podchaser?query=${encodeURI(query)}&format=rss`,
+        "href": `${PUBLIC_ZACUSCA_API_BASE}/search/itunes?query=${encodeURI(query)}&format=rss`,
+        "link": `${PUBLIC_ZACUSCA_API_BASE}/search/itunes?query=${encodeURI(query)}&format=rss`,
         "feed_type": "input",
         "title": query,
         "description": `vol podcast search for '${query}', prompted by '${prompt}'`,

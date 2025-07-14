@@ -10,7 +10,7 @@ export async function GET({ url }) {
     if (queries.length === 0) {
         return json({ searchResults: [] });
     }
-    const requestUrl = new URL(ZACUSCA_API_BASE + '/search/podchaser');
+    const requestUrl = new URL(ZACUSCA_API_BASE + '/search/itunes');
     requestUrl.searchParams.set('format', 'json_feed');
 
     let searchResults = [];
