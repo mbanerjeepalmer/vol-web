@@ -233,8 +233,8 @@
 				body: JSON.stringify({
 					prompt: data.prompt,
 					queries: queryList,
-					// TODO: improve this prompt
-					criteria: `Episodes which align with the aspiration: '${data.prompt}''`
+					criteria: `The user has told us '${data.prompt}'. The topics we believe that could help are: ${queryList.map((query) => `'${query}'`).join(', ')}.
+					Select episodes on these topics that could contribute towards the goal. Exclude those that have no relevance.`
 				})
 			});
 			const catalogueResponseJSON = await catalogueResponse.json();
