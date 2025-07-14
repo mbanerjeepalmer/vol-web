@@ -52,6 +52,11 @@
 				relevantFeedID = f.id;
 			}
 		});
+
+		if (megaCatalogueJSON.input_feeds.length === 0) {
+			console.warn(`No input feeds for catalogue ${catalogue_id}`);
+			errorText = 'hmmm...the searches might have broken...';
+		}
 	}
 
 	onMount(async () => {
@@ -197,6 +202,11 @@
 						clearInterval(intervalId);
 						intervalId = null;
 						isPolling = false;
+
+						if (relevantEpisodes.length === 0) {
+							console.error(`relevantEpisodes.length was 0 for ${relevantFeedID}`);
+							errorText = 'sorry, looks like vol failed to find any episodes';
+						}
 					}
 				} else {
 					consecutiveFeedChecks = 0;
@@ -291,7 +301,7 @@
 		checking again in {timeUntilNextPoll}
 	</p>
 
-	<p class="text-red-600">{errorText}</p>
+	<p class="mx-auto max-w-lg text-center text-xs text-red-600">{errorText}</p>
 	<div class="my-4 w-full text-center leading-8">
 		{#each queries as query}
 			<Badge variant="secondary">{query}</Badge>
