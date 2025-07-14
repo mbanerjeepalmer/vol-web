@@ -135,6 +135,8 @@
 			if (relevant.items) {
 				console.debug(`Relevant feed has ${relevant.items.length} items`);
 				relevantEpisodes = relevant.items;
+			} else {
+				console.debug(`relevant feed didn't have items`, relevant);
 			}
 		} catch (err) {
 			console.error(`Error when fetching the relevant feed`, err);
@@ -189,7 +191,7 @@
 			try {
 				await fetchRelevant();
 				if (relevantEpisodes === null) {
-					console.debug(`relevantEpisodes was`, relevantEpisodes);
+					console.debug(`relevantEpisodes was null:`, relevantEpisodes);
 					return;
 				}
 				console.log(`Feed item count: ${relevantEpisodes.length}`);
