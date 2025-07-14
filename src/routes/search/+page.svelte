@@ -165,7 +165,7 @@
 				}
 				return;
 			}
-			if (everythingElse.hasOwnProperty('length')) {
+			if (everythingElse.items) {
 				everythingElseEpisodes = everythingElse.items;
 			}
 			isProcessingQueue = false;
