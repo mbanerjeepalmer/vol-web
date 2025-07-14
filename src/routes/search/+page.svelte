@@ -29,7 +29,7 @@
 	let hasCopied = false;
 	let nextPollTime: number;
 	let timeUntilNextPoll: number;
-	let countdownInterval: NodeJS.Timeout;
+	let countdownInterval: NodeJS.Timeout | null;
 
 	let isProcessingQueue = false;
 
@@ -90,10 +90,12 @@
 		if (intervalId) {
 			clearInterval(intervalId);
 			intervalId = null;
+			console.debug(`Stopped polling`);
 		}
 		if (countdownInterval) {
 			clearInterval(countdownInterval);
 			countdownInterval = null;
+			console.debug(`Stopped countdown`);
 		}
 	});
 
@@ -230,7 +232,9 @@
 			const newURL = new URL($page.url);
 			newURL.searchParams.set('catalogue_id', catalogueResponseJSON.catalogue.id);
 			goto(newURL);
-			console.debug(`wahey we're still here`);
+			console.debug(`Going to start fetching data`);
+			await fetchMegaCatalogue(catalogueResponseJSON.catalogue.id);
+			await pollRelevantEpisodesFeed();
 		} catch (error) {
 			console.error('Search request failed:', error);
 			errorText = 'The server broke.';
