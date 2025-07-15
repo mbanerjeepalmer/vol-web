@@ -50,13 +50,14 @@
 	{#if episode.attachments?.length > 0}
 		{#each episode.attachments as attachment}
 			{#if attachment.mime_type.startsWith('audio/')}
-				<div class="flex flex-row items-center justify-between gap-4 px-4">
-					<span class="text-sm font-bold opacity-70">audio</span>
+				<div class="flex flex-col gap-2 px-4 pb-4">
 					<audio
 						controls
-						class="w-full rounded-lg opacity-90 [&::-webkit-media-controls-panel]:bg-background"
+						class="w-full rounded-lg shadow-sm [&::-webkit-media-controls-panel]:border [&::-webkit-media-controls-panel]:border-border [&::-webkit-media-controls-panel]:bg-background"
+						preload="metadata"
 					>
 						<source src={attachment.url} type={attachment.mime_type} />
+						Your browser does not support the audio element.
 					</audio>
 				</div>
 			{/if}
