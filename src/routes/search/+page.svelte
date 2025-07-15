@@ -199,17 +199,6 @@
 				if (relevantEpisodes.length === previousFeedItemCount) {
 					consecutiveFeedChecks++;
 					console.log(`Consecutive feed checks: ${consecutiveFeedChecks}`);
-
-					if (consecutiveFeedChecks >= 5 && intervalId) {
-						clearInterval(intervalId);
-						intervalId = null;
-						isPolling = false;
-
-						if (relevantEpisodes.length === 0) {
-							console.error(`relevantEpisodes.length was 0 for ${relevantFeedID}`);
-							errorText = 'sorry, looks like vol failed to find any episodes';
-						}
-					}
 				} else {
 					consecutiveFeedChecks = 0;
 				}
@@ -217,6 +206,16 @@
 			} catch (error) {
 				console.error(error);
 			} finally {
+				if (consecutiveFeedChecks >= 5 && intervalId) {
+					clearInterval(intervalId);
+					intervalId = null;
+					isPolling = false;
+
+					if (relevantEpisodes === null || relevantEpisodes.length === 0) {
+						console.error(`relevantEpisodes for ${relevantFeedID} was`, relevantEpisodes);
+						errorText = 'sorry, looks like vol failed to find any episodes';
+					}
+				}
 				nextPollTime = Date.now() + 20000;
 			}
 		}, 20000);
