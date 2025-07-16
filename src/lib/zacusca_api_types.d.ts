@@ -761,7 +761,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/seach/itunes": {
+    "/search/itunes": {
         parameters: {
             query?: never;
             header?: never;
@@ -769,7 +769,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get Itunes Search */
-        get: operations["get_itunes_search_seach_itunes_get"];
+        get: operations["get_itunes_search_search_itunes_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1022,8 +1022,8 @@ export interface components {
             /** Item Ids */
             item_ids: string[];
         };
-        /** ItemWithOutputFeeds */
-        ItemWithOutputFeeds: {
+        /** ItemWithFeedIds */
+        ItemWithFeedIds: {
             /**
              * Id
              * Format: uuid
@@ -1046,13 +1046,15 @@ export interface components {
             publisher_summary: string | null;
             /** Preview Image */
             preview_image: string | null;
+            /** Input Feed Ids */
+            input_feed_ids: string[] | null;
             /** Output Feed Ids */
             output_feed_ids: string[] | null;
         };
         /** ItemsResponse */
         ItemsResponse: {
             /** Items */
-            items: components["schemas"]["ItemWithOutputFeeds"][];
+            items: components["schemas"]["ItemWithFeedIds"][];
         };
         /**
          * MegaCatalogueResponse
@@ -1694,6 +1696,7 @@ export interface operations {
             query?: {
                 items_count?: number;
                 format?: components["schemas"]["FeedFormat"];
+                catalogue_id?: string | null;
             };
             header?: never;
             path: {
@@ -1764,6 +1767,7 @@ export interface operations {
         parameters: {
             query?: {
                 items_count?: number;
+                catalogue_id?: string | null;
             };
             header?: never;
             path: {
@@ -1795,7 +1799,10 @@ export interface operations {
     };
     get_feed_rss_feed__feed_id__rss_get: {
         parameters: {
-            query?: never;
+            query?: {
+                items_count?: number | null;
+                catalogue_id?: string | null;
+            };
             header?: never;
             path: {
                 feed_id: string;
@@ -1826,7 +1833,10 @@ export interface operations {
     };
     get_feed_atom_feed__feed_id__atom_get: {
         parameters: {
-            query?: never;
+            query?: {
+                items_count?: number | null;
+                catalogue_id?: string | null;
+            };
             header?: never;
             path: {
                 feed_id: string;
@@ -1857,7 +1867,10 @@ export interface operations {
     };
     get_feed_json_feed__feed_id__json_get: {
         parameters: {
-            query?: never;
+            query?: {
+                items_count?: number | null;
+                catalogue_id?: string | null;
+            };
             header?: never;
             path: {
                 feed_id: string;
@@ -2429,7 +2442,7 @@ export interface operations {
             };
         };
     };
-    get_itunes_search_seach_itunes_get: {
+    get_itunes_search_search_itunes_get: {
         parameters: {
             query: {
                 query: string;

@@ -3,7 +3,6 @@
 	import type { EpisodeRatings, JSONFeedItem } from '$lib/types';
 	import { onMount } from 'svelte';
 	export let episode: JSONFeedItem;
-	export let sourceQuery: string;
 
 	let expanded = false;
 	let hasMore = false;
@@ -41,11 +40,15 @@
 		</h3>
 	</div>
 	<div class="flex flex-row items-center justify-between gap-2 px-4">
-		<div>
-			<Badge variant="secondary" class="border-none text-sm font-light opacity-80">
-				{sourceQuery}
-			</Badge>
-		</div>
+		{#if episode._sources}
+			<div>
+				{#each episode._sources as source}
+					<Badge variant="secondary" class="border-none text-sm font-light opacity-80">
+						{source.feed_title}
+					</Badge>
+				{/each}
+			</div>
+		{/if}
 	</div>
 	{#if episode.attachments?.length > 0}
 		{#each episode.attachments as attachment}

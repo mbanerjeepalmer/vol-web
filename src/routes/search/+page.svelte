@@ -118,7 +118,8 @@
 					params: {
 						path: {
 							feed_id: relevantFeedID
-						}
+						},
+						query: { catalogue_id: data.catalogue_id }
 					}
 				}
 			);
@@ -332,7 +333,6 @@
 						url: '',
 						summary: ''
 					}}
-					sourceQuery=""
 				/>
 				<EpisodePreview
 					episode={{
@@ -346,14 +346,13 @@
 						url: '',
 						summary: ''
 					}}
-					sourceQuery=""
 				/>
 			</div>
 		</div>
 	{:else if relevantEpisodes.length > 0}
 		<div class="my-8 grid gap-6">
 			{#each relevantEpisodes as episode, index}
-				<EpisodePreview {episode} sourceQuery="TODO" />
+				<EpisodePreview {episode} />
 			{/each}
 		</div>
 	{/if}
@@ -393,7 +392,7 @@
 		{:else if everythingElseEpisodes.length > 0}
 			<div class="my-8 grid gap-6">
 				{#each everythingElseEpisodes as episode}
-					<EpisodePreview {episode} sourceQuery="TODO source" />
+					<EpisodePreview {episode} />
 				{/each}
 			</div>
 		{:else}

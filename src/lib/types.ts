@@ -36,6 +36,9 @@ export interface JSONFeedItem {
         size_in_bytes: number;
         duration_in_seconds?: number;
     }>;
+    _sources?: Array<{
+        feed_url: string; feed_title: string
+    }>;
     authors: Array<{
         name: string;
         url?: string;
