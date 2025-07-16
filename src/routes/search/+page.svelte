@@ -30,12 +30,20 @@
 	let nextPollTime: number;
 	let timeUntilNextPoll: number;
 	let countdownInterval: NodeJS.Timeout | null;
+	let catalogueState = { state: '' };
 
 	let isProcessingQueue = false;
 
 	const client = createClient<paths>({
 		baseUrl: PUBLIC_ZACUSCA_API_BASE
 	});
+
+	async function fetchCatalogueState(catalogue_id: string) {
+		console.debug(`fetching catalogue state`, catalogue_id);
+		const catalogueStateResponse = await fetch(`/api/catalogue/${catalogue_id}/state`);
+		const catalogueStateResponseJSON = await catalogueStateResponse.json();
+		return catalogueStateResponseJSON;
+	}
 
 	async function fetchMegaCatalogue(catalogue_id: string) {
 		console.debug(`fetching Mega Catalogue ${catalogue_id}`);

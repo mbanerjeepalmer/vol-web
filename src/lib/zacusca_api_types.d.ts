@@ -868,6 +868,7 @@ export interface components {
              * Format: uuid
              */
             user_id: string;
+            state: components["schemas"]["CatalogueState"];
         };
         /** CatalogueCreate */
         CatalogueCreate: {
@@ -876,6 +877,11 @@ export interface components {
             /** User Id */
             user_id?: string | null;
         };
+        /**
+         * CatalogueState
+         * @enum {string}
+         */
+        CatalogueState: "syncing" | "classifying" | "errored" | "idle" | "archived";
         /** Feed */
         Feed: {
             /**
@@ -1255,7 +1261,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Catalogue"];
                 };
             };
             /** @description Validation Error */
