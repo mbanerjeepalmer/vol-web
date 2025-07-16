@@ -38,10 +38,14 @@
 		baseUrl: PUBLIC_ZACUSCA_API_BASE
 	});
 
-	async function fetchCatalogueState(catalogue_id: string) {
-		console.debug(`fetching catalogue state`, catalogue_id);
+	async function fetchCatalogueState(catalogue_id: string | undefined | null) {
+		if (!catalogue_id) {
+			console.debug('No catalogue_id', catalogue_id);
+			return { state: '' };
+		}
 		const catalogueStateResponse = await fetch(`/api/catalogue/${catalogue_id}/state`);
 		const catalogueStateResponseJSON = await catalogueStateResponse.json();
+		console.debug(`fetched state`, catalogue_id, catalogueStateResponseJSON.state);
 		return catalogueStateResponseJSON;
 	}
 
@@ -50,6 +54,7 @@
 		const megaCatalogueResponse = await fetch(`/api/catalogue/${catalogue_id}`);
 		const megaCatalogueJSON: components['schemas']['MegaCatalogueResponse'] =
 			await megaCatalogueResponse.json();
+		catalogueState = { state: megaCatalogueJSON.catalogue.state };
 		data.prompt = megaCatalogueJSON.catalogue.name;
 		megaCatalogueJSON.output_feeds.forEach((f) => {
 			if (f.title === 'Everything else') {
@@ -60,13 +65,6 @@
 				relevantFeedID = f.id;
 			}
 		});
-
-		catalogueState = await fetchCatalogueState(catalogue_id);
-
-		if (catalogueState.state === 'idle' && megaCatalogueJSON.input_feeds.length === 0) {
-			console.warn(`No input feeds for catalogue ${catalogue_id}`);
-			errorText = 'hmmm...the searches might have broken...';
-		}
 	}
 
 	onMount(async () => {
@@ -192,6 +190,7 @@
 	let isPolling = false;
 
 	async function pollRelevantEpisodesFeed() {
+		catalogueState = await fetchCatalogueState(data.catalogue_id);
 		if (isPolling) {
 			console.debug(`Already polling`);
 			return;
@@ -280,6 +279,7 @@
 				})
 			});
 			const catalogueResponseJSON = await catalogueResponse.json();
+			catalogueState = await fetchCatalogueState(data.catalogue_id);
 			console.debug('catalogueResponseJSON', catalogueResponseJSON);
 			const newURL = new URL($page.url);
 			newURL.searchParams.set('catalogue_id', catalogueResponseJSON.catalogue.id);
@@ -336,7 +336,6 @@
 				>{:else}<span>2. searching</span>{/if}
 		</li>
 	</ol>
-
 	<p
 		class={`mx-auto text-center text-xs opacity-70 transition-all ease-in-out ${!intervalId || !timeUntilNextPoll ? 'invisible' : ''}`}
 	>
