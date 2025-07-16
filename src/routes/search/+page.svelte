@@ -61,7 +61,9 @@
 			}
 		});
 
-		if (megaCatalogueJSON.input_feeds.length === 0) {
+		catalogueState = await fetchCatalogueState(catalogue_id);
+
+		if (catalogueState.state === 'idle' && megaCatalogueJSON.input_feeds.length === 0) {
 			console.warn(`No input feeds for catalogue ${catalogue_id}`);
 			errorText = 'hmmm...the searches might have broken...';
 		}
@@ -196,7 +198,20 @@
 		}
 		isPolling = true;
 		console.debug(`Starting polling`);
-		intervalId = setInterval(async () => {
+
+		const stopPolling = () => {
+			if (intervalId) {
+				clearTimeout(intervalId);
+				intervalId = null;
+			}
+			if (countdownInterval) {
+				clearInterval(countdownInterval);
+				countdownInterval = null;
+			}
+			isPolling = false;
+		};
+
+		const poll = async () => {
 			try {
 				await fetchRelevant();
 				if (relevantEpisodes === null) {
@@ -215,24 +230,41 @@
 			} catch (error) {
 				console.error(error);
 			} finally {
-				if (consecutiveFeedChecks >= 5 && intervalId) {
-					clearInterval(intervalId);
-					intervalId = null;
-					isPolling = false;
+				let shouldStop = false;
 
+				if (data.catalogue_id) {
+					catalogueState = await fetchCatalogueState(data.catalogue_id);
+					if (['idle', 'errored'].includes(catalogueState.state)) {
+						shouldStop = true;
+					}
+				}
+
+				if (consecutiveFeedChecks >= 5) {
+					shouldStop = true;
 					if (relevantEpisodes === null || relevantEpisodes.length === 0) {
 						console.error(`relevantEpisodes for ${relevantFeedID} was`, relevantEpisodes);
 						errorText = 'sorry, looks like vol failed to find any episodes';
 					}
 				}
-				nextPollTime = Date.now() + 20000;
+
+				if (shouldStop) {
+					stopPolling();
+				} else {
+					// Schedule next poll after 20 seconds
+					nextPollTime = Date.now() + 20000;
+					intervalId = setTimeout(poll, 20000);
+				}
 			}
-		}, 20000);
+		};
+
 		countdownInterval = setInterval(() => {
 			const now = Date.now();
 			const remaining = nextPollTime - now;
 			timeUntilNextPoll = Math.max(0, Math.floor(remaining / 1000));
 		}, 1000);
+
+		nextPollTime = Date.now() + 20000;
+		await poll();
 	}
 
 	async function createCatalogueFromQueries(queryList: string[]) {
