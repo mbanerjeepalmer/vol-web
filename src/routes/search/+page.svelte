@@ -10,9 +10,10 @@
 	import createClient from 'openapi-fetch';
 	import { PUBLIC_ZACUSCA_API_BASE } from '$env/static/public';
 	import type { components, paths } from '$lib/zacusca_api_types';
-	import { Input } from '$lib/components/ui/input';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import * as Tabs from '$lib/components/ui/tabs/index';
+	import Subscribe from '$lib/components/Subscribe.svelte';
 
 	export let data: PageData;
 
@@ -31,6 +32,9 @@
 	let timeUntilNextPoll: number;
 	let countdownInterval: NodeJS.Timeout | null;
 	let catalogueState = { state: '' };
+	let activeTab: string;
+	const pulsingClasses =
+		'animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text text-transparent';
 
 	let isProcessingQueue = false;
 
@@ -65,15 +69,18 @@
 				relevantFeedID = f.id;
 			}
 		});
+		queries = megaCatalogueJSON.input_feeds.map((f) => f.title);
 	}
 
 	onMount(async () => {
 		if (data.catalogue_id) {
+			activeTab = 'search';
 			console.debug(`Loading an existing catalogue`, data.catalogue_id);
 			await fetchMegaCatalogue(data.catalogue_id);
 			await pollRelevantEpisodesFeed();
 			return;
 		} else if (data.prompt) {
+			activeTab = 'think';
 			console.debug(`No existing catalogue_id so creating one`);
 			let url = `/api/prompt-to-queries?prompt=${encodeURIComponent(data.prompt)}`;
 
@@ -256,10 +263,11 @@
 			}
 		};
 
-		countdownInterval = setInterval(() => {
+		countdownInterval = setInterval(async () => {
 			const now = Date.now();
 			const remaining = nextPollTime - now;
 			timeUntilNextPoll = Math.max(0, Math.floor(remaining / 1000));
+			catalogueState = await fetchCatalogueState(data.catalogue_id);
 		}, 1000);
 
 		nextPollTime = Date.now() + 20000;
@@ -292,6 +300,7 @@
 			errorText = 'The server broke.';
 		} finally {
 			isThinking = false;
+			activeTab = 'search';
 		}
 	}
 
@@ -306,136 +315,112 @@
 	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
 		{data.prompt}
 	</h1>
-	<ol class="flex flex-row items-center justify-center gap-4 text-sm">
-		<li>
-			<!-- the if is for a whole element because previously both the styling and text were different depending on state -->
-			{#if isThinking === null}<span class="">1. thinking</span>
-			{:else if isThinking}<span
-					class="animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text font-bold text-transparent"
-					>1. thinking</span
-				>{:else}
-				<Sheet.Root>
-					<Sheet.Trigger>
-						<Button variant="link" class="underline">1. thought (click to see)</Button>
-					</Sheet.Trigger>
-					<Sheet.Content side="right" class="overflow-y-auto">
-						<Sheet.Header>
-							<Sheet.Title>what the ai was thinking</Sheet.Title>
-						</Sheet.Header>
-						<div class="py-8">
-							<Markdown content={thinkingAboutQueries} />
-						</div>
-					</Sheet.Content>
-				</Sheet.Root>
-			{/if}
-		</li>
-		<li>
-			{#if isProcessingQueue}<span
-					class="animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text font-bold text-transparent"
-					>2. searching</span
-				>{:else}<span>2. searching</span>{/if}
-		</li>
-	</ol>
-	<p
-		class={`mx-auto text-center text-xs opacity-70 transition-all ease-in-out ${!intervalId || !timeUntilNextPoll ? 'invisible' : ''}`}
-	>
-		checking again in {timeUntilNextPoll}
-	</p>
 
 	<p class="mx-auto max-w-lg text-center text-xs text-red-600">{errorText}</p>
-	<div class="my-4 w-full text-center leading-8">
-		{#each queries as query}
-			<Badge variant="secondary">{query}</Badge>
-		{/each}
-	</div>
-	{#if relevantEpisodes === null}
-		<div class="mx-auto flex h-64 flex-col justify-center text-center align-middle text-2xl">
-			<p
-				class="animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text font-bold text-transparent"
-			>
-				finding episodes for you
-			</p>
+
+	<Tabs.Root value={activeTab} class="w-full">
+		<div class="flex w-full">
+			<Tabs.List class="mx-auto">
+				<Tabs.Trigger value="think">1. think</Tabs.Trigger>
+				<Tabs.Trigger value="search">
+					2. <span class={catalogueState.state === 'syncing' ? pulsingClasses : ''}>search</span>
+					+
+					<span class={catalogueState.state === 'classifying' ? pulsingClasses : ''}>select</span>
+				</Tabs.Trigger>
+				<Tabs.Trigger value="subscribe">3. subscribe</Tabs.Trigger>
+			</Tabs.List>
 		</div>
-	{:else if relevantEpisodes.length === 0}
-		<div class="flex w-full flex-col items-center justify-center gap-4 p-4">
-			<p class="text-xl font-medium">no episodes</p>
-			<div class="flex w-full flex-col gap-6 opacity-50">
-				<EpisodePreview
-					episode={{
-						title: '',
-						attachments: [],
-						content_html: '',
-						image: '',
-						authors: [],
-						date_published: '',
-						id: '',
-						url: '',
-						summary: ''
-					}}
-				/>
-				<EpisodePreview
-					episode={{
-						title: '',
-						attachments: [],
-						content_html: '',
-						image: '',
-						authors: [],
-						date_published: '',
-						id: '',
-						url: '',
-						summary: ''
-					}}
-				/>
-			</div>
-		</div>
-	{:else if relevantEpisodes.length > 0}
-		<div class="my-8 grid gap-6">
-			{#each relevantEpisodes as episode, index}
-				<EpisodePreview {episode} />
-			{/each}
-		</div>
-	{/if}
-	<div
-		class="mx-auto my-12 flex max-w-lg flex-col gap-y-6 rounded-md border border-border px-3 py-6"
-		class:opacity-0={!relevantEpisodes || relevantEpisodes.length === 0}
-	>
-		<h2 class="px-1 text-lg font-medium tracking-tight">subscribe to these results as a podcast</h2>
-		<div class="flex h-12 flex-row justify-between gap-x-6 align-middle">
-			<!-- copy on click, cursor should be pointer -->
-			<div class="flex flex-row gap-x-1">
-				<Input class="h-full" value={`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`} />
-				<Button
-					on:click={() => {
-						navigator.clipboard.writeText(`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`);
-						hasCopied = true;
-					}}
-					class="h-full"
-					variant="outline">{hasCopied ? 'copied' : 'copy'}</Button
-				>
-			</div>
-			<img
-				class="p-1"
-				src="/assets/US-UK_Apple_Podcasts_Listen_Badge_RGB_062023.svg"
-				alt="Apple Podcasts badge"
-			/>
-		</div>
-		<p>copy the RSS feed URL. paste it into your podcast player.</p>
-	</div>
-	<div class="mt-12 opacity-80 hover:opacity-100">
-		{#if relevantEpisodes === null}{:else if everythingElseEpisodes === null}
-			<Button
-				class="mx-auto w-full underline underline-offset-4"
-				variant="link"
-				on:click={async () => await fetchEverythingElse()}>everything else... ⏷</Button
-			>
-		{:else if everythingElseEpisodes.length > 0}
-			<div class="my-8 grid gap-6">
-				{#each everythingElseEpisodes as episode}
-					<EpisodePreview {episode} />
+		<Tabs.Content value="think"><Markdown content={thinkingAboutQueries} /></Tabs.Content>
+		<Tabs.Content value="search"
+			><div class="my-4 min-h-16 w-full text-center leading-8">
+				{#each queries as query}
+					<Badge variant="secondary">{query}</Badge>
 				{/each}
 			</div>
-		{:else}
-			<div class="w-full text-center"><p>nothing else.</p></div>
-		{/if}
-	</div>
+			{#if relevantEpisodes === null || (relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length === 0)}
+				<div class="flex w-full flex-col items-center justify-center gap-4 p-4">
+					<div class="flex w-full animate-pulse flex-col gap-6 opacity-50">
+						<EpisodePreview
+							episode={{
+								title: '',
+								attachments: [],
+								content_html: '',
+								image: '',
+								authors: [],
+								date_published: '',
+								id: '',
+								url: '',
+								summary: ''
+							}}
+						/>
+						<EpisodePreview
+							episode={{
+								title: '',
+								attachments: [],
+								content_html: '',
+								image: '',
+								authors: [],
+								date_published: '',
+								id: '',
+								url: '',
+								summary: ''
+							}}
+						/>
+						<EpisodePreview
+							episode={{
+								title: '',
+								attachments: [],
+								content_html: '',
+								image: '',
+								authors: [],
+								date_published: '',
+								id: '',
+								url: '',
+								summary: ''
+							}}
+						/>
+						<EpisodePreview
+							episode={{
+								title: '',
+								attachments: [],
+								content_html: '',
+								image: '',
+								authors: [],
+								date_published: '',
+								id: '',
+								url: '',
+								summary: ''
+							}}
+						/>
+					</div>
+				</div>
+			{:else if relevantEpisodes.length > 0}
+				<div class="my-8 grid gap-6">
+					{#each relevantEpisodes as episode, index}
+						<EpisodePreview {episode} />
+					{/each}
+				</div>
+			{/if}
+			<Subscribe {relevantEpisodes} {relevantFeedID} />
+
+			<div class="mt-12 opacity-80 hover:opacity-100">
+				{#if relevantEpisodes === null}{:else if everythingElseEpisodes === null}
+					<Button
+						class="mx-auto w-full underline underline-offset-4"
+						variant="link"
+						on:click={async () => await fetchEverythingElse()}>everything else... ⏷</Button
+					>
+				{:else if everythingElseEpisodes.length > 0}
+					<div class="my-8 grid gap-6">
+						{#each everythingElseEpisodes as episode}
+							<EpisodePreview {episode} />
+						{/each}
+					</div>
+				{:else}
+					<div class="w-full text-center"><p>nothing else.</p></div>
+				{/if}
+			</div></Tabs.Content
+		>
+		<Tabs.Content value="subscribe"><Subscribe {relevantEpisodes} {relevantFeedID} /></Tabs.Content>
+	</Tabs.Root>
 </div>
