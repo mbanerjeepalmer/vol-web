@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
+	import { ChevronDown, ChevronUp } from 'lucide-svelte';
 	import type { EpisodeRatings, JSONFeedItem } from '$lib/types';
 	import { onMount } from 'svelte';
 	export let episode: JSONFeedItem;
@@ -35,21 +36,28 @@
 				class="h-32 w-32 flex-shrink-0 rounded-xl bg-gradient-to-r from-fuchsia-500 to-green-500 opacity-80"
 			></div>
 		{/if}
-		<h3 class="text-lg font-bold opacity-90 hover:text-primary">
-			{episode.title}
-		</h3>
-	</div>
-	<div class="flex flex-row items-center justify-between gap-2 px-4">
-		{#if episode._sources}
-			<div>
+		<div class="flex w-full flex-col align-top">
+			{#if episode.link}
+				<a href={episode.link} target="_blank">
+					<h3 class="font-sans text-lg font-bold opacity-90 hover:text-primary">
+						{episode.title}
+					</h3></a
+				>
+			{:else}
+				<h3 class="mx-2 my-3 font-sans text-lg font-bold opacity-90 hover:text-primary">
+					{episode.title}
+				</h3>
+			{/if}
+			{#if episode._sources}
 				{#each episode._sources as source}
-					<Badge variant="secondary" class="border-none text-sm font-light opacity-80">
+					<Badge variant="secondary" class="w-fit self-end border-none text-xs font-light">
 						{source.feed_title}
 					</Badge>
 				{/each}
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
+	<div class="flex flex-row items-center justify-between gap-2 px-4"></div>
 	{#if episode.attachments?.length > 0}
 		{#each episode.attachments as attachment}
 			{#if attachment.mime_type.startsWith('audio/')}
@@ -66,7 +74,7 @@
 			{/if}
 		{/each}
 	{/if}
-	{#if episode.content_html}
+	{#if episode.summary}
 		<div class="bg-slate-100 px-4 pt-4">
 			<button
 				bind:this={descriptionElem}
@@ -77,11 +85,13 @@
 			>
 				<span
 					id="episode-description"
-					class={`text-sm opacity-90 ${!expanded ? 'line-clamp-2' : ''}`}
-					>{@html episode.content_html}</span
+					class={`font-sans text-sm opacity-90 ${!expanded ? 'line-clamp-2' : ''}`}
+					>{episode.summary}</span
 				>
-				<div class="align-middl w-full pb-2 text-center">
-					{#if !expanded}⏷{:else}⏶{/if}
+				<div class="w-full pb-2 text-center">
+					{#if !expanded}<ChevronDown class="mx-auto h-12 pt-4" />{:else}<ChevronUp
+							class="mx-auto h-12 pt-4"
+						/>{/if}
 				</div>
 			</button>
 		</div>
