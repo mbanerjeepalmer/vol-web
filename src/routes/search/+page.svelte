@@ -69,7 +69,9 @@
 				relevantFeedID = f.id;
 			}
 		});
-		queries = megaCatalogueJSON.input_feeds.map((f) => f.title);
+		if (megaCatalogueJSON.input_feeds.length > 0) {
+			queries = megaCatalogueJSON.input_feeds.map((f) => f.title);
+		}
 	}
 
 	onMount(async () => {
@@ -323,9 +325,11 @@
 			<Tabs.List class="mx-auto">
 				<Tabs.Trigger value="think">1. think</Tabs.Trigger>
 				<Tabs.Trigger value="search">
-					2. <span class={catalogueState.state === 'syncing' ? pulsingClasses : ''}>search</span>
-					+
-					<span class={catalogueState.state === 'classifying' ? pulsingClasses : ''}>select</span>
+					<div class="flex flex-row gap-2">
+						2. <span class={catalogueState.state === 'syncing' ? pulsingClasses : ''}>search</span>
+						+
+						<span class={catalogueState.state === 'classifying' ? pulsingClasses : ''}>select</span>
+					</div>
 				</Tabs.Trigger>
 				<Tabs.Trigger value="subscribe">3. subscribe</Tabs.Trigger>
 			</Tabs.List>
