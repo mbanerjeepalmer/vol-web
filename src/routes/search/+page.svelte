@@ -163,6 +163,7 @@
 	}
 
 	async function fetchEverythingElse() {
+		console.log('fetching everything else');
 		try {
 			const { data: everythingElse, error: everythingElseError } = await client.GET(
 				'/feed/{feed_id}/json',
@@ -411,7 +412,7 @@
 					<Button
 						class="mx-auto w-full underline underline-offset-4"
 						variant="link"
-						on:click={async () => await fetchEverythingElse()}>everything else... ⏷</Button
+						onclick={async () => await fetchEverythingElse()}>everything else... ⏷</Button
 					>
 				{:else if everythingElseEpisodes.length > 0}
 					<div class="my-8 grid gap-6">
