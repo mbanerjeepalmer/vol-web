@@ -120,80 +120,6 @@
 		}
 	});
 
-	async function fetchRelevant() {
-		if (!relevantFeedID) {
-			console.info(`No relevantFeedID`);
-			return;
-		}
-		try {
-			isProcessingQueue = true;
-			console.debug(`Fetching relevant feed: ${relevantFeedID}`);
-			const { data: relevant, error: relevantEpisodesError } = await client.GET(
-				'/feed/{feed_id}/json',
-				{
-					params: {
-						path: {
-							feed_id: relevantFeedID
-						},
-						query: { catalogue_id: data.catalogue_id }
-					}
-				}
-			);
-
-			if (relevantEpisodesError) {
-				console.error(relevantEpisodesError);
-				if (relevantEpisodesError.detail) {
-					errorText = `oh no! tried to fetch feeds but, error: ${relevantEpisodesError.detail[0].msg}`;
-				} else {
-					errorText = `uh oh. unexpected, unknown error trying to fetch feeds`;
-				}
-				return;
-			}
-			if (relevant.items) {
-				console.debug(`Relevant feed has ${relevant.items.length} items`);
-				relevantEpisodes = relevant.items;
-			} else {
-				console.debug(`relevant feed didn't have items`, relevant);
-			}
-		} catch (err) {
-			console.error(`Error when fetching the relevant feed`, err);
-		} finally {
-			isProcessingQueue = false;
-		}
-	}
-
-	async function fetchEverythingElse() {
-		console.log('fetching everything else');
-		try {
-			const { data: everythingElse, error: everythingElseError } = await client.GET(
-				'/feed/{feed_id}/json',
-				{
-					params: {
-						path: {
-							feed_id: everythingElseFeedID
-						}
-					}
-				}
-			);
-
-			if (everythingElseError) {
-				console.error(everythingElseError);
-				if (everythingElseError.detail) {
-					errorText = `oh no! fetching the 'everything else' feed broke`;
-				} else {
-					errorText = `uh oh. something broke in the 'everything else' feed`;
-				}
-				return;
-			}
-			if (everythingElse.items) {
-				everythingElseEpisodes = everythingElse.items;
-			}
-			isProcessingQueue = false;
-		} finally {
-			isProcessingQueue = false;
-		}
-	}
-
 	let consecutiveFeedChecks = 0;
 	let previousFeedItemCount = 0;
 	let isPolling = false;
@@ -221,20 +147,42 @@
 
 		const poll = async () => {
 			try {
-				await fetchRelevant();
-				if (relevantEpisodes === null) {
-					console.debug(`relevantEpisodes was null:`, relevantEpisodes);
+				const { data: allEpisodes, error: allEpisodesError } = await client.GET(
+					'/catalogue/{catalogue_id}/item',
+					{
+						params: {
+							path: {
+								catalogue_id: data.catalogue_id
+							},
+							query: {
+								format: 'json_feed'
+							}
+						}
+					}
+				);
+
+				if (allEpisodesError) {
+					console.error(allEpisodesError);
+					if (allEpisodesError.detail) {
+						errorText = `oh no! tried to fetch episodes but, error: ${allEpisodesError.detail[0].msg}`;
+					} else {
+						errorText = `uh oh. unexpected, unknown error trying to fetch feeds`;
+					}
 					return;
 				}
-				console.log(`Feed item count: ${relevantEpisodes.length}`);
 
-				if (relevantEpisodes.length === previousFeedItemCount) {
-					consecutiveFeedChecks++;
-					console.log(`Consecutive feed checks: ${consecutiveFeedChecks}`);
+				if (allEpisodes.items) {
+					relevantEpisodes = allEpisodes.items.filter((item) =>
+						item._categories.some((cat) => (cat.feed_title === 'Everything else' ? false : true))
+					);
+					everythingElseEpisodes = allEpisodes.items.filter((item) =>
+						item._categories.some((cat) => cat.feed_title === 'Everything else')
+					);
 				} else {
-					consecutiveFeedChecks = 0;
+					console.debug(`No items in the response`, allEpisodes);
+					relevantEpisodes = [];
+					everythingElseEpisodes = [];
 				}
-				previousFeedItemCount = relevantEpisodes.length;
 			} catch (error) {
 				console.error(error);
 			} finally {
@@ -244,14 +192,6 @@
 					catalogueState = await fetchCatalogueState(data.catalogue_id);
 					if (['idle', 'errored'].includes(catalogueState.state)) {
 						shouldStop = true;
-					}
-				}
-
-				if (consecutiveFeedChecks >= 5) {
-					shouldStop = true;
-					if (relevantEpisodes === null || relevantEpisodes.length === 0) {
-						console.error(`relevantEpisodes for ${relevantFeedID} was`, relevantEpisodes);
-						errorText = 'sorry, looks like vol failed to find any episodes';
 					}
 				}
 

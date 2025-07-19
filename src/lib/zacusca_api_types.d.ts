@@ -135,10 +135,6 @@ export interface paths {
          *
          *     An Item is considered 'classified' if it is linked via a feed of type OUTPUT.
          *
-         *     Filtering can be applied:
-         *       - classified_only=True: only return classified items,
-         *       - classified_only=False: only return unclassified items,
-         *       - classified_only=None: return both.
          *     The limit `count` applies to the total number of items returned.
          */
         get: operations["get_catalogue_items_catalogue__catalogue_id__item_get"];
@@ -460,12 +456,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Sync All Feeds
-         * @description "
-         *     NOTE: feedparser uses `href` and `link` for feeds, but only `link` (and `links`) for
-         *      entries.
-         */
+        /** Sync All Feeds */
         post: operations["sync_all_feeds_feed_synced_post"];
         delete?: never;
         options?: never;
@@ -533,22 +524,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Classify Catalogue
-         * @description Classifies items in a catalogue.
-         *
-         *     Which items it classifies
-         *     - If `items_body.item_ids` is provided it will classify those exact items.
-         *         - It will reclassify if they have already been classified
-         *         - It will not classify if they don't belong to input feeds attached to this
-         *           catalogue.
-         *     - If `after` is provided it classifies items from this catalogue's input feeds
-         *       that were either published or created after that date.
-         *     - If `after` is not provided it defaults to the last 24h.
-         *     - `after` and `items_body` can't both be provided.
-         *
-         *     Place newly classified items into the output feeds that match their groups.
-         */
+        /** Classify Catalogue */
         post: operations["classify_catalogue_catalogue__catalogue_id__classified_post"];
         delete?: never;
         options?: never;
@@ -778,6 +754,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/search/spotify-itunes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Spotify Itunes Search */
+        get: operations["get_spotify_itunes_search_search_spotify_itunes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/user/me": {
         parameters: {
             query?: never;
@@ -882,6 +875,11 @@ export interface components {
          * @enum {string}
          */
         CatalogueState: "syncing" | "classifying" | "errored" | "idle" | "archived";
+        /**
+         * ClassificationStatus
+         * @enum {string}
+         */
+        ClassificationStatus: "unclassified" | "classified";
         /** Feed */
         Feed: {
             /**
@@ -1027,40 +1025,6 @@ export interface components {
         ItemIDs: {
             /** Item Ids */
             item_ids: string[];
-        };
-        /** ItemWithFeedIds */
-        ItemWithFeedIds: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Title */
-            title: string;
-            /** Link */
-            link: string;
-            /** Type */
-            type: string;
-            /** Published At */
-            published_at: string | null;
-            /** Publisher Summary */
-            publisher_summary: string | null;
-            /** Preview Image */
-            preview_image: string | null;
-            /** Input Feed Ids */
-            input_feed_ids: string[] | null;
-            /** Output Feed Ids */
-            output_feed_ids: string[] | null;
-        };
-        /** ItemsResponse */
-        ItemsResponse: {
-            /** Items */
-            items: components["schemas"]["ItemWithFeedIds"][];
         };
         /**
          * MegaCatalogueResponse
@@ -1377,8 +1341,9 @@ export interface operations {
         parameters: {
             query?: {
                 count?: number;
-                classified_only?: boolean | null;
+                classified?: components["schemas"]["ClassificationStatus"] | null;
                 sort?: components["schemas"]["SortOrder"];
+                format?: components["schemas"]["FeedFormat"];
             };
             header?: never;
             path: {
@@ -1394,7 +1359,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ItemsResponse"];
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -2385,7 +2350,7 @@ export interface operations {
         parameters: {
             query: {
                 query: string;
-                markets?: string[] | null;
+                market?: string | null;
                 limit?: number;
                 offset?: number;
                 format?: components["schemas"]["FeedFormat"];
@@ -2453,6 +2418,41 @@ export interface operations {
             query: {
                 query: string;
                 format?: components["schemas"]["FeedFormat"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_spotify_itunes_search_search_spotify_itunes_get: {
+        parameters: {
+            query: {
+                query: string;
+                limit?: number;
+                offset?: number;
+                format?: components["schemas"]["FeedFormat"];
+                market?: string;
             };
             header?: never;
             path?: never;
