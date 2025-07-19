@@ -36,21 +36,21 @@
 				class="h-32 w-32 flex-shrink-0 rounded-xl bg-gradient-to-r from-fuchsia-500 to-green-500 opacity-80"
 			></div>
 		{/if}
-		<div class="flex w-full flex-col align-top">
+		<div class="flex h-full w-full flex-col items-start gap-1">
 			{#if episode.link}
 				<a href={episode.link} target="_blank">
-					<h3 class="font-sans text-lg font-bold opacity-90 hover:text-primary">
+					<h3 class="font-sans text-lg font-bold opacity-90">
 						{episode.title}
 					</h3></a
 				>
 			{:else}
-				<h3 class="mx-2 my-3 font-sans text-lg font-bold opacity-90 hover:text-primary">
+				<h3 class="mx-2 my-3 font-sans text-lg font-bold opacity-90">
 					{episode.title}
 				</h3>
 			{/if}
 			{#if episode._sources}
 				{#each episode._sources as source}
-					<Badge variant="secondary" class="w-fit self-end border-none text-xs font-light">
+					<Badge variant="secondary" class="w-fit border-none text-xs font-light">
 						{source.feed_title}
 					</Badge>
 				{/each}
