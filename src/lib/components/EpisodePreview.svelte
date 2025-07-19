@@ -2,6 +2,10 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { ChevronDown, ChevronUp } from 'lucide-svelte';
 	import type { EpisodeRatings, JSONFeedItem } from '$lib/types';
+
+	function formatDescription(text: string): string {
+		return text.replace(/\n/g, '<br>');
+	}
 	import { onMount } from 'svelte';
 	export let episode: JSONFeedItem;
 
@@ -86,7 +90,7 @@
 				<span
 					id="episode-description"
 					class={`font-sans text-sm opacity-90 ${!expanded ? 'line-clamp-2' : ''}`}
-					>{episode.summary}</span
+					>{@html formatDescription(episode.summary)}</span
 				>
 				<div class="w-full pb-2 text-center">
 					{#if !expanded}<ChevronDown class="mx-auto h-12 pt-4" />{:else}<ChevronUp
