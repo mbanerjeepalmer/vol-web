@@ -10,7 +10,7 @@
 	class="mx-auto my-12 flex max-w-lg flex-col gap-y-6 rounded-md border border-border px-3 py-6"
 	class:opacity-0={!relevantEpisodes || relevantEpisodes.length === 0}
 >
-	<h2 class="px-1 text-lg font-medium tracking-tight">subscribe to these results as a podcast</h2>
+	<h2 class="px-1 text-lg font-medium tracking-tight">listen in your player</h2>
 	<div class="flex h-12 flex-row justify-between gap-x-6 align-middle">
 		<!-- copy on click, cursor should be pointer -->
 		<div class="flex flex-row gap-x-1">
@@ -22,7 +22,7 @@
 					);
 					hasCopied = true;
 				}}
-				class="h-full w-28"
+				class={`h-full w-28 ${hasCopied ? 'border-green-500 text-green-500 hover:bg-green-50/50 hover:text-green-800' : ''}`}
 				variant="outline">{hasCopied ? 'copied' : 'copy'}</Button
 			>
 		</div>
@@ -32,5 +32,8 @@
 			alt="Apple Podcasts badge"
 		/>
 	</div>
-	<p>copy the RSS feed URL. paste it into your podcast player.</p>
+
+	<p class={hasCopied ? 'font-medium text-green-500 opacity-100' : 'opacity-0'}>
+		now paste the url into your player
+	</p>
 </div>
