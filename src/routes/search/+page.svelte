@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import Markdown from '$lib/components/Markdown.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
 	import type { PageData } from './$types';
-	import * as Sheet from '$lib/components/ui/sheet';
 	import type { JSONFeedItem } from '$lib/types';
 	import EpisodePreview from '$lib/components/EpisodePreview.svelte';
 	import Badge from '$lib/components/ui/badge/badge.svelte';
@@ -14,6 +12,7 @@
 	import { page } from '$app/stores';
 	import * as Tabs from '$lib/components/ui/tabs/index';
 	import Subscribe from '$lib/components/Subscribe.svelte';
+	import { ChartCandlestick, Orbit, Podcast, Search } from 'lucide-svelte';
 
 	export let data: PageData;
 
@@ -22,20 +21,20 @@
 	let relevantEpisodes: JSONFeedItem[] | null = null;
 	let everythingElseFeedID = '';
 	let everythingElseEpisodes: JSONFeedItem[] | null = null;
-	let isThinking: boolean | null = null;
 	let thinkingAboutQueries = '';
 	let queries: string[] = [];
 	let intervalId: NodeJS.Timeout | null;
-	// TODO toast library
-	let nextPollTime: number;
-	let timeUntilNextPoll: number;
-	let countdownInterval: NodeJS.Timeout | null;
 	let catalogueState = { state: '' };
 	let activeTab: string;
 	const pulsingClasses =
 		'animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text text-transparent';
 
 	let isProcessingQueue = false;
+
+	// Tracking for stopping conditions
+	let lastCategorizedCount = 0;
+	let lastCategorizedCountTime = Date.now();
+	let isPolling = false;
 
 	const client = createClient<paths>({
 		baseUrl: PUBLIC_ZACUSCA_API_BASE
@@ -78,7 +77,7 @@
 			activeTab = 'search';
 			console.debug(`Loading an existing catalogue`, data.catalogue_id);
 			await fetchMegaCatalogue(data.catalogue_id);
-			await pollRelevantEpisodesFeed();
+			await startPolling();
 			return;
 		} else if (data.prompt) {
 			activeTab = 'think';
@@ -113,19 +112,9 @@
 			intervalId = null;
 			console.debug(`Stopped polling`);
 		}
-		if (countdownInterval) {
-			clearInterval(countdownInterval);
-			countdownInterval = null;
-			console.debug(`Stopped countdown`);
-		}
 	});
 
-	let consecutiveFeedChecks = 0;
-	let previousFeedItemCount = 0;
-	let isPolling = false;
-
-	async function pollRelevantEpisodesFeed() {
-		catalogueState = await fetchCatalogueState(data.catalogue_id);
+	async function startPolling() {
 		if (isPolling) {
 			console.debug(`Already polling`);
 			return;
@@ -133,94 +122,113 @@
 		isPolling = true;
 		console.debug(`Starting polling`);
 
-		const stopPolling = () => {
-			if (intervalId) {
-				clearTimeout(intervalId);
-				intervalId = null;
-			}
-			if (countdownInterval) {
-				clearInterval(countdownInterval);
-				countdownInterval = null;
-			}
-			isPolling = false;
-		};
-
 		const poll = async () => {
 			try {
-				const { data: allEpisodes, error: allEpisodesError } = await client.GET(
-					'/catalogue/{catalogue_id}/item',
-					{
-						params: {
-							path: {
-								catalogue_id: data.catalogue_id
-							},
-							query: {
-								format: 'json_feed',
-								count: 50,
-								sort: 'desc'
-							}
-						}
-					}
-				);
+				// Always fetch catalogue state
+				catalogueState = await fetchCatalogueState(data.catalogue_id);
 
-				if (allEpisodesError) {
-					console.error(allEpisodesError);
-					if (allEpisodesError.detail) {
-						errorText = `oh no! tried to fetch episodes but, error: ${allEpisodesError.detail[0].msg}`;
-					} else {
-						errorText = `uh oh. unexpected, unknown error trying to fetch feeds`;
-					}
+				// Check if we should stop due to error state
+				if (catalogueState.state === 'errored') {
+					errorText = 'the server broke';
+					stopPolling();
 					return;
 				}
 
-				if (allEpisodes.items) {
-					relevantEpisodes = allEpisodes.items.filter((item) =>
-						item._categories.some((cat) => (cat.feed_title === 'Everything else' ? false : true))
+				// Fetch episodes if we're syncing or classifying
+				if (['syncing', 'classifying', 'idle'].includes(catalogueState.state)) {
+					const { data: allEpisodes, error: allEpisodesError } = await client.GET(
+						'/catalogue/{catalogue_id}/item',
+						{
+							params: {
+								path: {
+									catalogue_id: data.catalogue_id
+								},
+								query: {
+									format: 'json_feed',
+									count: 50,
+									sort: 'desc'
+								}
+							}
+						}
 					);
-					everythingElseEpisodes = allEpisodes.items.filter((item) =>
-						item._categories.some((cat) => cat.feed_title === 'Everything else')
-					);
-				} else {
-					console.debug(`No items in the response`, allEpisodes);
-					relevantEpisodes = [];
-					everythingElseEpisodes = [];
-				}
-			} catch (error) {
-				console.error(error);
-			} finally {
-				let shouldStop = false;
 
-				if (data.catalogue_id) {
-					catalogueState = await fetchCatalogueState(data.catalogue_id);
-					if (['idle', 'errored'].includes(catalogueState.state)) {
-						shouldStop = true;
+					if (allEpisodesError) {
+						console.error(allEpisodesError);
+						errorText = 'the server broke';
+						stopPolling();
+						return;
+					}
+
+					if (allEpisodes.items) {
+						relevantEpisodes = allEpisodes.items.filter((item) =>
+							item._categories.some((cat) => (cat.feed_title === 'Everything else' ? false : true))
+						);
+						everythingElseEpisodes = allEpisodes.items.filter((item) =>
+							item._categories.some((cat) => cat.feed_title === 'Everything else')
+						);
+
+						// Check stopping conditions
+						const categorisedCount = allEpisodes.items.filter(
+							(item) => item._categories && item._categories.length > 0
+						).length;
+						const totalCount = allEpisodes.items.length;
+
+						// All items have categories
+						if (categorisedCount === totalCount && totalCount > 0) {
+							console.debug('All items have categories, stopping polling');
+							stopPolling();
+							return;
+						}
+
+						// Check if categorized count hasn't changed for 60 seconds
+						if (categorisedCount !== lastCategorizedCount) {
+							lastCategorizedCount = categorisedCount;
+							lastCategorizedCountTime = Date.now();
+						} else if (Date.now() - lastCategorizedCountTime > 60000) {
+							console.debug('Categorized count unchanged for 60 seconds, stopping polling');
+							stopPolling();
+							return;
+						}
+					} else {
+						console.debug(`No items in the response`, allEpisodes);
+						relevantEpisodes = [];
+						everythingElseEpisodes = [];
 					}
 				}
 
-				if (shouldStop) {
+				// Check if state changed from classifying to idle
+				if (catalogueState.state === 'idle') {
+					console.debug('State is idle, stopping polling');
 					stopPolling();
-				} else {
-					// Schedule next poll after 20 seconds
-					nextPollTime = Date.now() + 20000;
-					intervalId = setTimeout(poll, 20000);
+					return;
 				}
+
+				// Schedule next poll
+				const pollInterval = ['syncing', 'classifying'].includes(catalogueState.state)
+					? 5000
+					: 1000;
+				intervalId = setTimeout(poll, pollInterval);
+			} catch (error) {
+				console.error('Polling error:', error);
+				errorText = 'the server broke';
+				stopPolling();
 			}
 		};
 
-		countdownInterval = setInterval(async () => {
-			const now = Date.now();
-			const remaining = nextPollTime - now;
-			timeUntilNextPoll = Math.max(0, Math.floor(remaining / 1000));
-			catalogueState = await fetchCatalogueState(data.catalogue_id);
-		}, 1000);
-
-		nextPollTime = Date.now() + 20000;
 		await poll();
+	}
+
+	function stopPolling() {
+		if (intervalId) {
+			clearTimeout(intervalId);
+			intervalId = null;
+		}
+		isPolling = false;
+		console.debug('Stopped polling');
 	}
 
 	async function createCatalogueFromQueries(queryList: string[]) {
 		try {
-			isThinking = false;
 			const catalogueResponse = await fetch('/api/catalogue', {
 				method: 'POST',
 				body: JSON.stringify({
@@ -231,19 +239,18 @@
 				})
 			});
 			const catalogueResponseJSON = await catalogueResponse.json();
-			catalogueState = await fetchCatalogueState(data.catalogue_id);
+			data.catalogue_id = catalogueResponseJSON.catalogue.id;
 			console.debug('catalogueResponseJSON', catalogueResponseJSON);
 			const newURL = new URL($page.url);
 			newURL.searchParams.set('catalogue_id', catalogueResponseJSON.catalogue.id);
 			goto(newURL);
 			console.debug(`Going to start fetching data`);
 			await fetchMegaCatalogue(catalogueResponseJSON.catalogue.id);
-			await pollRelevantEpisodesFeed();
+			await startPolling();
 		} catch (error) {
 			console.error('Search request failed:', error);
 			errorText = 'The server broke.';
 		} finally {
-			isThinking = false;
 			activeTab = 'search';
 		}
 	}
@@ -265,15 +272,16 @@
 	<Tabs.Root value={activeTab} class="w-full">
 		<div class="flex w-full">
 			<Tabs.List class="mx-auto">
-				<Tabs.Trigger value="think">1. think</Tabs.Trigger>
+				<Tabs.Trigger value="think">1. <Orbit class="mx-2 w-4" /> think</Tabs.Trigger>
 				<Tabs.Trigger value="search">
 					<div class="flex flex-row gap-2">
-						2. <span class={catalogueState.state === 'syncing' ? pulsingClasses : ''}>search</span>
-						+
+						2.<Search class="mx-2 w-4" />
+						<span class={catalogueState.state === 'syncing' ? pulsingClasses : ''}>search</span>
+						+ <ChartCandlestick class="mx-2 w-4" />
 						<span class={catalogueState.state === 'classifying' ? pulsingClasses : ''}>select</span>
 					</div>
 				</Tabs.Trigger>
-				<Tabs.Trigger value="subscribe">3. subscribe</Tabs.Trigger>
+				<Tabs.Trigger value="subscribe">3. <Podcast class="mx-2 w-4" />subscribe</Tabs.Trigger>
 			</Tabs.List>
 		</div>
 		<Tabs.Content value="think"><Markdown content={thinkingAboutQueries} /></Tabs.Content>
@@ -283,7 +291,6 @@
 					<Badge variant="secondary">{query}</Badge>
 				{/each}
 			</div>
-			<h2 class="mx-auto mt-4 text-center text-lg font-medium">selected for you</h2>
 			{#if relevantEpisodes === null || (relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length === 0)}
 				<div class="flex w-full flex-col items-center justify-center gap-4 p-4">
 					<div class="flex w-full animate-pulse flex-col gap-6 opacity-50">
@@ -350,7 +357,6 @@
 			{/if}
 			<Subscribe {relevantEpisodes} {relevantFeedID} />
 			<div class="">
-				<h2 class="mx-auto mt-4 text-center text-lg font-medium">everything else</h2>
 				{#if relevantEpisodes === null || everythingElseEpisodes === null}{:else if everythingElseEpisodes.length > 0}
 					<div class="my-8 grid gap-6">
 						{#each everythingElseEpisodes as episode}
