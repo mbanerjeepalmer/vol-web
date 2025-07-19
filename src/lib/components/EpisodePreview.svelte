@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
-	import { ChevronDown, ChevronUp } from 'lucide-svelte';
+	import { ChevronDown, ChevronUp, ThumbsUp, ThumbsDown } from 'lucide-svelte';
 	import type { EpisodeRatings, JSONFeedItem } from '$lib/types';
 
 	function formatDescription(text: string): string {
@@ -52,13 +52,20 @@
 					{episode.title}
 				</h3>
 			{/if}
-			{#if episode._sources}
-				{#each episode._sources as source}
-					<Badge variant="secondary" class="w-fit border-none text-xs font-light">
-						{source.feed_title}
-					</Badge>
-				{/each}
-			{/if}
+			<div class="flex w-full flex-row items-center gap-2">
+				{#if episode._sources}
+					{#each episode._sources as source}
+						<Badge variant="secondary" class="w-fit border-none text-xs font-light">
+							{source.feed_title}
+						</Badge>
+					{/each}
+				{/if}
+				{#if episode._categories?.some((cat) => cat.feed_title === 'Everything else')}
+					<ThumbsDown class="h-4 text-fuchsia-500" />
+				{:else}
+					<ThumbsUp class="h-4 text-green-500" />
+				{/if}
+			</div>
 		</div>
 	</div>
 	<div class="flex flex-row items-center justify-between gap-2 px-4"></div>

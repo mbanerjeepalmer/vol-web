@@ -12,7 +12,7 @@
 	import { page } from '$app/stores';
 	import * as Tabs from '$lib/components/ui/tabs/index';
 	import Subscribe from '$lib/components/Subscribe.svelte';
-	import { ChartCandlestick, Orbit, Podcast, Search } from 'lucide-svelte';
+	import { ChartCandlestick, Orbit, Podcast, Search, ThumbsUp, ThumbsDown } from 'lucide-svelte';
 
 	export let data: PageData;
 
@@ -351,7 +351,9 @@
 			{:else if relevantEpisodes.length > 0}
 				<div class="my-8 grid gap-6">
 					{#each relevantEpisodes as episode, index}
-						<EpisodePreview {episode} />
+						<div class="relative">
+							<EpisodePreview {episode} />
+						</div>
 					{/each}
 				</div>
 			{/if}
