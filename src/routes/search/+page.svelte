@@ -155,7 +155,9 @@
 								catalogue_id: data.catalogue_id
 							},
 							query: {
-								format: 'json_feed'
+								format: 'json_feed',
+								count: 50,
+								sort: 'desc'
 							}
 						}
 					}
@@ -275,12 +277,13 @@
 			</Tabs.List>
 		</div>
 		<Tabs.Content value="think"><Markdown content={thinkingAboutQueries} /></Tabs.Content>
-		<Tabs.Content value="search"
+		<Tabs.Content value="search" class="flex flex-col"
 			><div class="my-4 min-h-16 w-full text-center leading-8">
 				{#each queries as query}
 					<Badge variant="secondary">{query}</Badge>
 				{/each}
 			</div>
+			<h2 class="mx-auto mt-4 text-center text-lg font-medium">selected for you</h2>
 			{#if relevantEpisodes === null || (relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length === 0)}
 				<div class="flex w-full flex-col items-center justify-center gap-4 p-4">
 					<div class="flex w-full animate-pulse flex-col gap-6 opacity-50">
@@ -346,15 +349,9 @@
 				</div>
 			{/if}
 			<Subscribe {relevantEpisodes} {relevantFeedID} />
-
-			<div class="mt-12 opacity-80 hover:opacity-100">
-				{#if relevantEpisodes === null}{:else if everythingElseEpisodes === null}
-					<Button
-						class="mx-auto w-full underline underline-offset-4"
-						variant="link"
-						onclick={async () => await fetchEverythingElse()}>everything else... ⏷</Button
-					>
-				{:else if everythingElseEpisodes.length > 0}
+			<div class="">
+				<h2 class="mx-auto mt-4 text-center text-lg font-medium">everything else</h2>
+				{#if relevantEpisodes === null || everythingElseEpisodes === null}{:else if everythingElseEpisodes.length > 0}
 					<div class="my-8 grid gap-6">
 						{#each everythingElseEpisodes as episode}
 							<EpisodePreview {episode} />
