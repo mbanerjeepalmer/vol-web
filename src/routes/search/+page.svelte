@@ -27,7 +27,6 @@
 	let queries: string[] = [];
 	let intervalId: NodeJS.Timeout | null;
 	// TODO toast library
-	let hasCopied = false;
 	let nextPollTime: number;
 	let timeUntilNextPoll: number;
 	let countdownInterval: NodeJS.Timeout | null;

@@ -16,11 +16,13 @@
 		<div class="flex flex-row gap-x-1">
 			<Input class="h-full" value={`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`} />
 			<Button
-				on:click={() => {
-					navigator.clipboard.writeText(`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`);
+				onclick={async () => {
+					await navigator.clipboard.writeText(
+						`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`
+					);
 					hasCopied = true;
 				}}
-				class="h-full"
+				class="h-full w-28"
 				variant="outline">{hasCopied ? 'copied' : 'copy'}</Button
 			>
 		</div>
