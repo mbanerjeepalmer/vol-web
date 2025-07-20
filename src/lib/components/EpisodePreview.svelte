@@ -32,7 +32,7 @@
 <article
 	in:receive={{ key: episode.id }}
 	out:send={{ key: episode.id }}
-	class="flex flex-col gap-4 rounded-md border border-border"
+	class="flex flex-col gap-4 rounded-xl border border-border"
 >
 	<!-- Fixed square aspect ratio episode.image.
 		 Flex on the div to the right so only that grows/shrinks.
@@ -69,11 +69,20 @@
 						</Badge>
 					{/each}
 				{/if}
-				{#if episode._categories?.some((cat) => cat.feed_title === 'Everything else')}
-					<ThumbsDown class="h-4 text-fuchsia-500" />
-				{:else}
-					<ThumbsUp class="h-4 text-green-500" />
-				{/if}
+			</div>
+			<div class="mx-2 mt-4 flex gap-4">
+				<ThumbsUp
+					class="h-6 {episode._categories?.some(
+						(cat) => cat.feed_title && cat.feed_title !== 'Everything else'
+					)
+						? 'text-green-500'
+						: 'opacity-40'}"
+				/>
+				<ThumbsDown
+					class="h-6 {episode._categories?.some((cat) => cat.feed_title === 'Everything else')
+						? 'text-fuchsia-500'
+						: 'opacity-40'}"
+				/>
 			</div>
 		</div>
 	</div>
