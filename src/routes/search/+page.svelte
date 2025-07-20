@@ -166,6 +166,8 @@
 						everythingElseEpisodes = allEpisodes.items.filter((item) =>
 							item._categories.some((cat) => cat.feed_title === 'Everything else')
 						);
+						relevantEpisodes = [...relevantEpisodes];
+						everythingElseEpisodes = [...everythingElseEpisodes];
 
 						// Check stopping conditions
 						const categorisedCount = allEpisodes.items.filter(
