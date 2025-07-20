@@ -29,7 +29,7 @@
 	let queries: string[] = $state([]);
 	let intervalId: NodeJS.Timeout | null;
 	let catalogueState = $state({ state: '' });
-	let activeTab: string = $state();
+	let activeTab: string = $state('think');
 	const pulsingClasses =
 		'animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text text-transparent';
 
@@ -272,9 +272,7 @@
 	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
 		{data.prompt}
 	</h1>
-
 	<p class="mx-auto max-w-lg text-center text-xs text-red-600">{errorText}</p>
-
 	<Tabs.Root value={activeTab} class="w-full">
 		<div class="flex w-full">
 			<Tabs.List class="mx-auto">
@@ -301,8 +299,8 @@
 			</Tabs.List>
 		</div>
 		<Tabs.Content value="think"><Markdown content={thinkingAboutQueries} /></Tabs.Content>
-		<Tabs.Content value="search" class="flex flex-col"
-			><div class="my-4 min-h-16 w-full text-center leading-8">
+		<Tabs.Content value="search">
+			<div class="my-4 min-h-16 w-full text-center leading-8">
 				{#each queries as query}
 					<Badge variant="secondary">{query}</Badge>
 				{/each}
@@ -381,11 +379,9 @@
 							<EpisodePreview {episode} />
 						{/each}
 					</div>
-				{:else}
-					<div class="w-full text-center"><p>nothing else.</p></div>
-				{/if}
-			</div></Tabs.Content
-		>
+				{:else}{/if}
+			</div>
+		</Tabs.Content>
 		<Tabs.Content value="subscribe"><Subscribe {relevantEpisodes} {relevantFeedID} /></Tabs.Content>
 	</Tabs.Root>
 </div>
