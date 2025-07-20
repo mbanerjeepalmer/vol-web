@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { send, receive } from '$lib/utils';
 	import { Badge } from '$lib/components/ui/badge';
 	import { ChevronDown, ChevronUp, ThumbsUp, ThumbsDown } from 'lucide-svelte';
 	import type { EpisodeRatings, JSONFeedItem } from '$lib/types';
@@ -28,7 +29,11 @@
 	}
 </script>
 
-<article class="flex flex-col gap-4 rounded-md border border-border">
+<article
+	in:receive={{ key: episode.id }}
+	out:send={{ key: episode.id }}
+	class="flex flex-col gap-4 rounded-md border border-border"
+>
 	<!-- Fixed square aspect ratio episode.image.
 		 Flex on the div to the right so only that grows/shrinks.
 		  -->

@@ -39,6 +39,10 @@ export interface JSONFeedItem {
     _sources?: Array<{
         feed_url: string; feed_title: string
     }>;
+    _categories?: Array<{
+        feed_url: string;
+        feed_title: string;
+    }>
     authors: Array<{
         name: string;
         url?: string;

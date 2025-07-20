@@ -2,6 +2,10 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 import type { TransitionConfig } from "svelte/transition";
+import { quintOut } from 'svelte/easing';
+import { crossfade } from 'svelte/transition';
+
+
 
 const MAX_STORED_SEARCHES = 10;
 
@@ -62,3 +66,21 @@ export const flyAndScale = (
 		easing: cubicOut
 	};
 };
+
+export const [send, receive] = crossfade({
+	duration: (d) => Math.sqrt(d * 200),
+
+	fallback(node, params) {
+		const style = getComputedStyle(node);
+		const transform = style.transform === 'none' ? '' : style.transform;
+
+		return {
+			duration: 600,
+			easing: quintOut,
+			css: (t) => `
+				transform: ${transform} scale(${t});
+				opacity: ${t}
+			`
+		};
+	}
+});

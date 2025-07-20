@@ -12,7 +12,8 @@
 	import { page } from '$app/stores';
 	import * as Tabs from '$lib/components/ui/tabs/index';
 	import Subscribe from '$lib/components/Subscribe.svelte';
-	import { ChartCandlestick, Orbit, Podcast, Search, ThumbsUp, ThumbsDown } from 'lucide-svelte';
+	import { ChartCandlestick, Orbit, Podcast, Search } from 'lucide-svelte';
+	import { fade } from 'svelte/transition';
 
 	interface Props {
 		data: PageData;
@@ -21,10 +22,34 @@
 	let { data = $bindable() }: Props = $props();
 
 	let errorText = $state('');
+	let episodes: JSONFeedItem[] | null = $state(null);
 	let relevantFeedID = $state('');
-	let relevantEpisodes: JSONFeedItem[] | null = $state(null);
+	let relevantEpisodes: JSONFeedItem[] | null = $derived.by(() => {
+		if (episodes === null) {
+			return null;
+		} else {
+			return episodes.filter((item) =>
+				item._categories?.some((category) => category.feed_title !== 'Everything else')
+			);
+		}
+	});
 	let everythingElseFeedID = '';
-	let everythingElseEpisodes: JSONFeedItem[] | null = $state(null);
+	let everythingElseEpisodes: JSONFeedItem[] | null = $derived.by(() => {
+		if (episodes === null) {
+			return null;
+		} else {
+			return episodes.filter((item) =>
+				item._categories?.some((category) => category.feed_title === 'Everything else')
+			);
+		}
+	});
+	let unclassifiedEpisodes: JSONFeedItem[] | null = $derived.by(() => {
+		if (episodes === null) {
+			return null;
+		} else {
+			return episodes.filter((item) => !item._categories || item._categories.length === 0);
+		}
+	});
 	let thinkingAboutQueries = $state('');
 	let queries: string[] = $state([]);
 	let intervalId: NodeJS.Timeout | null;
@@ -36,8 +61,8 @@
 	let isProcessingQueue = false;
 
 	// Tracking for stopping conditions
-	let lastCategorizedCount = 0;
-	let lastCategorizedCountTime = Date.now();
+	let lastCategorisedCount = 0;
+	let lastCategorisedCountTime = Date.now();
 	let isPolling = false;
 
 	const client = createClient<paths>({
@@ -164,14 +189,7 @@
 					}
 
 					if (allEpisodes.items) {
-						relevantEpisodes = allEpisodes.items.filter((item) =>
-							item._categories.some((cat) => (cat.feed_title === 'Everything else' ? false : true))
-						);
-						everythingElseEpisodes = allEpisodes.items.filter((item) =>
-							item._categories.some((cat) => cat.feed_title === 'Everything else')
-						);
-						relevantEpisodes = [...relevantEpisodes];
-						everythingElseEpisodes = [...everythingElseEpisodes];
+						episodes = allEpisodes.items;
 
 						// Check stopping conditions
 						const categorisedCount = allEpisodes.items.filter(
@@ -186,12 +204,12 @@
 							return;
 						}
 
-						// Check if categorized count hasn't changed for 60 seconds
-						if (categorisedCount !== lastCategorizedCount) {
-							lastCategorizedCount = categorisedCount;
-							lastCategorizedCountTime = Date.now();
-						} else if (Date.now() - lastCategorizedCountTime > 60000) {
-							console.debug('Categorized count unchanged for 60 seconds, stopping polling');
+						// Check if categorised count hasn't changed for 60 seconds
+						if (categorisedCount !== lastCategorisedCount) {
+							lastCategorisedCount = categorisedCount;
+							lastCategorisedCountTime = Date.now();
+						} else if (Date.now() - lastCategorisedCountTime > 60000) {
+							console.debug('Categorised count unchanged for 60 seconds, stopping polling');
 							stopPolling();
 							return;
 						}
@@ -255,7 +273,7 @@
 			await startPolling();
 		} catch (error) {
 			console.error('Search request failed:', error);
-			errorText = 'The server broke.';
+			errorText = 'the server broke.';
 		} finally {
 			activeTab = 'search';
 		}
@@ -305,77 +323,85 @@
 					<Badge variant="secondary">{query}</Badge>
 				{/each}
 			</div>
-			{#if relevantEpisodes === null || (relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length === 0)}
-				<div class="flex w-full flex-col items-center justify-center gap-4 p-4">
-					<div class="flex w-full animate-pulse flex-col gap-6 opacity-50">
-						<EpisodePreview
-							episode={{
-								title: '',
-								attachments: [],
-								content_html: '',
-								image: '',
-								authors: [],
-								date_published: '',
-								id: '',
-								url: '',
-								summary: ''
-							}}
-						/>
-						<EpisodePreview
-							episode={{
-								title: '',
-								attachments: [],
-								content_html: '',
-								image: '',
-								authors: [],
-								date_published: '',
-								id: '',
-								url: '',
-								summary: ''
-							}}
-						/>
-						<EpisodePreview
-							episode={{
-								title: '',
-								attachments: [],
-								content_html: '',
-								image: '',
-								authors: [],
-								date_published: '',
-								id: '',
-								url: '',
-								summary: ''
-							}}
-						/>
-						<EpisodePreview
-							episode={{
-								title: '',
-								attachments: [],
-								content_html: '',
-								image: '',
-								authors: [],
-								date_published: '',
-								id: '',
-								url: '',
-								summary: ''
-							}}
-						/>
-					</div>
+			{#if episodes === null}
+				<div out:fade class="flex w-full animate-pulse flex-col gap-6 opacity-50">
+					<EpisodePreview
+						episode={{
+							title: '',
+							attachments: [],
+							content_html: '',
+							image: '',
+							authors: [],
+							date_published: '',
+							id: '',
+							url: '',
+							summary: ''
+						}}
+					/>
+					<EpisodePreview
+						episode={{
+							title: '',
+							attachments: [],
+							content_html: '',
+							image: '',
+							authors: [],
+							date_published: '',
+							id: '',
+							url: '',
+							summary: ''
+						}}
+					/>
+					<EpisodePreview
+						episode={{
+							title: '',
+							attachments: [],
+							content_html: '',
+							image: '',
+							authors: [],
+							date_published: '',
+							id: '',
+							url: '',
+							summary: ''
+						}}
+					/>
+					<EpisodePreview
+						episode={{
+							title: '',
+							attachments: [],
+							content_html: '',
+							image: '',
+							authors: [],
+							date_published: '',
+							id: '',
+							url: '',
+							summary: ''
+						}}
+					/>
 				</div>
-			{:else if relevantEpisodes.length > 0}
+			{/if}
+			{#if relevantEpisodes !== null}
 				<div class="my-8 grid gap-6">
-					{#each relevantEpisodes as episode, index}
+					{#each relevantEpisodes as episode (episode.id)}
 						<div class="relative">
 							<EpisodePreview {episode} />
 						</div>
 					{/each}
 				</div>
 			{/if}
+			<div>
+				{#if unclassifiedEpisodes !== null}
+					<div class="my-8 grid gap-6">
+						{#each unclassifiedEpisodes as episode (episode.id)}
+							<EpisodePreview {episode} />
+						{/each}
+					</div>
+				{/if}
+			</div>
 			<Subscribe {relevantEpisodes} {relevantFeedID} />
 			<div class="">
-				{#if relevantEpisodes === null || everythingElseEpisodes === null}{:else if everythingElseEpisodes.length > 0}
+				{#if everythingElseEpisodes !== null}
 					<div class="my-8 grid gap-6">
-						{#each everythingElseEpisodes as episode}
+						{#each everythingElseEpisodes as episode (episode.id)}
 							<EpisodePreview {episode} />
 						{/each}
 					</div>
