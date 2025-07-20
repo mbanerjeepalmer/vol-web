@@ -9,11 +9,11 @@
 	import { PUBLIC_ZACUSCA_API_BASE } from '$env/static/public';
 	import type { components, paths } from '$lib/zacusca_api_types';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import * as Tabs from '$lib/components/ui/tabs/index';
 	import Subscribe from '$lib/components/Subscribe.svelte';
 	import { ChartCandlestick, Orbit, Podcast, Search } from 'lucide-svelte';
-	import { fade } from 'svelte/transition';
+	import EmptyEpisodes from '$lib/components/EmptyEpisodes.svelte';
 
 	interface Props {
 		data: PageData;
@@ -156,82 +156,78 @@
 				// Always fetch catalogue state
 				catalogueState = await fetchCatalogueState(data.catalogue_id);
 
-				// Check if we should stop due to error state
-				if (catalogueState.state === 'errored') {
-					errorText = 'the server broke';
+				// Fetch episodes if we're syncing or classifying
+
+				const { data: allEpisodes, error: allEpisodesError } = await client.GET(
+					'/catalogue/{catalogue_id}/item',
+					{
+						params: {
+							path: {
+								catalogue_id: data.catalogue_id
+							},
+							query: {
+								format: 'json_feed',
+								count: 50,
+								sort: 'desc'
+							}
+						}
+					}
+				);
+
+				if (allEpisodesError) {
+					console.error(allEpisodesError);
+					errorText = "couldn't get episodes from the server";
 					stopPolling();
 					return;
 				}
 
-				// Fetch episodes if we're syncing or classifying
-				if (['syncing', 'classifying', 'idle'].includes(catalogueState.state)) {
-					const { data: allEpisodes, error: allEpisodesError } = await client.GET(
-						'/catalogue/{catalogue_id}/item',
-						{
-							params: {
-								path: {
-									catalogue_id: data.catalogue_id
-								},
-								query: {
-									format: 'json_feed',
-									count: 50,
-									sort: 'desc'
-								}
-							}
-						}
-					);
+				if (allEpisodes.items) {
+					episodes = allEpisodes.items;
 
-					if (allEpisodesError) {
-						console.error(allEpisodesError);
-						errorText = 'the server broke';
+					// Check stopping conditions
+					const categorisedCount = allEpisodes.items.filter(
+						(item) => item._categories && item._categories.length > 0
+					).length;
+					const totalCount = allEpisodes.items.length;
+
+					if (categorisedCount === totalCount && totalCount > 0) {
+						console.debug(`All ${totalCount} items have categories, stopping polling`);
 						stopPolling();
 						return;
 					}
 
-					if (allEpisodes.items) {
-						episodes = allEpisodes.items;
-
-						// Check stopping conditions
-						const categorisedCount = allEpisodes.items.filter(
-							(item) => item._categories && item._categories.length > 0
-						).length;
-						const totalCount = allEpisodes.items.length;
-
-						// All items have categories
-						if (categorisedCount === totalCount && totalCount > 0) {
-							console.debug('All items have categories, stopping polling');
-							stopPolling();
-							return;
-						}
-
-						// Check if categorised count hasn't changed for 60 seconds
-						if (categorisedCount !== lastCategorisedCount) {
-							lastCategorisedCount = categorisedCount;
-							lastCategorisedCountTime = Date.now();
-						} else if (Date.now() - lastCategorisedCountTime > 60000) {
-							console.debug('Categorised count unchanged for 60 seconds, stopping polling');
-							stopPolling();
-							return;
-						}
-					} else {
-						console.debug(`No items in the response`, allEpisodes);
-						relevantEpisodes = [];
-						everythingElseEpisodes = [];
+					if (categorisedCount !== lastCategorisedCount) {
+						lastCategorisedCount = categorisedCount;
+						lastCategorisedCountTime = Date.now();
+					} else if (Date.now() - lastCategorisedCountTime > 60000) {
+						console.debug('Categorised count unchanged for 60 seconds, stopping polling');
+						stopPolling();
+						return;
 					}
+				} else {
+					console.debug(`No items in the response`, allEpisodes);
+					relevantEpisodes = [];
+					everythingElseEpisodes = [];
 				}
 
-				// Check if state changed from classifying to idle
-				if (catalogueState.state === 'idle') {
-					console.debug('State is idle, stopping polling');
-					stopPolling();
-					return;
+				catalogueState = await fetchCatalogueState(data.catalogue_id);
+				switch (catalogueState.state) {
+					case 'idle':
+						console.debug("State is idle, we assume we're done, stopping polling");
+						stopPolling();
+						return;
+					case 'errored':
+						console.error('There was an error with the catalaogue');
+						errorText = 'something broke on the server';
+						stopPolling();
+						return;
 				}
 
 				// Schedule next poll
-				const pollInterval = ['syncing', 'classifying'].includes(catalogueState.state)
-					? 5000
-					: 1000;
-				intervalId = setTimeout(poll, pollInterval);
+				// const pollInterval = ['syncing', 'classifying'].includes(catalogueState.state)
+				// 	? 5000
+				// 	: 1000;
+				intervalId = setTimeout(poll, 2000);
 			} catch (error) {
 				console.error('Polling error:', error);
 				errorText = 'the server broke';
@@ -299,10 +295,8 @@
 					<div class="flex w-fit flex-row">
 						2.
 						<span
-							class={[
-								{ pulsingClasses: catalogueState.state === 'classifying' },
-								'mx-2 flex flex-row'
-							]}><Search class="mx-2 w-4" />search</span
+							class={[{ pulsingClasses: catalogueState.state === 'syncing' }, 'mx-2 flex flex-row']}
+							><Search class="mx-2 w-4" />search</span
 						>
 						+
 						<span
@@ -324,60 +318,7 @@
 				{/each}
 			</div>
 			{#if episodes === null}
-				<div out:fade class="flex w-full animate-pulse flex-col gap-6 opacity-50">
-					<EpisodePreview
-						episode={{
-							title: '',
-							attachments: [],
-							content_html: '',
-							image: '',
-							authors: [],
-							date_published: '',
-							id: '',
-							url: '',
-							summary: ''
-						}}
-					/>
-					<EpisodePreview
-						episode={{
-							title: '',
-							attachments: [],
-							content_html: '',
-							image: '',
-							authors: [],
-							date_published: '',
-							id: '',
-							url: '',
-							summary: ''
-						}}
-					/>
-					<EpisodePreview
-						episode={{
-							title: '',
-							attachments: [],
-							content_html: '',
-							image: '',
-							authors: [],
-							date_published: '',
-							id: '',
-							url: '',
-							summary: ''
-						}}
-					/>
-					<EpisodePreview
-						episode={{
-							title: '',
-							attachments: [],
-							content_html: '',
-							image: '',
-							authors: [],
-							date_published: '',
-							id: '',
-							url: '',
-							summary: ''
-						}}
-					/>
-				</div>
+				<EmptyEpisodes />
 			{/if}
 			{#if relevantEpisodes !== null}
 				<div class="my-8 grid gap-6">
