@@ -14,18 +14,22 @@
 	import Subscribe from '$lib/components/Subscribe.svelte';
 	import { ChartCandlestick, Orbit, Podcast, Search, ThumbsUp, ThumbsDown } from 'lucide-svelte';
 
-	export let data: PageData;
+	interface Props {
+		data: PageData;
+	}
 
-	let errorText = '';
-	let relevantFeedID = '';
-	let relevantEpisodes: JSONFeedItem[] | null = null;
+	let { data = $bindable() }: Props = $props();
+
+	let errorText = $state('');
+	let relevantFeedID = $state('');
+	let relevantEpisodes: JSONFeedItem[] | null = $state(null);
 	let everythingElseFeedID = '';
-	let everythingElseEpisodes: JSONFeedItem[] | null = null;
-	let thinkingAboutQueries = '';
-	let queries: string[] = [];
+	let everythingElseEpisodes: JSONFeedItem[] | null = $state(null);
+	let thinkingAboutQueries = $state('');
+	let queries: string[] = $state([]);
 	let intervalId: NodeJS.Timeout | null;
-	let catalogueState = { state: '' };
-	let activeTab: string;
+	let catalogueState = $state({ state: '' });
+	let activeTab: string = $state();
 	const pulsingClasses =
 		'animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text text-transparent';
 

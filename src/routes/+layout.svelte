@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import posthog from 'posthog-js';
 	import { browser } from '$app/environment';
@@ -15,7 +15,7 @@
 </script>
 
 <div class="flex min-h-screen flex-col">
-	{#if $page.url.pathname !== '/'}
+	{#if page.url.pathname !== '/'}
 		<header class="container mx-auto p-4 lg:mt-8">
 			<div class="flex items-center justify-center">
 				<a href="/">

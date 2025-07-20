@@ -7,11 +7,15 @@
 		return text.replace(/\n/g, '<br>');
 	}
 	import { onMount } from 'svelte';
-	export let episode: JSONFeedItem;
+	interface Props {
+		episode: JSONFeedItem;
+	}
 
-	let expanded = false;
+	let { episode }: Props = $props();
+
+	let expanded = $state(false);
 	let hasMore = false;
-	let descriptionElem: HTMLElement;
+	let descriptionElem: HTMLElement = $state();
 
 	onMount(() => {
 		if (expanded) {
@@ -89,7 +93,7 @@
 		<div class="bg-slate-100 px-4 pt-4">
 			<button
 				bind:this={descriptionElem}
-				on:click={toggleExpanded}
+				onclick={toggleExpanded}
 				class="w-full text-left"
 				aria-expanded={expanded}
 				aria-controls="episode-description"
