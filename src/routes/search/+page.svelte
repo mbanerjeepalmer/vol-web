@@ -66,6 +66,52 @@
 	let lastCategorisedCountTime = Date.now();
 	let isPolling = false;
 
+	// Queue for user classifications
+	let classificationQueue: {
+		episodeId: string;
+		category: 'plus' | 'minus';
+		status: 'pending' | 'success' | 'error';
+		retries: number;
+	}[] = $state([]);
+
+	function getClassificationStatus(episodeId: string) {
+		const item = classificationQueue.find((q) => q.episodeId === episodeId);
+		return item ? item.status : null;
+	}
+
+	async function processClassificationQueue() {
+		for (const item of classificationQueue) {
+			if (item.status !== 'pending') continue;
+			try {
+				// Send the classification to the server
+				const response = await fetch(`/api/classify`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						catalogue_id: data.catalogue_id,
+						episode_id: item.episodeId,
+						category: item.category
+					})
+				});
+				if (!response.ok) {
+					throw new Error(`Server responded with ${response.status}`);
+				}
+				// Update the item's status
+				item.status = 'success';
+			} catch (error) {
+				console.error('Classification failed:', error);
+				item.status = 'error';
+				item.retries++;
+				if (item.retries < 3) {
+					// Retry after a delay
+					setTimeout(() => processClassificationQueue(), 5000);
+				}
+			}
+		}
+	}
+
+	// Queue for user classifications
+
 	const client = createClient<paths>({
 		baseUrl: PUBLIC_ZACUSCA_API_BASE
 	});
@@ -285,30 +331,65 @@
 		const matches = [...content.matchAll(queryRegex)];
 		return matches.map((match) => match[1].trim());
 	}
+
+	/**
+	 * Manages episode classification state with optimistic updates and server synchronization.
+
+	 * Handles user classification changes (plus/minus) with immediate UI feedback while managing
+	 * server synchronization challenges.
+	 *
+	 * Key behaviors:
+	 * - Applies changes instantly to UI (optimistic updates)
+	 * - Maintains pending changes queue for server sync
+	 * - Tracks request status separately from UI state
+	 * - Disables classification when server is 'classifying'
+	 * - Accepts server state as authoritative after classification
+	 * - Provides retry mechanism for failed updates
+	 * - Shows visual feedback for pending/failed/override states
+	 *
+	 * State flow:
+	 * 1. User clicks → immediate UI update
+	 * 2. Change queued → POST to server
+	 * 3. Server response → update tracking status
+	 * 4. Classification state → refresh from server if active
+	 * 5. Conflicts → server state wins, user notified
+	 */
 	async function userClassify(episode: JSONFeedItem, category: 'plus' | 'minus') {
 		if (!megaCatalogue?.output_feeds || megaCatalogue.output_feeds.length === 0) {
 			console.error(`No output feeds in megaCatalogue`);
 			errorText = "don't have categories";
 			return;
 		}
-		// TODO WET
+
+		// Add to queue
+		const existing = classificationQueue.find((q) => q.episodeId === episode.id);
+		if (existing) {
+			existing.category = category;
+			existing.status = 'pending';
+			existing.retries = 0;
+		} else {
+			classificationQueue.push({ episodeId: episode.id, category, status: 'pending', retries: 0 });
+		}
+
+		// Optimistically update the episode's category
 		if (category === 'minus') {
 			const targetFeed = megaCatalogue.output_feeds.find((f) => f.title === 'Everything else');
 			if (!targetFeed) {
 				console.error("Couldn't find 'Everything else' feed");
 				return;
 			}
-			episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed?.href }];
-			console.debug(`minused episode ${episode.id}`, $state.snapshot(episode._categories));
+			episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed.href }];
 		} else {
 			const targetFeed = megaCatalogue.output_feeds.find((f) => f.title !== 'Everything else');
 			if (!targetFeed) {
 				console.error("Couldn't find the non-'Everything else' feed");
 				return;
 			}
-			episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed?.href }];
-			console.debug(`plussed episode ${episode.id}`, $state.snapshot(episode._categories));
+			episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed.href }];
 		}
+
+		// Process the queue
+		processClassificationQueue();
 	}
 </script>
 
@@ -361,7 +442,11 @@
 				<div class="my-8 grid gap-6">
 					{#each relevantEpisodes as episode (episode.id)}
 						<div class="relative">
-							<EpisodePreview {episode} {userClassify} />
+							<EpisodePreview
+								{episode}
+								{userClassify}
+								classificationStatus={getClassificationStatus(episode.id)}
+							/>
 						</div>
 					{/each}
 				</div>

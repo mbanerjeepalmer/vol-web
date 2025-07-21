@@ -4,9 +4,12 @@
 	import EpisodeCore from './EpisodeCore.svelte';
 	interface Props {
 		episode: JSONFeedItem;
+		userClassify: (episode: JSONFeedItem, category: 'plus' | 'minus') => Promise<void>;
+		classificationStatus: 'pending' | 'success' | 'error' | null;
+		serverClassifying: boolean;
 	}
 
-	let { episode, userClassify }: Props = $props();
+	let { episode, userClassify, classificationStatus, serverClassifying }: Props = $props();
 </script>
 
 <article
@@ -14,5 +17,5 @@
 	out:send={{ key: episode.id }}
 	class="flex flex-col gap-4 rounded-xl border border-border"
 >
-	<EpisodeCore {episode} {userClassify} />
+	<EpisodeCore {episode} {userClassify} classificationStatus={classificationStatus} />
 </article>

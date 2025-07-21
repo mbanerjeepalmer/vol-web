@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
-	import { ChevronDown, ChevronUp, CircleMinus, CirclePlus } from 'lucide-svelte';
+	import { ChevronDown, ChevronUp, CircleMinus, CirclePlus, Loader, RefreshCw } from 'lucide-svelte';
 	import type { JSONFeedItem } from '$lib/types';
 	import { onMount } from 'svelte';
 
@@ -9,9 +9,11 @@
 	}
 	interface Props {
 		episode: JSONFeedItem;
+		userClassify: (episode: JSONFeedItem, category: 'plus' | 'minus') => Promise<void>;
+		classificationStatus: 'pending' | 'success' | 'error' | null;
 	}
 
-	let { episode, userClassify }: Props = $props();
+	let { episode, userClassify, classificationStatus }: Props = $props();
 
 	let expanded = $state(false);
 	let hasMore = false;
@@ -63,22 +65,38 @@
 		</div>
 		<div class="mx-2 mt-4 flex min-h-10 gap-4">
 			{#if episode.id}
-				<button onclick={async () => userClassify(episode, 'plus')}>
-					<CirclePlus
-						class="h-6 {episode._categories?.some(
-							(cat) => cat.feed_title && cat.feed_title !== 'Everything else'
-						)
-							? 'text-green-500'
-							: 'opacity-40'}"
-					/></button
-				>
-				<button onclick={async () => userClassify(episode, 'minus')}>
-					<CircleMinus
-						class="h-6 {episode._categories?.some((cat) => cat.feed_title === 'Everything else')
-							? 'text-fuchsia-500'
-							: 'opacity-40'}"
-					/></button
-				>
+				{#if classificationStatus === 'pending'}
+					<button disabled>
+						<Loader class="animate-spin h-6" />
+					</button>
+					<button disabled>
+						<Loader class="animate-spin h-6" />
+					</button>
+				{:elseif classificationStatus === 'error'}
+					<button onclick={async () => userClassify(episode, 'plus')}>
+						<RefreshCw class="h-6 text-red-500" />
+					</button>
+					<button onclick={async () => userClassify(episode, 'minus')}>
+						<RefreshCw class="h-6 text-red-500" />
+					</button>
+				{:else}
+					<button onclick={async () => userClassify(episode, 'plus')}>
+						<CirclePlus
+							class="h-6 {episode._categories?.some(
+								(cat) => cat.feed_title && cat.feed_title !== 'Everything else'
+							)
+								? 'text-green-500'
+								: 'opacity-40'}"
+						/></button
+					>
+					<button onclick={async () => userClassify(episode, 'minus')}>
+						<CircleMinus
+							class="h-6 {episode._categories?.some((cat) => cat.feed_title === 'Everything else')
+								? 'text-fuchsia-500'
+								: 'opacity-40'}"
+						/></button
+					>
+				{/if}
 			{/if}
 		</div>
 	</div>
