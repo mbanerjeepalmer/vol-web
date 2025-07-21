@@ -11,7 +11,7 @@
 		episode: JSONFeedItem;
 	}
 
-	let { episode }: Props = $props();
+	let { episode, userClassify }: Props = $props();
 
 	let expanded = $state(false);
 	let hasMore = false;
@@ -62,18 +62,22 @@
 			{/if}
 		</div>
 		<div class="mx-2 mt-4 flex gap-4">
-			<CirclePlus
-				class="h-6 {episode._categories?.some(
-					(cat) => cat.feed_title && cat.feed_title !== 'Everything else'
-				)
-					? 'text-green-500'
-					: 'opacity-40'}"
-			/>
-			<CircleMinus
-				class="h-6 {episode._categories?.some((cat) => cat.feed_title === 'Everything else')
-					? 'text-fuchsia-500'
-					: 'opacity-40'}"
-			/>
+			<button onclick={async () => userClassify(episode, 'plus')}>
+				<CirclePlus
+					class="h-6 {episode._categories?.some(
+						(cat) => cat.feed_title && cat.feed_title !== 'Everything else'
+					)
+						? 'text-green-500'
+						: 'opacity-40'}"
+				/></button
+			>
+			<button onclick={async () => userClassify(episode, 'minus')}>
+				<CircleMinus
+					class="h-6 {episode._categories?.some((cat) => cat.feed_title === 'Everything else')
+						? 'text-fuchsia-500'
+						: 'opacity-40'}"
+				/></button
+			>
 		</div>
 	</div>
 </div>

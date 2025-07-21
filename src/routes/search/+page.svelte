@@ -21,6 +21,7 @@
 
 	let { data = $bindable() }: Props = $props();
 
+	let megaCatalogue: components['schemas']['MegaCatalogueResponse'] | null;
 	let errorText = $state('');
 	let episodes: JSONFeedItem[] | null = $state(null);
 	let relevantFeedID = $state('');
@@ -83,11 +84,15 @@
 	async function fetchMegaCatalogue(catalogue_id: string) {
 		console.debug(`fetching Mega Catalogue ${catalogue_id}`);
 		const megaCatalogueResponse = await fetch(`/api/catalogue/${catalogue_id}`);
-		const megaCatalogueJSON: components['schemas']['MegaCatalogueResponse'] =
-			await megaCatalogueResponse.json();
-		catalogueState = { state: megaCatalogueJSON.catalogue.state };
-		data.prompt = megaCatalogueJSON.catalogue.name;
-		megaCatalogueJSON.output_feeds.forEach((f) => {
+		megaCatalogue = await megaCatalogueResponse.json();
+		if (!megaCatalogue) {
+			console.error(`megaCatalogue was`, megaCatalogue);
+			errorText = `sorry, something broke`;
+			return;
+		}
+		catalogueState = { state: megaCatalogue.catalogue.state };
+		data.prompt = megaCatalogue.catalogue.name;
+		megaCatalogue.output_feeds.forEach((f) => {
 			if (f.title === 'Everything else') {
 				console.debug(`Found 'Everything else' feed:  ${f.id}`);
 				everythingElseFeedID = f.id;
@@ -96,8 +101,8 @@
 				relevantFeedID = f.id;
 			}
 		});
-		if (megaCatalogueJSON.input_feeds.length > 0) {
-			queries = megaCatalogueJSON.input_feeds.map((f) => f.title);
+		if (megaCatalogue.input_feeds.length > 0) {
+			queries = megaCatalogue.input_feeds.map((f) => f.title);
 		}
 	}
 
@@ -280,6 +285,30 @@
 		const matches = [...content.matchAll(queryRegex)];
 		return matches.map((match) => match[1].trim());
 	}
+	async function userClassify(episode: JSONFeedItem, category: 'plus' | 'minus') {
+		if (!megaCatalogue?.output_feeds || megaCatalogue.output_feeds.length === 0) {
+			console.error(`No output feeds in megaCatalogue`);
+			errorText = "don't have categories";
+			return;
+		}
+		if (category === 'minus') {
+			const targetFeed = megaCatalogue.output_feeds.find((f) => f.title === 'Everything else');
+			if (!targetFeed) {
+				console.error("Couldn't find 'Everything else' feed");
+				return;
+			}
+			episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed?.href }];
+			console.debug(`minused episode ${episode.id}`, episode._categories);
+		} else {
+			const targetFeed = megaCatalogue.output_feeds.find((f) => f.title !== 'Everything else');
+			if (!targetFeed) {
+				console.error("Couldn't find the non-'Everything else' feed");
+				return;
+			}
+			episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed?.href }];
+			console.debug(`plussed episode ${episode.id}`, episode._categories);
+		}
+	}
 </script>
 
 <div class="mx-auto max-w-xl px-2 py-8 lg:px-4">
@@ -331,7 +360,7 @@
 				<div class="my-8 grid gap-6">
 					{#each relevantEpisodes as episode (episode.id)}
 						<div class="relative">
-							<EpisodePreview {episode} />
+							<EpisodePreview {episode} {userClassify} />
 						</div>
 					{/each}
 				</div>
@@ -340,7 +369,7 @@
 				{#if unclassifiedEpisodes !== null}
 					<div class="my-8 grid gap-6">
 						{#each unclassifiedEpisodes as episode (episode.id)}
-							<EpisodePreview {episode} />
+							<EpisodePreview {episode} {userClassify} />
 						{/each}
 					</div>
 				{/if}
@@ -350,7 +379,7 @@
 				{#if everythingElseEpisodes !== null}
 					<div class="my-8 grid gap-6">
 						{#each everythingElseEpisodes as episode (episode.id)}
-							<EpisodePreview {episode} />
+							<EpisodePreview {episode} {userClassify} />
 						{/each}
 					</div>
 				{:else}{/if}

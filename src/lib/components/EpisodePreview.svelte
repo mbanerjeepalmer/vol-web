@@ -6,7 +6,7 @@
 		episode: JSONFeedItem;
 	}
 
-	let { episode }: Props = $props();
+	let { episode, userClassify }: Props = $props();
 </script>
 
 <article
@@ -14,5 +14,5 @@
 	out:send={{ key: episode.id }}
 	class="flex flex-col gap-4 rounded-xl border border-border"
 >
-	<EpisodeCore {episode} />
+	<EpisodeCore {episode} {userClassify} />
 </article>
