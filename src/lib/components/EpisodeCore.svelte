@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
-	import { ChevronDown, ChevronUp, ThumbsUp, ThumbsDown } from 'lucide-svelte';
+	import { ChevronDown, ChevronUp, CircleMinus, CirclePlus } from 'lucide-svelte';
 	import type { JSONFeedItem } from '$lib/types';
 	import { onMount } from 'svelte';
 
@@ -62,14 +62,14 @@
 			{/if}
 		</div>
 		<div class="mx-2 mt-4 flex gap-4">
-			<ThumbsUp
+			<CirclePlus
 				class="h-6 {episode._categories?.some(
 					(cat) => cat.feed_title && cat.feed_title !== 'Everything else'
 				)
 					? 'text-green-500'
 					: 'opacity-40'}"
 			/>
-			<ThumbsDown
+			<CircleMinus
 				class="h-6 {episode._categories?.some((cat) => cat.feed_title === 'Everything else')
 					? 'text-fuchsia-500'
 					: 'opacity-40'}"
