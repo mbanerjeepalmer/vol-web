@@ -822,6 +822,14 @@ export interface components {
             /** Count */
             count: number;
         };
+        /** Body_classify_catalogue_catalogue__catalogue_id__classified_post */
+        Body_classify_catalogue_catalogue__catalogue_id__classified_post: {
+            items_body?: components["schemas"]["ItemIDs"] | null;
+            /** Classified Groups */
+            classified_groups?: {
+                [key: string]: components["schemas"]["WithID"][];
+            } | null;
+        };
         /** Body_create_mega_catalogue_async_catalogue_mega_async_post */
         Body_create_mega_catalogue_async_catalogue_mega_async_post: {
             catalogue: components["schemas"]["CatalogueCreate"];
@@ -1105,6 +1113,14 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WithID */
+        WithID: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
         };
     };
     responses: never;
@@ -2080,7 +2096,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ItemIDs"] | null;
+                "application/json": components["schemas"]["Body_classify_catalogue_catalogue__catalogue_id__classified_post"];
             };
         };
         responses: {
