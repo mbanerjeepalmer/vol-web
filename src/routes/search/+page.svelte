@@ -291,6 +291,7 @@
 			errorText = "don't have categories";
 			return;
 		}
+		// TODO WET
 		if (category === 'minus') {
 			const targetFeed = megaCatalogue.output_feeds.find((f) => f.title === 'Everything else');
 			if (!targetFeed) {
@@ -298,7 +299,7 @@
 				return;
 			}
 			episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed?.href }];
-			console.debug(`minused episode ${episode.id}`, episode._categories);
+			console.debug(`minused episode ${episode.id}`, $state.snapshot(episode._categories));
 		} else {
 			const targetFeed = megaCatalogue.output_feeds.find((f) => f.title !== 'Everything else');
 			if (!targetFeed) {
@@ -306,7 +307,7 @@
 				return;
 			}
 			episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed?.href }];
-			console.debug(`plussed episode ${episode.id}`, episode._categories);
+			console.debug(`plussed episode ${episode.id}`, $state.snapshot(episode._categories));
 		}
 	}
 </script>
