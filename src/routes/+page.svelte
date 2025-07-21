@@ -3,8 +3,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { onMount } from 'svelte';
 
-	let inputValue = $state('');
-	let inputElement: HTMLInputElement = $state();
+	let inputValue = $state();
+	let inputElement: HTMLInputElement | null = $state(null);
 
 	const predefinedPrompts = [
 		'i want to be like olivia rodrigo',
@@ -51,7 +51,7 @@
 				autofocus
 				accept="text/plain"
 				name="prompt"
-				bind:thisElement={inputElement}
+				bind:ref={inputElement}
 				bind:value={inputValue}
 				class="h-16 w-full"
 				placeholder="what's on your mind?"
@@ -64,7 +64,7 @@
 			<button
 				type="button"
 				onclick={() => {
-					inputValue = prompt + ' ';
+					inputValue = prompt;
 					inputElement.focus();
 				}}
 				class="h-full w-full text-wrap rounded-md border border-input bg-slate-50 p-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"

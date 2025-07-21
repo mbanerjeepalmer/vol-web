@@ -261,7 +261,7 @@
 			const catalogueResponseJSON = await catalogueResponse.json();
 			data.catalogue_id = catalogueResponseJSON.catalogue.id;
 			console.debug('catalogueResponseJSON', catalogueResponseJSON);
-			const newURL = new URL($page.url);
+			const newURL = new URL(page.url);
 			newURL.searchParams.set('catalogue_id', catalogueResponseJSON.catalogue.id);
 			goto(newURL);
 			console.debug(`Going to start fetching data`);
@@ -286,7 +286,14 @@
 	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
 		{data.prompt}
 	</h1>
-	<p class="mx-auto max-w-lg text-center text-xs text-red-600">{errorText}</p>
+	<p
+		class={[
+			errorText && 'opacity-100',
+			'mx-auto my-4 min-h-12 max-w-lg text-center text-xs text-red-600 opacity-0'
+		]}
+	>
+		{errorText}
+	</p>
 	<Tabs.Root value={activeTab} class="w-full">
 		<div class="flex w-full">
 			<Tabs.List class="mx-auto">
@@ -295,13 +302,13 @@
 					<div class="flex w-fit flex-row">
 						2.
 						<span
-							class={[{ pulsingClasses: catalogueState.state === 'syncing' }, 'mx-2 flex flex-row']}
+							class={[pulsingClasses && catalogueState.state === 'syncing', 'mx-2 flex flex-row']}
 							><Search class="mx-2 w-4" />search</span
 						>
 						+
 						<span
 							class={[
-								{ pulsingClasses: catalogueState.state === 'classifying' },
+								pulsingClasses && catalogueState.state === 'classifying',
 								'mx-2 flex flex-row'
 							]}><ChartCandlestick class="mx-2 w-4" /> select</span
 						>
@@ -317,7 +324,7 @@
 					<Badge variant="secondary">{query}</Badge>
 				{/each}
 			</div>
-			{#if episodes === null}
+			{#if episodes === null || (episodes.length === 0 && catalogueState.state === 'syncing')}
 				<EmptyEpisodes />
 			{/if}
 			{#if relevantEpisodes !== null}
