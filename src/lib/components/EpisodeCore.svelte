@@ -61,23 +61,25 @@
 				{/each}
 			{/if}
 		</div>
-		<div class="mx-2 mt-4 flex gap-4">
-			<button onclick={async () => userClassify(episode, 'plus')}>
-				<CirclePlus
-					class="h-6 {episode._categories?.some(
-						(cat) => cat.feed_title && cat.feed_title !== 'Everything else'
-					)
-						? 'text-green-500'
-						: 'opacity-40'}"
-				/></button
-			>
-			<button onclick={async () => userClassify(episode, 'minus')}>
-				<CircleMinus
-					class="h-6 {episode._categories?.some((cat) => cat.feed_title === 'Everything else')
-						? 'text-fuchsia-500'
-						: 'opacity-40'}"
-				/></button
-			>
+		<div class="mx-2 mt-4 flex min-h-10 gap-4">
+			{#if episode.id}
+				<button onclick={async () => userClassify(episode, 'plus')}>
+					<CirclePlus
+						class="h-6 {episode._categories?.some(
+							(cat) => cat.feed_title && cat.feed_title !== 'Everything else'
+						)
+							? 'text-green-500'
+							: 'opacity-40'}"
+					/></button
+				>
+				<button onclick={async () => userClassify(episode, 'minus')}>
+					<CircleMinus
+						class="h-6 {episode._categories?.some((cat) => cat.feed_title === 'Everything else')
+							? 'text-fuchsia-500'
+							: 'opacity-40'}"
+					/></button
+				>
+			{/if}
 		</div>
 	</div>
 </div>
