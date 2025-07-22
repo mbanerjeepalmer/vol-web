@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
-	import { ChevronDown, ChevronUp, CircleMinus, CirclePlus, Loader, RefreshCw } from 'lucide-svelte';
+	import {
+		ChevronDown,
+		ChevronUp,
+		CircleMinus,
+		CirclePlus,
+		Loader,
+		RefreshCw
+	} from 'lucide-svelte';
 	import type { JSONFeedItem } from '$lib/types';
 	import { onMount } from 'svelte';
 
@@ -67,12 +74,12 @@
 			{#if episode.id}
 				{#if classificationStatus === 'pending'}
 					<button disabled>
-						<Loader class="animate-spin h-6" />
+						<Loader class="h-6 animate-spin" />
 					</button>
 					<button disabled>
-						<Loader class="animate-spin h-6" />
+						<Loader class="h-6 animate-spin" />
 					</button>
-				{:elseif classificationStatus === 'error'}
+				{:else if classificationStatus === 'error'}
 					<button onclick={async () => userClassify(episode, 'plus')}>
 						<RefreshCw class="h-6 text-red-500" />
 					</button>

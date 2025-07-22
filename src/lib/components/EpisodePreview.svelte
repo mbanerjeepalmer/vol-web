@@ -1,15 +1,14 @@
 <script lang="ts">
 	import type { JSONFeedItem } from '$lib/types';
 	import { send, receive } from '$lib/utils';
-	import EpisodeCore from './EpisodeCore.svelte';
+	import EpisodeCore from '$lib/components/EpisodeCore.svelte';
 	interface Props {
 		episode: JSONFeedItem;
 		userClassify: (episode: JSONFeedItem, category: 'plus' | 'minus') => Promise<void>;
 		classificationStatus: 'pending' | 'success' | 'error' | null;
-		serverClassifying: boolean;
 	}
 
-	let { episode, userClassify, classificationStatus, serverClassifying }: Props = $props();
+	let { episode, userClassify, classificationStatus }: Props = $props();
 </script>
 
 <article
@@ -17,5 +16,5 @@
 	out:send={{ key: episode.id }}
 	class="flex flex-col gap-4 rounded-xl border border-border"
 >
-	<EpisodeCore {episode} {userClassify} classificationStatus={classificationStatus} />
+	<EpisodeCore {episode} {userClassify} {classificationStatus} />
 </article>

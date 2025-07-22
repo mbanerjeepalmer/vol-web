@@ -5,8 +5,6 @@
 	import type { JSONFeedItem } from '$lib/types';
 	import EpisodePreview from '$lib/components/EpisodePreview.svelte';
 	import Badge from '$lib/components/ui/badge/badge.svelte';
-	import createClient from 'openapi-fetch';
-	import { PUBLIC_ZACUSCA_API_BASE } from '$env/static/public';
 	import type { components, paths } from '$lib/zacusca_api_types';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -14,6 +12,8 @@
 	import Subscribe from '$lib/components/Subscribe.svelte';
 	import { ChartCandlestick, Orbit, Podcast, Search } from 'lucide-svelte';
 	import EmptyEpisodes from '$lib/components/EmptyEpisodes.svelte';
+	import createClient from 'openapi-fetch';
+	import { PUBLIC_ZACUSCA_API_BASE } from '$env/static/public';
 
 	interface Props {
 		data: PageData;
@@ -59,8 +59,6 @@
 	const pulsingClasses =
 		'animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text text-transparent';
 
-	let isProcessingQueue = false;
-
 	// Tracking for stopping conditions
 	let lastCategorisedCount = 0;
 	let lastCategorisedCountTime = Date.now();
@@ -69,52 +67,72 @@
 	// Queue for user classifications
 	let classificationQueue: {
 		episodeId: string;
-		category: 'plus' | 'minus';
+		feed_title: string; // In reality either 'Everything else' or the name of the other category
 		status: 'pending' | 'success' | 'error';
 		retries: number;
 	}[] = $state([]);
+
+	const client = createClient<paths>({
+		baseUrl: PUBLIC_ZACUSCA_API_BASE
+	});
 
 	function getClassificationStatus(episodeId: string) {
 		const item = classificationQueue.find((q) => q.episodeId === episodeId);
 		return item ? item.status : null;
 	}
 
+	function simulateSpottyServer() {
+		return new Promise((resolve, reject) => {
+			// Simulate a random delay between 1 and 3 seconds
+			const delay = Math.floor(Math.random() * 3000) + 1000;
+
+			setTimeout(() => {
+				// Randomly decide if the server will respond successfully or fail
+				const isSuccess = Math.random() > 0.5;
+
+				if (isSuccess) {
+					resolve('Server responded successfully!');
+				} else {
+					reject('Server failed to respond.');
+				}
+			}, delay);
+		});
+	}
+
 	async function processClassificationQueue() {
+		let hasPending = false;
+
 		for (const item of classificationQueue) {
 			if (item.status !== 'pending') continue;
+			hasPending = true;
+
 			try {
-				// Send the classification to the server
-				const response = await fetch(`/api/classify`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						catalogue_id: data.catalogue_id,
-						episode_id: item.episodeId,
-						category: item.category
-					})
-				});
-				if (!response.ok) {
-					throw new Error(`Server responded with ${response.status}`);
-				}
-				// Update the item's status
+				await simulateSpottyServer(); // Replace with real API call
 				item.status = 'success';
 			} catch (error) {
-				console.error('Classification failed:', error);
+				console.error(`Classification failed for ${item.episodeId}:`, error);
 				item.status = 'error';
 				item.retries++;
+
 				if (item.retries < 3) {
-					// Retry after a delay
-					setTimeout(() => processClassificationQueue(), 5000);
+					// Reset to pending for next retry
+					item.status = 'pending';
+				} else {
+					console.warn(`Max retries reached for ${item.episodeId}`);
 				}
 			}
 		}
+
+		// Schedule next retry if any item is still pending or needs retry
+		if (
+			hasPending ||
+			classificationQueue.some((item) => item.status === 'error' && item.retries < 3)
+		) {
+			setTimeout(processClassificationQueue, 5000);
+		} else {
+			console.log('All classification tasks completed.');
+		}
 	}
-
-	// Queue for user classifications
-
-	const client = createClient<paths>({
-		baseUrl: PUBLIC_ZACUSCA_API_BASE
-	});
 
 	async function fetchCatalogueState(catalogue_id: string | undefined | null) {
 		if (!catalogue_id) {
@@ -131,9 +149,9 @@
 		console.debug(`fetching Mega Catalogue ${catalogue_id}`);
 		const megaCatalogueResponse = await fetch(`/api/catalogue/${catalogue_id}`);
 		megaCatalogue = await megaCatalogueResponse.json();
-		if (!megaCatalogue) {
+		if (!megaCatalogueResponse.ok || !megaCatalogue) {
 			console.error(`megaCatalogue was`, megaCatalogue);
-			errorText = `sorry, something broke`;
+			errorText = `sorry, couldn't get search from the server`;
 			return;
 		}
 		catalogueState = { state: megaCatalogue.catalogue.state };
@@ -355,40 +373,45 @@
 	 * 5. Conflicts → server state wins, user notified
 	 */
 	async function userClassify(episode: JSONFeedItem, category: 'plus' | 'minus') {
+		// Early return if no output feeds are available
 		if (!megaCatalogue?.output_feeds || megaCatalogue.output_feeds.length === 0) {
-			console.error(`No output feeds in megaCatalogue`);
-			errorText = "don't have categories";
+			console.error('No output feeds in megaCatalogue');
+			errorText = "error: don't have categories";
 			return;
 		}
 
-		// Add to queue
+		// Determine the target feed based on the category
+		const isMinus = category === 'minus';
+		const targetFeedTitle = isMinus ? 'Everything else' : null;
+		const targetFeed = megaCatalogue.output_feeds.find((f) =>
+			isMinus ? f.title === targetFeedTitle : f.title !== 'Everything else'
+		);
+
+		if (!targetFeed) {
+			const errorMessage = isMinus
+				? "Couldn't find 'Everything else' feed"
+				: "Couldn't find the non-'Everything else' feed";
+			console.error(errorMessage);
+			return;
+		}
+
+		// Update episode categories
+		episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed.href }];
+
+		// Update or add to classification queue
 		const existing = classificationQueue.find((q) => q.episodeId === episode.id);
 		if (existing) {
-			existing.category = category;
+			existing.feed_title = targetFeed.title;
 			existing.status = 'pending';
 			existing.retries = 0;
 		} else {
-			classificationQueue.push({ episodeId: episode.id, category, status: 'pending', retries: 0 });
+			classificationQueue.push({
+				episodeId: episode.id,
+				feed_title: targetFeed.title,
+				status: 'pending',
+				retries: 0
+			});
 		}
-
-		// Optimistically update the episode's category
-		if (category === 'minus') {
-			const targetFeed = megaCatalogue.output_feeds.find((f) => f.title === 'Everything else');
-			if (!targetFeed) {
-				console.error("Couldn't find 'Everything else' feed");
-				return;
-			}
-			episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed.href }];
-		} else {
-			const targetFeed = megaCatalogue.output_feeds.find((f) => f.title !== 'Everything else');
-			if (!targetFeed) {
-				console.error("Couldn't find the non-'Everything else' feed");
-				return;
-			}
-			episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed.href }];
-		}
-
-		// Process the queue
 		processClassificationQueue();
 	}
 </script>
@@ -455,7 +478,11 @@
 				{#if unclassifiedEpisodes !== null}
 					<div class="my-8 grid gap-6">
 						{#each unclassifiedEpisodes as episode (episode.id)}
-							<EpisodePreview {episode} {userClassify} />
+							<EpisodePreview
+								{episode}
+								{userClassify}
+								classificationStatus={getClassificationStatus(episode.id)}
+							/>
 						{/each}
 					</div>
 				{/if}
@@ -465,7 +492,11 @@
 				{#if everythingElseEpisodes !== null}
 					<div class="my-8 grid gap-6">
 						{#each everythingElseEpisodes as episode (episode.id)}
-							<EpisodePreview {episode} {userClassify} />
+							<EpisodePreview
+								{episode}
+								{userClassify}
+								classificationStatus={getClassificationStatus(episode.id)}
+							/>
 						{/each}
 					</div>
 				{:else}{/if}
