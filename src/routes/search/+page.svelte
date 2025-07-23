@@ -120,19 +120,25 @@
 			};
 
 			try {
-				const { data: classificationResult, error: classificationError } = await client.POST(
-					'/catalogue/{catalogue_id}/classification',
-					{
-						params: {
-							path: { catalogue_id: data.catalogue_id }
-						},
-						body: body
-					}
-				);
-				if (classificationError) {
-					console.error(classificationError);
-					throw Error('API failure when attempting to classify');
+				// Call the new SvelteKit server endpoint
+				const response = await fetch(`/api/catalogue/${data.catalogue_id}/classification`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(body)
+				});
+
+				if (!response.ok) {
+					// Check for HTTP errors from our server endpoint
+					const errorResponse = await response.json();
+					console.error(errorResponse);
+					throw new Error('API failure when attempting to classify');
 				}
+
+				// Get the JSON data from the successful response
+				const classificationResult = await response.json();
+
 				console.log(`Classification response`, classificationResult);
 				for (const [feed_title, items] of Object.entries(classificationResult.classified_groups)) {
 					if (Array.isArray(items)) {
