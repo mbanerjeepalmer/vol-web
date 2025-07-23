@@ -12,7 +12,7 @@
 	import { onMount } from 'svelte';
 
 	function formatDescription(text: string): string {
-		return text.replace(/\n/g, '<br>');
+		return text.replace(/^\s+/, '').replace(/\n/g, '<br>');
 	}
 	interface Props {
 		episode: JSONFeedItem;
@@ -68,17 +68,11 @@
 		{/if}
 	</div>
 	<div class="mx-1 flex h-full w-full flex-col items-start gap-4">
-		{#if episode.link}
-			<a href={episode.link} target="_blank">
-				<h3 class="font-sans text-lg font-bold opacity-90">
-					{episode.title}
-				</h3></a
-			>
-		{:else}
-			<h3 class="mx-2 font-sans text-lg font-bold opacity-90">
+		<a href={episode.link} target="_blank">
+			<h3 class="mx-2 line-clamp-2 min-h-12 pt-2 font-sans text-lg font-bold opacity-90">
 				{episode.title}
-			</h3>
-		{/if}
+			</h3></a
+		>
 		<div class="mx-1 flex w-full flex-row items-center gap-2">
 			{#if episode._sources}
 				{#each episode._sources as source}
@@ -128,7 +122,7 @@
 		</div>
 
 		{#if episode.summary}
-			<div class="px-4 pt-4 text-primary/80">
+			<div class="px-4 text-primary/80">
 				<button
 					bind:this={descriptionElem}
 					onclick={toggleExpanded}
