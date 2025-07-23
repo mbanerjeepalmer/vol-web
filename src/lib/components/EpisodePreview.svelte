@@ -5,10 +5,11 @@
 	interface Props {
 		episode: JSONFeedItem;
 		userClassify: (episode: JSONFeedItem, category: 'plus' | 'minus') => Promise<void>;
+		processClassificationQueue: () => Promise<void>;
 		classificationStatus: 'pending' | 'success' | 'error' | null;
 	}
 
-	let { episode, userClassify, classificationStatus }: Props = $props();
+	let { episode, userClassify, classificationStatus, processClassificationQueue }: Props = $props();
 </script>
 
 <article
@@ -16,5 +17,5 @@
 	out:send={{ key: episode.id }}
 	class="flex flex-col gap-4 rounded-xl border border-border"
 >
-	<EpisodeCore {episode} {userClassify} {classificationStatus} />
+	<EpisodeCore {episode} {userClassify} {classificationStatus} {processClassificationQueue} />
 </article>

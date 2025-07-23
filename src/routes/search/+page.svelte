@@ -505,6 +505,7 @@
 								{episode}
 								{userClassify}
 								classificationStatus={getClassificationStatus(episode.id)}
+								{processClassificationQueue}
 							/>
 						</div>
 					{/each}
