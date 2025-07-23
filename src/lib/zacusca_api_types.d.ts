@@ -498,6 +498,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalogue/classification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Classify All Catalogues */
+        post: operations["classify_all_catalogues_catalogue_classification_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalogue/{catalogue_id}/classified/trigger": {
         parameters: {
             query?: never;
@@ -515,6 +532,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalogue/{catalogue_id}/classification/trigger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Trigger Classify Catalogue */
+        post: operations["trigger_classify_catalogue_catalogue__catalogue_id__classification_trigger_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalogue/{catalogue_id}/classified": {
         parameters: {
             query?: never;
@@ -526,6 +560,23 @@ export interface paths {
         put?: never;
         /** Classify Catalogue */
         post: operations["classify_catalogue_catalogue__catalogue_id__classified_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalogue/{catalogue_id}/classification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Classify Catalogue */
+        post: operations["classify_catalogue_catalogue__catalogue_id__classification_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -822,6 +873,14 @@ export interface components {
             /** Count */
             count: number;
         };
+        /** Body_classify_catalogue_catalogue__catalogue_id__classification_post */
+        Body_classify_catalogue_catalogue__catalogue_id__classification_post: {
+            items_body?: components["schemas"]["ItemIDs"] | null;
+            /** Classified Groups */
+            classified_groups?: {
+                [key: string]: components["schemas"]["WithID"][];
+            } | null;
+        };
         /** Body_classify_catalogue_catalogue__catalogue_id__classified_post */
         Body_classify_catalogue_catalogue__catalogue_id__classified_post: {
             items_body?: components["schemas"]["ItemIDs"] | null;
@@ -883,6 +942,33 @@ export interface components {
          * @enum {string}
          */
         CatalogueState: "syncing" | "classifying" | "errored" | "idle" | "archived";
+        /** ClassificationResult */
+        ClassificationResult: {
+            /**
+             * Failed Items
+             * @default []
+             */
+            failed_items: (components["schemas"]["WithID"] | components["schemas"]["Item"])[];
+            /**
+             * Totals Classified By Group
+             * @default {}
+             */
+            totals_classified_by_group: {
+                [key: string]: number;
+            };
+            /**
+             * Classified Groups
+             * @default {}
+             */
+            classified_groups: {
+                [key: string]: components["schemas"]["Item"][] | components["schemas"]["WithID"][];
+            };
+            /**
+             * Total Available
+             * @default 0
+             */
+            total_available: number;
+        };
         /**
          * ClassificationStatus
          * @enum {string}
@@ -2045,7 +2131,75 @@ export interface operations {
             };
         };
     };
+    classify_all_catalogues_catalogue_classification_post: {
+        parameters: {
+            query?: {
+                paid_tier_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     trigger_classify_catalogue_catalogue__catalogue_id__classified_trigger_post: {
+        parameters: {
+            query?: {
+                after?: string | null;
+            };
+            header?: never;
+            path: {
+                catalogue_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ItemIDs"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trigger_classify_catalogue_catalogue__catalogue_id__classification_trigger_post: {
         parameters: {
             query?: {
                 after?: string | null;
@@ -2107,6 +2261,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    classify_catalogue_catalogue__catalogue_id__classification_post: {
+        parameters: {
+            query?: {
+                after?: string | null;
+                batch_size?: number;
+            };
+            header?: never;
+            path: {
+                catalogue_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Body_classify_catalogue_catalogue__catalogue_id__classification_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassificationResult"];
                 };
             };
             /** @description Validation Error */

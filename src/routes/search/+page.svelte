@@ -81,54 +81,90 @@
 		return item ? item.status : null;
 	}
 
-	function simulateSpottyServer() {
-		return new Promise((resolve, reject) => {
-			// Simulate a random delay between 1 and 3 seconds
-			const delay = Math.floor(Math.random() * 3000) + 1000;
-
-			setTimeout(() => {
-				// Randomly decide if the server will respond successfully or fail
-				const isSuccess = Math.random() > 0.5;
-
-				if (isSuccess) {
-					resolve('Server responded successfully!');
-				} else {
-					reject('Server failed to respond.');
-				}
-			}, delay);
-		});
-	}
-
 	async function processClassificationQueue() {
-		let hasPending = false;
+		if (!data.catalogue_id) {
+			console.error(`No catalogue_id`, data.catalogue_id);
+			return;
+		}
 
-		for (const item of classificationQueue) {
-			if (item.status !== 'pending') continue;
-			hasPending = true;
+		const pendingItems = classificationQueue.filter(
+			(it) => it.status === 'pending' || (it.status === 'error' && it.retries < 3)
+		);
+
+		if (pendingItems.length === 0) {
+			console.log('All classification tasks completed.');
+			return;
+		}
+
+		console.debug(`About to save ${pendingItems.length} user classifications`);
+		for (let i = 0; i < pendingItems.length; i += 10) {
+			const batch = pendingItems.slice(i, i + 10);
+			const batchIds = batch.map((it) => it.episodeId);
+
+			// TODO we should just use the api_types
+			interface ClassifiedGroups {
+				[key: string]: { id: string }[];
+			}
+			// Build request body
+			const body = {
+				items_body: {
+					item_ids: batchIds
+				},
+				classified_groups: pendingItems.reduce<ClassifiedGroups>((acc, item) => {
+					if (!acc[item.feed_title]) {
+						acc[item.feed_title] = [];
+					}
+					acc[item.feed_title].push({ id: item.episodeId });
+					return acc;
+				}, {})
+			};
 
 			try {
-				await simulateSpottyServer(); // Replace with real API call
-				item.status = 'success';
-			} catch (error) {
-				console.error(`Classification failed for ${item.episodeId}:`, error);
-				item.status = 'error';
-				item.retries++;
-
-				if (item.retries < 3) {
-					// Reset to pending for next retry
-					item.status = 'pending';
-				} else {
-					console.warn(`Max retries reached for ${item.episodeId}`);
+				const { data: classificationResult, error: classificationError } = await client.POST(
+					'/catalogue/{catalogue_id}/classification',
+					{
+						params: {
+							path: { catalogue_id: data.catalogue_id }
+						},
+						body: body
+					}
+				);
+				if (classificationError) {
+					console.error(classificationError);
+					throw Error;
 				}
+				console.log(`Classification response`, classificationResult);
+				// TODO do something with the result
+				// 				Classification response
+				// Object { failed_items: [], totals_classified_by_group: {}, classified_groups: {…}, total_available: 1 }
+				// ​
+				// classified_groups: Object { "i yap too much about artisanal cutlery ": (1) […], "Everything else": [] }
+				// ​
+				// failed_items: Array []
+				// ​
+				// total_available: 1
+				// ​
+				// totals_classified_by_group: Object {  }
+				// ​
+				// <prototype>: Object { … }
+				// +page.svelte:140:13
+			} catch (err) {
+				console.error(`Batch classification failed [${batchIds.join(', ')}]:`, err);
+
+				// Mark all in the batch as error + bump retries
+				batch.forEach((it) => {
+					it.status = 'error';
+					it.retries++;
+				});
 			}
 		}
 
-		// Schedule next retry if any item is still pending or needs retry
-		if (
-			hasPending ||
-			classificationQueue.some((item) => item.status === 'error' && item.retries < 3)
-		) {
-			setTimeout(processClassificationQueue, 5000);
+		const stillPending = classificationQueue.some(
+			(it) => it.status === 'pending' || (it.status === 'error' && it.retries < 3)
+		);
+		if (stillPending) {
+			console.debug(`Some items still pending`);
+			setTimeout(processClassificationQueue, 5_000);
 		} else {
 			console.log('All classification tasks completed.');
 		}
@@ -504,4 +540,8 @@
 		</Tabs.Content>
 		<Tabs.Content value="subscribe"><Subscribe {relevantEpisodes} {relevantFeedID} /></Tabs.Content>
 	</Tabs.Root>
+</div>
+
+<div class="sticky bottom-0 flex h-fit min-h-14 flex-col bg-blue-600 px-2 text-white">
+	{JSON.stringify(classificationQueue, null, 2)}
 </div>
