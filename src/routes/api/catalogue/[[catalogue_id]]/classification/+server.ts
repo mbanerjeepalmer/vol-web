@@ -15,18 +15,15 @@ const client = createClient<paths>({
 
 export async function POST({ request, params }) {
     if (!params.catalogue_id) {
-        // This check is already in your provided code
         error(400, "No catalogue ID provided.")
     }
 
     try {
-        // Get the body from the incoming client request
         const body = await request.json();
-
         console.debug(`About to call Zacusca API for catalogue ${params.catalogue_id}`)
 
-        // Make the external API call using the pre-configured client
-        const { data: classificationResult, error: classificationError } = await client.POST(
+
+        const classificationResp = await client.POST(
             '/catalogue/{catalogue_id}/classification',
             {
                 params: {
@@ -35,20 +32,18 @@ export async function POST({ request, params }) {
                 body: body
             }
         );
+        const { data: classificationResult, error: classificationError } = classificationResp
 
         if (classificationError) {
-            // If the external API returned an error, return a SvelteKit error
             console.error(`Zacusca API error:`, classificationError);
-            error(classificationError.status || 500, 'API failure when attempting to classify');
+            error(classificationResp.response.status || 500, 'API failure when attempting to classify');
         }
 
         console.debug(`Successfully classified items for catalogue ${params.catalogue_id}`)
 
-        // Return the successful result to the client
         return json(classificationResult);
 
     } catch (e) {
-        // Catch any unexpected errors (e.g., invalid JSON body)
         console.error('Unexpected error in classification endpoint:', e);
         error(500, 'An unexpected error occurred.');
     }

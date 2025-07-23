@@ -105,7 +105,6 @@
 			interface ClassifiedGroups {
 				[key: string]: { id: string }[];
 			}
-			// Build request body
 			const body = {
 				items_body: {
 					item_ids: batchIds
@@ -120,7 +119,6 @@
 			};
 
 			try {
-				// Call the new SvelteKit server endpoint
 				const response = await fetch(`/api/catalogue/${data.catalogue_id}/classification`, {
 					method: 'POST',
 					headers: {
@@ -130,16 +128,14 @@
 				});
 
 				if (!response.ok) {
-					// Check for HTTP errors from our server endpoint
 					const errorResponse = await response.json();
 					console.error(errorResponse);
 					throw new Error('API failure when attempting to classify');
 				}
 
-				// Get the JSON data from the successful response
+				// TODO typing
 				const classificationResult = await response.json();
 
-				console.log(`Classification response`, classificationResult);
 				for (const [feed_title, items] of Object.entries(classificationResult.classified_groups)) {
 					if (Array.isArray(items)) {
 						items.forEach((item) => {
@@ -156,7 +152,6 @@
 			} catch (err) {
 				console.error(`Batch classification failed [${batchIds.join(', ')}]:`, err);
 
-				// Mark all in the batch as error + bump retries
 				batch.forEach((it) => {
 					it.status = 'error';
 					it.retries++;
