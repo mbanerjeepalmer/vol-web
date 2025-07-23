@@ -322,7 +322,7 @@
 						stopPolling();
 						return;
 					case 'errored':
-						console.error('There was an error with the catalaogue');
+						console.error('There was an error with the catalogue');
 						errorText = 'something broke on the server';
 						stopPolling();
 						return;
