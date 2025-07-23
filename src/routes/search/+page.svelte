@@ -498,7 +498,9 @@
 				<EmptyEpisodes />
 			{/if}
 			{#if relevantEpisodes !== null}
-				<div class="my-8 grid gap-6">
+				<div
+					class="-mx-4 my-8 flex flex-col gap-6 rounded-2xl border-4 border-green-500/30 px-4 py-6"
+				>
 					{#each relevantEpisodes as episode (episode.id)}
 						<div class="relative">
 							<EpisodePreview
@@ -509,6 +511,7 @@
 							/>
 						</div>
 					{/each}
+					<Subscribe {relevantEpisodes} {relevantFeedID} />
 				</div>
 			{/if}
 			<div>
@@ -524,7 +527,6 @@
 					</div>
 				{/if}
 			</div>
-			<Subscribe {relevantEpisodes} {relevantFeedID} />
 			<div class="">
 				{#if everythingElseEpisodes !== null}
 					<div class="my-8 grid gap-6">
