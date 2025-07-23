@@ -134,20 +134,19 @@
 					throw Error;
 				}
 				console.log(`Classification response`, classificationResult);
-				// TODO do something with the result
-				// 				Classification response
-				// Object { failed_items: [], totals_classified_by_group: {}, classified_groups: {…}, total_available: 1 }
-				// ​
-				// classified_groups: Object { "i yap too much about artisanal cutlery ": (1) […], "Everything else": [] }
-				// ​
-				// failed_items: Array []
-				// ​
-				// total_available: 1
-				// ​
-				// totals_classified_by_group: Object {  }
-				// ​
-				// <prototype>: Object { … }
-				// +page.svelte:140:13
+				for (const [feed_title, items] of Object.entries(classificationResult.classified_groups)) {
+					if (Array.isArray(items)) {
+						items.forEach((item) => {
+							if ('id' in item && typeof item.id === 'string') {
+								const match = classificationQueue.find((q) => q.episodeId === item.id);
+								if (match) {
+									match.feed_title = feed_title;
+									match.status = 'success';
+								}
+							}
+						});
+					}
+				}
 			} catch (err) {
 				console.error(`Batch classification failed [${batchIds.join(', ')}]:`, err);
 
@@ -540,8 +539,4 @@
 		</Tabs.Content>
 		<Tabs.Content value="subscribe"><Subscribe {relevantEpisodes} {relevantFeedID} /></Tabs.Content>
 	</Tabs.Root>
-</div>
-
-<div class="sticky bottom-0 flex h-fit min-h-14 flex-col bg-blue-600 px-2 text-white">
-	{JSON.stringify(classificationQueue, null, 2)}
 </div>
