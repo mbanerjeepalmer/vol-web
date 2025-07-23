@@ -131,7 +131,7 @@
 				);
 				if (classificationError) {
 					console.error(classificationError);
-					throw Error;
+					throw Error('API failure when attempting to classify');
 				}
 				console.log(`Classification response`, classificationResult);
 				for (const [feed_title, items] of Object.entries(classificationResult.classified_groups)) {
