@@ -1,13 +1,6 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
-	import {
-		ChevronDown,
-		ChevronUp,
-		CircleMinus,
-		CirclePlus,
-		Loader,
-		RefreshCw
-	} from 'lucide-svelte';
+	import { CircleMinus, CirclePlus, Loader, RefreshCw, Play, Pause, Volume2 } from 'lucide-svelte';
 	import type { JSONFeedItem } from '$lib/types';
 	import { onMount } from 'svelte';
 
@@ -25,47 +18,113 @@
 	let expanded = $state(false);
 	let hasMore = false;
 	let descriptionElem: HTMLElement = $state();
+	let isPlayingPreview = $state(false);
+	let audioPlayer: HTMLAudioElement | null = $state(null);
+	let audioPosition = $state(0);
+	let audioDuration = $state(0);
 
 	onMount(() => {
 		if (expanded) {
 			hasMore = descriptionElem.scrollHeight > descriptionElem.clientHeight;
 		}
 	});
+
 	function toggleExpanded(event: MouseEvent) {
 		event.stopPropagation();
 		expanded = !expanded;
+	}
+
+	async function togglePreviewPlayback() {
+		if (!audioPlayer) {
+			const audioAttachment = episode.attachments?.find((a) => a.mime_type.startsWith('audio/'));
+			if (!audioAttachment) return;
+
+			// Create and configure audio element
+			audioPlayer = new Audio(audioAttachment.url);
+			audioPlayer.preload = 'metadata';
+
+			audioPlayer.ontimeupdate = () => {
+				audioPosition = audioPlayer?.currentTime || 0;
+			};
+
+			audioPlayer.onloadedmetadata = () => {
+				audioDuration = audioPlayer?.duration || 0;
+			};
+
+			audioPlayer.onended = () => {
+				isPlayingPreview = false;
+			};
+		}
+
+		if (isPlayingPreview) {
+			audioPlayer.pause();
+			isPlayingPreview = false;
+		} else {
+			// Play 15-second preview
+			audioPlayer.currentTime = 0;
+			await audioPlayer.play();
+			isPlayingPreview = true;
+
+			// Auto-stop after 15 seconds
+			setTimeout(() => {
+				if (isPlayingPreview) {
+					audioPlayer?.pause();
+					isPlayingPreview = false;
+				}
+			}, 15000);
+		}
 	}
 </script>
 
 <div class="flex flex-row gap-4 p-2">
 	<div class="flex shrink-0 flex-col gap-2">
-		{#if episode.image}
-			<img
-				src={episode.image}
-				alt={episode.title}
-				class="aspect-1/1 h-48 flex-shrink-0 self-start rounded-xl object-cover"
-			/>
-		{:else}
-			<div
-				class="aspect-1/1 h-48 flex-shrink-0 rounded-xl bg-gradient-to-r from-fuchsia-500 to-green-500 opacity-80"
-			></div>
-		{/if}
-		{#if episode.attachments?.length > 0}
-			{#each episode.attachments as attachment}
-				{#if attachment.mime_type.startsWith('audio/')}
-					<div class="flex max-w-48 flex-col">
-						<audio
-							controls
-							class="w-full rounded-lg shadow-sm [&::-webkit-media-controls-panel]:border [&::-webkit-media-controls-panel]:border-border [&::-webkit-media-controls-panel]:bg-background"
-							preload="metadata"
-						>
-							<source src={attachment.url} type={attachment.mime_type} />
-							Your browser does not support the audio element.
-						</audio>
-					</div>
-				{/if}
-			{/each}
-		{/if}
+		<div class="relative">
+			{#if episode.image}
+				<img
+					src={episode.image}
+					alt={episode.title}
+					class="aspect-1/1 h-48 flex-shrink-0 self-start rounded-xl object-cover"
+				/>
+			{:else}
+				<div
+					class="aspect-1/1 h-48 flex-shrink-0 rounded-xl bg-gradient-to-r from-fuchsia-500 to-green-500 opacity-80"
+				></div>
+			{/if}
+			{#if isPlayingPreview}
+				<!-- Placeholder for image overlay -->
+				<div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent">
+					<!-- Timeline will go here -->
+					<div class="timeline-placeholder">Timeline</div>
+				</div>
+			{/if}
+		</div>
+
+		<div class="pt-2">
+			{#if isPlayingPreview}
+				<button
+					class="flex items-center gap-2 rounded-lg bg-gray-200 px-3 py-1 hover:bg-gray-300"
+					onclick={togglePreviewPlayback}
+				>
+					<Pause class="h-4 w-4" />
+					Pause
+				</button>
+				<div class="pt-2">
+					<Volume2 class="inline h-4 w-4" />
+					<span class="ml-2 text-xs">Volume Placeholder</span>
+				</div>
+				<div class="pt-1 text-xs">
+					{Math.floor(audioPosition)}s / {Math.floor(audioDuration)}s
+				</div>
+			{:else}
+				<button
+					class="flex items-center gap-2 rounded-lg bg-green-500 px-3 py-1 text-white hover:bg-green-600"
+					onclick={togglePreviewPlayback}
+				>
+					<Play class="h-4 w-4" />
+					Preview (15s)
+				</button>
+			{/if}
+		</div>
 	</div>
 	<div class="mx-1 flex h-full w-full flex-col items-start gap-4">
 		<a href={episode.link} target="_blank">
@@ -132,7 +191,7 @@
 				>
 					<span
 						id="episode-description"
-						class={`font-sans text-sm opacity-90 ${!expanded ? 'line-clamp-1' : ''}`}
+						class={`w-full text-wrap font-sans text-sm opacity-90 ${!expanded ? 'line-clamp-1' : ''}`}
 						>{@html formatDescription(episode.summary)}</span
 					>
 				</button>
