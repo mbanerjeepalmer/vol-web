@@ -95,29 +95,25 @@
 				<div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent">
 					<!-- Timeline will go here -->
 					<div class="timeline-placeholder">Timeline</div>
+					<div class="pt-1 text-xs">
+						{Math.floor(audioPosition)}s / {Math.floor(audioDuration)}s
+					</div>
 				</div>
 			{/if}
 		</div>
 
-		<div class="pt-2">
+		<div class="w-full">
 			{#if isPlayingPreview}
 				<button
-					class="flex items-center gap-2 rounded-lg bg-gray-200 px-3 py-1 hover:bg-gray-300"
+					class="flex w-full items-center gap-2 rounded-lg bg-gray-200 px-3 py-2 hover:bg-gray-300"
 					onclick={togglePreviewPlayback}
 				>
 					<Pause class="h-4 w-4" />
 					Pause
 				</button>
-				<div class="pt-2">
-					<Volume2 class="inline h-4 w-4" />
-					<span class="ml-2 text-xs">Volume Placeholder</span>
-				</div>
-				<div class="pt-1 text-xs">
-					{Math.floor(audioPosition)}s / {Math.floor(audioDuration)}s
-				</div>
 			{:else}
 				<button
-					class="flex items-center gap-2 rounded-lg bg-green-500 px-3 py-1 text-white hover:bg-green-600"
+					class="flex w-full items-center gap-2 rounded-lg bg-green-500 px-3 py-2 text-white hover:bg-green-600"
 					onclick={togglePreviewPlayback}
 				>
 					<Play class="h-4 w-4" />
