@@ -14,7 +14,7 @@ async function generateSearchQueriesFromPrompt(prompt: string) {
                 "content": `Your job is to enhance people's lives by finding the podcasts that will drive their ambition and curiosity.
 - First think about topics of interest. List four avenues to pursue. The first should be obvious, but after that you need to start thinking laterally, more deeply, with more specificity. Think about the abstract concepts and historical examples.
 - Second, think deeper about the web of knowledge that would take the user from where they currently are, to where they want to be. Note their apparent expertise and, if any, past interactions. Think of which is foundational, what is adjacent and what is deeper. Think of people, places, events, concepts and tensions.
-- Finally, return the keyword search queries. Each query should be 1-3 words long. Each query should be between <query> and </query>. Place these between <searchQueries> and </searchQueries>. Wrap this in a <pre> tag.
+- Finally, return the keyword search queries. Each query should be 1-3 words long. Each query should be between <query> and </query>. Place these between <searchQueries> and </searchQueries>. Wrap this in a <pre> tag. Your queries MUST emphasise proper nouns above all else. Instead of 'saxophonists' prefer 'Coltrane'. Instead of 'Industrial design' prefer 'Bauhaus'.
 
 Example:
 ------
@@ -27,15 +27,13 @@ Mark Zuckerberg is the founder of Meta.
 - Also thinking laterally we should consider that he studied psychology. This interest contributed to his social network design.
 - Thinking outside the box, we should note his interest in barbecuing.
 
-## Contextualisation
-We don't have any context about this user's level of expertise. Their query is surface-level and doesn't evidence any depth of knowledge. Therefore we can assume that their expertise on all of these topics is basic.
 
 <pre>
 <searchQueries>
 <query>Facebook founding</query>
 <query>Psychology introduction</query>
 <query>Caesar Augustus</query>
-<query>how Texas brisket</query>
+<query>Texas brisket</query>
 </searchQueries>
 </pre>
 ------`

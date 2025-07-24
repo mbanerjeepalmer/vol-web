@@ -44,11 +44,11 @@
 		return quarterPoint + Math.random() * (threeQuarterPoint - quarterPoint);
 	}
 
-	function handleSeek(newPosition: number) {
+	function handleSliderChange(newPosition: number) {
 		if (!audioPlayer) return;
 		userHasSeeked = true;
 		audioPlayer.currentTime = newPosition;
-		audioPosition = newPosition;
+		audioPosition = newPosition; // Update state to provide immediate visual feedback
 	}
 
 	onMount(() => {
@@ -150,16 +150,17 @@
 				<div
 					class="absolute inset-0 flex flex-col justify-end rounded-xl bg-gradient-to-t from-black/70 to-transparent p-2"
 				>
-					<Slider
+					<!-- <Slider
 						type="single"
 						min={0}
 						max={audioDuration}
-						bind:value={audioPosition}
+						value={audioPosition]}
 						step={1}
 						disabled={!isPlayingPreview}
-						onValueChange={handleSeek}
+						onValueCommit={(value) => handleSliderChange(value[0])}
 						class="w-full"
-					/>
+					/> -->
+
 					<div class="pt-1 text-xs text-white">
 						{formatTime(audioPosition)} / {formatTime(audioDuration)}
 					</div>
