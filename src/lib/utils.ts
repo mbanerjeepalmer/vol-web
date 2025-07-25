@@ -2,7 +2,10 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 import type { TransitionConfig } from "svelte/transition";
-import type { EpisodeRatings } from "./types";
+import { quintOut } from 'svelte/easing';
+import { crossfade } from 'svelte/transition';
+
+
 
 const MAX_STORED_SEARCHES = 10;
 
@@ -64,89 +67,20 @@ export const flyAndScale = (
 	};
 };
 
-export interface Interaction {
-	spotifyId?: string;
-	reaction: string;
-	timestamp: number;
-	episodeTitle?: string;
-	episodeDescription?: string;
-	searchId?: string;
-}
+export const [send, receive] = crossfade({
+	duration: (d) => Math.sqrt(d * 200),
 
-export function getInteractionHistory(): Interaction[] {
-	try {
-		return JSON.parse(localStorage.getItem('vol-interactions') || '[]');
-	} catch (error) {
-		console.error('Failed to load interaction history:', error);
-		return [];
-	}
-}
+	fallback(node, params) {
+		const style = getComputedStyle(node);
+		const transform = style.transform === 'none' ? '' : style.transform;
 
-export function saveInteraction(params: Partial<Interaction>) {
-	try {
-		const interactions = getInteractionHistory();
-		const newInteraction: Interaction = {
-			spotifyId: params.spotifyId || '',
-			reaction: params.reaction!,
-			timestamp: Date.now(),
-			episodeTitle: params.episodeTitle,
-			episodeDescription: params.episodeDescription,
-			searchId: params.searchId || ''
+		return {
+			duration: 600,
+			easing: quintOut,
+			css: (t) => `
+				transform: ${transform} scale(${t});
+				opacity: ${t}
+			`
 		};
-
-		const filteredInteractions = interactions.filter(i =>
-			i.spotifyId !== newInteraction.spotifyId
-		);
-
-		filteredInteractions.unshift(newInteraction);
-
-		const trimmedInteractions = filteredInteractions.slice(0, 50);
-
-		localStorage.setItem('vol-interactions', JSON.stringify(trimmedInteractions));
-	} catch (error) {
-		console.error('Failed to save interaction:', error);
 	}
-}
-
-
-export function getStoredSearch(searchId: string) {
-	try {
-		const stored = localStorage.getItem(`vol-search-${searchId}`);
-		return stored ? JSON.parse(stored) : null;
-	} catch (error) {
-		console.error('Failed to load stored search:', error);
-		return null;
-	}
-}
-
-export function cleanUpStorage() {
-	try {
-		// Clean up old searches
-		const searchKeys = Object.keys(localStorage)
-			.filter(key => key.startsWith('vol-search-'))
-			.sort((a, b) => {
-				const timeA = JSON.parse(localStorage.getItem(a) || '{}').timestamp || 0;
-				const timeB = JSON.parse(localStorage.getItem(b) || '{}').timestamp || 0;
-				return timeA - timeB;
-			});
-
-		while (searchKeys.length >= MAX_STORED_SEARCHES) {
-			localStorage.removeItem(searchKeys.shift()!);
-		}
-
-		// Clean up interactions
-		const interactions = getInteractionHistory();
-		if (interactions.length > 50) {
-			localStorage.setItem('vol-interactions',
-				JSON.stringify(interactions.slice(0, 50))
-			);
-		}
-	} catch (error) {
-		console.error('Storage cleanup failed:', error);
-	}
-}
-
-export function getAverageRating(ratings?: EpisodeRatings): number {
-	if (!ratings) return 0;
-	return Math.round((ratings.goal + ratings.context + ratings.quality + ratings.freshness) / 4);
-}
+});

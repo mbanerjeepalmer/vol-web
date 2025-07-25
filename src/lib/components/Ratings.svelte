@@ -3,7 +3,11 @@
 	import { getAverageRating } from '$lib/utils';
 	import { Compass, Sprout, GraduationCap, Gem } from 'lucide-svelte';
 
-	export let ratings: EpisodeRatings | undefined;
+	interface Props {
+		ratings: EpisodeRatings | undefined;
+	}
+
+	let { ratings }: Props = $props();
 
 	function getRatingColour(rating: number): string {
 		if (rating >= 80) return 'text-green-400';

@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { marked } from 'marked';
-	export let content: string = '';
+	interface Props {
+		content?: string;
+	}
+
+	let { content = '' }: Props = $props();
 </script>
 
 <div class="markdown">
