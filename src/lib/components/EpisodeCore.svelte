@@ -255,7 +255,7 @@
 				>
 					<span
 						id="episode-description"
-						class={`w-full text-wrap font-sans text-sm opacity-90 ${!expanded ? 'line-clamp-1' : ''}`}
+						class={`w-full text-wrap break-words font-sans text-sm opacity-90 ${!expanded ? 'line-clamp-1' : ''}`}
 						>{@html formatDescription(episode.summary)}</span
 					>
 				</button>
