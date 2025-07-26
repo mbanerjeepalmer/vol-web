@@ -471,17 +471,20 @@
 				<Tabs.Trigger value="search">
 					<div class="flex w-fit flex-row">
 						2.
-						<span
-							class={[pulsingClasses && catalogueState.state === 'syncing', 'mx-2 flex flex-row']}
-							><Search class="mx-2 w-4" />search</span
-						>
-						+
-						<span
-							class={[
-								pulsingClasses && catalogueState.state === 'classifying',
-								'mx-2 flex flex-row'
-							]}><ChartCandlestick class="mx-2 w-4" /> select</span
-						>
+						<span class={'mx-2 flex flex-row'}
+							><Search class="mx-2 w-4" /><span
+								class={[catalogueState.state === 'syncing' && pulsingClasses]}
+							>
+								search</span
+							>
+							+
+							<span class={'mx-2 flex flex-row'}
+								><ChartCandlestick class="mx-2 w-4" />
+								<span class={[catalogueState.state === 'classifying' && pulsingClasses]}
+									>select</span
+								>
+							</span>
+						</span>
 					</div>
 				</Tabs.Trigger>
 				<Tabs.Trigger value="subscribe">3. <Podcast class="mx-2 w-4" />subscribe</Tabs.Trigger>
