@@ -191,8 +191,10 @@
 		{/if}
 	</div>
 	<div class="mx-1 flex h-full w-full flex-col items-start gap-4">
-		<a href={episode.link} target="_blank">
-			<h3 class="mx-2 line-clamp-2 min-h-12 pt-2 font-sans text-lg font-bold opacity-90">
+		<a href={episode?.link} target="_blank">
+			<h3
+				class="mx-2 line-clamp-2 min-h-12 text-wrap break-words pt-2 font-sans text-lg font-bold opacity-90"
+			>
 				{episode.title}
 			</h3></a
 		>
