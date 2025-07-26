@@ -494,25 +494,48 @@
 					<Badge variant="secondary">{query}</Badge>
 				{/each}
 			</div>
+			{#if relevantEpisodes !== null}
+				<div class="-mx-4 my-8 flex flex-col rounded-2xl border-4 border-green-500/30">
+					<!-- Scrollable episodes container -->
+					<div
+						class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[80vh] overflow-y-auto px-4 py-6"
+					>
+						<!-- Inner shadow indicators for scroll -->
+						<div class="relative">
+							<!-- Top fade indicator -->
+							<div
+								class="pointer-events-none absolute -top-6 left-0 right-0 z-10 h-6 bg-gradient-to-b from-white to-transparent"
+							></div>
+
+							<!-- Episodes list -->
+							<div class="flex flex-col gap-6">
+								{#each relevantEpisodes as episode (episode.id)}
+									<div class="relative">
+										<EpisodePreview
+											{episode}
+											{userClassify}
+											classificationStatus={getClassificationStatus(episode.id)}
+											{processClassificationQueue}
+										/>
+									</div>
+								{/each}
+							</div>
+
+							<!-- Bottom fade indicator -->
+							<div
+								class="pointer-events-none absolute -bottom-6 left-0 right-0 z-10 h-6 bg-gradient-to-t from-white to-transparent"
+							></div>
+						</div>
+					</div>
+
+					<!-- Subscribe component - always visible -->
+					<div class="border-t border-green-500/20 px-4 py-6">
+						<Subscribe {relevantEpisodes} {relevantFeedID} />
+					</div>
+				</div>
+			{/if}
 			{#if episodes === null || (episodes.length === 0 && catalogueState.state === 'syncing')}
 				<EmptyEpisodes />
-			{/if}
-			{#if relevantEpisodes !== null}
-				<div
-					class="-mx-4 my-8 flex flex-col gap-6 rounded-2xl border-4 border-green-500/30 px-4 py-6"
-				>
-					{#each relevantEpisodes as episode (episode.id)}
-						<div class="relative">
-							<EpisodePreview
-								{episode}
-								{userClassify}
-								classificationStatus={getClassificationStatus(episode.id)}
-								{processClassificationQueue}
-							/>
-						</div>
-					{/each}
-					<Subscribe {relevantEpisodes} {relevantFeedID} />
-				</div>
 			{/if}
 			<div>
 				{#if unclassifiedEpisodes !== null}
@@ -541,6 +564,10 @@
 				{:else}{/if}
 			</div>
 		</Tabs.Content>
-		<Tabs.Content value="subscribe"><Subscribe {relevantEpisodes} {relevantFeedID} /></Tabs.Content>
+		<Tabs.Content value="subscribe">
+			<div class="my-12">
+				<Subscribe {relevantEpisodes} {relevantFeedID} />
+			</div>
+		</Tabs.Content>
 	</Tabs.Root>
 </div>
