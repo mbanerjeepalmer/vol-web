@@ -304,8 +304,8 @@
 					if (categorisedCount !== lastCategorisedCount) {
 						lastCategorisedCount = categorisedCount;
 						lastCategorisedCountTime = Date.now();
-					} else if (Date.now() - lastCategorisedCountTime > 60000) {
-						console.debug('Categorised count unchanged for 60 seconds, stopping polling');
+					} else if (Date.now() - lastCategorisedCountTime > 120000) {
+						console.debug('Categorised count unchanged for 120 seconds, stopping polling');
 						stopPolling();
 						return;
 					}
