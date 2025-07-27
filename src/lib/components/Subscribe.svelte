@@ -7,7 +7,7 @@
 </script>
 
 <div
-	class="mx-auto mt-12 flex flex-col gap-y-4 rounded-md border border-border px-3 py-3"
+	class="mx-auto flex flex-col gap-y-4 rounded-md border border-border px-3 py-3"
 	class:opacity-0={!relevantEpisodes || relevantEpisodes.length === 0}
 >
 	<div class="flex flex-row gap-2">

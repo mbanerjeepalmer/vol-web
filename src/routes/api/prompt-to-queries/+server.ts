@@ -31,7 +31,7 @@ Mark Zuckerberg is the founder of Meta.
 <pre>
 <searchQueries>
 <query>Facebook founding</query>
-<query>Psychology introduction</query>
+<query>Operant conditioning</query>
 <query>Caesar Augustus</query>
 <query>Texas brisket</query>
 </searchQueries>
@@ -47,7 +47,6 @@ ${prompt}`
         "model": "llama3-70b-8192",
         "temperature": 1,
         "max_tokens": 1024,
-        "top_p": 1,
         "stream": true,
         "stop": null
     });

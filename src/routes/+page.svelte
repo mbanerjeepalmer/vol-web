@@ -7,10 +7,10 @@
 	let inputElement: HTMLInputElement | null = $state(null);
 
 	const predefinedPrompts = [
+		"i'm want to get into international cinema",
 		'i want to be like olivia rodrigo',
-		"i can't stop thinking about stablecoins",
-		"i'm working on linear regressions",
-		'i yap too much about artisanal cutlery'
+		"i'm working on human computer interface design",
+		"i can't stop thinking about the roman empire"
 	];
 	// const placeholders = [
 	// 	"i can't stop thinking about the roman empire",
