@@ -7,27 +7,27 @@
 </script>
 
 <div
-	class="relative m-8 flex flex-col gap-y-4 rounded-md border border-border bg-primary-foreground px-3 py-3"
+	class="relative flex flex-col gap-y-4 rounded-md border border-border bg-primary-foreground px-3 py-3 md:m-8"
 	class:opacity-0={!relevantEpisodes || relevantEpisodes.length === 0}
 >
 	<!-- Glow effect (pseudo-element) -->
 	<div
 		class="absolute inset-0 -z-10 rounded-md bg-gradient-to-br from-green-500 to-purple-500 opacity-90 blur-[35px]"
 	></div>
-	<div class="flex flex-row gap-2">
+	<div class="flex flex-col gap-2 md:flex-row">
 		<div class="flex shrink-0 flex-col gap-4">
 			<h2 class="px-1 text-lg font-medium tracking-tight">listen in your player</h2>
 			<p class="-mt-3 px-1 text-xs opacity-70">works with everything except spotify.</p>
 		</div>
 		<p
-			class="self-end {hasCopied
-				? 'text-right text-xs font-medium text-green-500 opacity-100'
+			class="self-end text-right text-xs font-medium text-green-500 {hasCopied
+				? 'opacity-100'
 				: 'opacity-0'}"
 		>
 			now paste the url into your player
 		</p>
 	</div>
-	<div class="flex h-12 flex-row justify-between gap-x-6">
+	<div class="flex min-h-12 flex-col justify-between gap-x-6 gap-y-4 md:flex-row">
 		<div class="flex flex-row gap-x-1">
 			<Input class="h-full" value={`${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`} />
 			<Button
