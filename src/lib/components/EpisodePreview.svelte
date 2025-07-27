@@ -4,8 +4,8 @@
 	import EpisodeCore from '$lib/components/EpisodeCore.svelte';
 	interface Props {
 		episode: JSONFeedItem;
-		userClassify: (episode: JSONFeedItem, category: 'plus' | 'minus') => Promise<void>;
-		processClassificationQueue: () => Promise<void>;
+		userClassify?: (episode: JSONFeedItem, category: 'plus' | 'minus') => Promise<void>;
+		processClassificationQueue?: () => Promise<void>;
 		classificationStatus: 'pending' | 'success' | 'error' | null;
 	}
 

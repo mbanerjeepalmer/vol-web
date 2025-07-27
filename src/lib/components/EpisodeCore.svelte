@@ -2,16 +2,16 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { CircleMinus, CirclePlus, Loader, RefreshCw, Play, Pause, Volume2 } from 'lucide-svelte';
 	import type { JSONFeedItem } from '$lib/types';
-	import { Slider } from '$lib/components/ui/slider';
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 
 	function formatDescription(text: string): string {
 		return text.replace(/^\s+/, '').replace(/\n/g, '<br>');
 	}
 	interface Props {
 		episode: JSONFeedItem;
-		userClassify: (episode: JSONFeedItem, category: 'plus' | 'minus') => Promise<void>;
-		classificationStatus: 'pending' | 'success' | 'error' | null;
+		userClassify?: (episode: JSONFeedItem, category: 'plus' | 'minus') => Promise<void>;
+		processClassificationQueue?: () => Promise<void>;
+		classificationStatus?: 'pending' | 'success' | 'error' | undefined;
 	}
 
 	let { episode, userClassify, classificationStatus, processClassificationQueue }: Props = $props();
@@ -143,7 +143,7 @@
 				/>
 			{:else}
 				<div
-					class="aspect-1/1 h-48 flex-shrink-0 rounded-xl bg-gradient-to-r from-fuchsia-500 to-green-500 opacity-80"
+					class="h-48 w-48 flex-shrink-0 rounded-xl bg-gradient-to-r from-fuchsia-500 to-green-500 opacity-80"
 				></div>
 			{/if}
 			{#if audioAttachment && isPlayingPreview}
@@ -213,11 +213,11 @@
 					<button disabled>
 						<Loader class="h-6 animate-spin" />
 					</button>
-				{:else if classificationStatus === 'error'}
+				{:else if classificationStatus === 'error' && processClassificationQueue}
 					<button onclick={async () => processClassificationQueue()}>
 						<RefreshCw class="h-6 text-red-500" />
 					</button>
-				{:else}
+				{:else if userClassify}
 					<button
 						class="flex flex-row items-center gap-2 rounded-2xl border border-transparent px-4 py-2 hover:border-green-200 hover:bg-green-50 hover:text-green-500 {episode._categories?.some(
 							(cat) => cat.feed_title && cat.feed_title !== 'Everything else'
@@ -239,6 +239,19 @@
 							? 'text-fuchsia-500'
 							: 'opacity-40'}"
 						onclick={async () => userClassify(episode, 'minus')}
+					>
+						<CircleMinus class="h-6" /></button
+					>
+				{:else}
+					<button
+						class="flex cursor-not-allowed flex-row items-center gap-2 rounded-2xl border border-transparent px-4 py-2 opacity-40 hover:border-green-200 hover:bg-green-50 hover:text-green-500"
+						disabled
+					>
+						<CirclePlus class="h-6" />add to playlist</button
+					>
+					<button
+						class="cursor-not-allowed rounded-2xl border border-transparent px-2 py-2 opacity-40 hover:border-fuchsia-500/40 hover:bg-fuchsia-50 hover:text-fuchsia-500"
+						disabled
 					>
 						<CircleMinus class="h-6" /></button
 					>
