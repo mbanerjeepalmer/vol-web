@@ -47,6 +47,23 @@
 	let activeTab: string = $state('think');
 	const pulsingClasses =
 		'animate-pulse bg-gradient-to-l from-fuchsia-500 to-green-500 bg-clip-text text-transparent';
+	/**
+	 * If an episode with the same id exists, replace it,
+	 * otherwise append the new episode.
+	 */
+	function upsert(list: JSONFeedItem[], incoming: JSONFeedItem): JSONFeedItem[] {
+		const idx = list.findIndex((e) => e.id === incoming.id);
+
+		if (idx === -1) {
+			// not found  → append
+			return [incoming, ...list];
+		}
+
+		// found → replace in-place copy
+		const clone = [...list];
+		clone[idx] = incoming;
+		return clone;
+	}
 
 	// Tracking for stopping conditions
 	let lastCategorisedCount = 0;
@@ -276,7 +293,28 @@
 				}
 
 				if (allEpisodes.items) {
-					episodes = allEpisodes.items;
+					const maxBatchTime = 3000; // 3s total max
+					const delayPerItem = 300; // Initial delay per item
+					const maxItemsBeforeBatch = Math.floor(maxBatchTime / delayPerItem); // ~10 items
+
+					let index = 0;
+
+					const interval = setInterval(() => {
+						if (index < allEpisodes.items.length) {
+							if (index < maxItemsBeforeBatch) {
+								episodes = upsert(episodes, allEpisodes.items[index]);
+								index++;
+							}
+						} else {
+							// batch branch
+							const rest = allEpisodes.items.slice(index);
+							let next = episodes;
+							for (const ep of rest) next = upsert(next, ep);
+							episodes = next;
+							clearInterval(interval);
+							return;
+						}
+					}, delayPerItem);
 
 					// Check stopping conditions
 					const categorisedCount = allEpisodes.items.filter(
