@@ -435,7 +435,7 @@
 	}
 </script>
 
-<div class="mx-auto max-w-xl px-2 py-8 lg:px-4">
+<div class="mx-auto max-w-fit px-2 py-8 sm:max-w-xl lg:px-4">
 	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
 		{data.prompt}
 	</h1>
@@ -475,80 +475,92 @@
 		</div>
 		<Tabs.Content value="think"><Markdown content={thinkingAboutQueries} /></Tabs.Content>
 		<Tabs.Content value="search">
-			<div class="my-4 min-h-16 w-full text-center leading-8">
-				{#each queries as query}
-					<Badge variant="secondary">{query}</Badge>
-				{/each}
-			</div>
+			<div class="flex flex-col gap-10">
+				<div class="my-4 min-h-16 w-full text-center leading-8">
+					{#each queries as query}
+						<Badge variant="secondary">{query}</Badge>
+					{/each}
+				</div>
 
-			{#if (relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0) || catalogueState.state === 'classifying'}
-				<div class="-mx-4 my-8 flex flex-col rounded-2xl border-4 border-green-500/30">
-					<!-- Scrollable episodes container -->
-					<div
-						class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[80vh] overflow-y-auto px-4 py-6"
-					>
-						<!-- Inner shadow indicators for scroll -->
-						<div class="relative">
-							<!-- Top fade indicator -->
-							<div
-								class="pointer-events-none absolute -top-6 left-0 right-0 z-10 h-6 bg-gradient-to-b from-white to-transparent"
-							></div>
+				{#if (relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0) || catalogueState.state === 'classifying'}
+					<div class="my-8 box-border flex flex-col rounded-2xl border-4 border-green-500/30 pt-4">
+						<h2 class="my-8 text-center text-2xl font-extrabold opacity-90 lg:text-5xl">
+							selected {relevantEpisodes.length} episode{everythingElseEpisodes.length === 1
+								? ''
+								: 's'} for your playlist
+						</h2>
+						<!-- Scrollable episodes container -->
+						<div
+							class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[80vh] overflow-y-auto px-4 py-6"
+						>
+							<!-- Inner shadow indicators for scroll -->
+							<div class="relative">
+								<!-- Top fade indicator -->
+								<div
+									class="pointer-events-none absolute -top-6 left-0 right-0 z-10 h-6 bg-gradient-to-b from-white to-transparent"
+								></div>
 
-							{#if relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0}
-								<div class="flex flex-col gap-6">
-									{#each relevantEpisodes as episode (episode.id)}
-										<div class="relative">
-											<EpisodePreview
-												{episode}
-												{userClassify}
-												classificationStatus={getClassificationStatus(episode.id)}
-												{processClassificationQueue}
-											/>
-										</div>
-									{/each}
-								</div>
-							{/if}
+								{#if relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0}
+									<div class="flex flex-col gap-6">
+										{#each relevantEpisodes as episode (episode.id)}
+											<div class="relative">
+												<EpisodePreview
+													{episode}
+													{userClassify}
+													classificationStatus={getClassificationStatus(episode.id)}
+													{processClassificationQueue}
+												/>
+											</div>
+										{/each}
+									</div>
+								{/if}
 
-							<!-- Bottom fade indicator -->
-							<div
-								class="pointer-events-none absolute -bottom-6 left-0 right-0 z-10 h-6 bg-gradient-to-t from-white to-transparent"
-							></div>
+								<!-- Bottom fade indicator -->
+								<div
+									class="pointer-events-none absolute -bottom-6 left-0 right-0 z-10 h-6 bg-gradient-to-t from-white to-transparent"
+								></div>
+							</div>
+						</div>
+						<!-- Subscribe component - always visible -->
+						<div class="border-t border-green-500/20 px-4 py-6">
+							<Subscribe {relevantEpisodes} {relevantFeedID} />
 						</div>
 					</div>
-					<!-- Subscribe component - always visible -->
-					<div class="border-t border-green-500/20 px-4 py-6">
-						<Subscribe {relevantEpisodes} {relevantFeedID} />
-					</div>
-				</div>
-			{/if}
-			{#if episodes.length === 0 && catalogueState.state === 'syncing'}
-				<EmptyEpisodes />
-			{/if}
-			<div>
-				{#if unclassifiedEpisodes.length > 0}
-					<div class="my-8 grid gap-6">
-						{#each unclassifiedEpisodes as episode (episode.id)}
-							<EpisodePreview
-								{episode}
-								{userClassify}
-								classificationStatus={getClassificationStatus(episode.id)}
-							/>
-						{/each}
-					</div>
 				{/if}
-			</div>
-			<div class="">
-				{#if everythingElseEpisodes.length > 0}
-					<div class="my-8 grid gap-6">
-						{#each everythingElseEpisodes as episode (episode.id)}
-							<EpisodePreview
-								{episode}
-								{userClassify}
-								classificationStatus={getClassificationStatus(episode.id)}
-							/>
-						{/each}
-					</div>
-				{:else}{/if}
+				{#if episodes.length === 0 && catalogueState.state === 'syncing'}
+					<EmptyEpisodes />
+				{/if}
+				<div>
+					{#if unclassifiedEpisodes.length > 0}
+						<div class="my-8 grid gap-6">
+							{#each unclassifiedEpisodes as episode (episode.id)}
+								<EpisodePreview
+									{episode}
+									{userClassify}
+									classificationStatus={getClassificationStatus(episode.id)}
+								/>
+							{/each}
+						</div>
+					{/if}
+				</div>
+				<div class="">
+					{#if everythingElseEpisodes.length > 0}
+						<h2 class="my-8 text-center text-2xl font-extrabold opacity-90 lg:text-5xl">
+							{everythingElseEpisodes.length} episode{everythingElseEpisodes.length === 1
+								? ''
+								: 's'} excluded
+						</h2>
+						<div class="my-8 grid gap-6 px-4">
+							{#each everythingElseEpisodes as episode (episode.id)}
+								<EpisodePreview
+									{episode}
+									{userClassify}
+									classificationStatus={getClassificationStatus(episode.id)}
+								/>
+							{/each}
+						</div>
+					{:else}{/if}
+				</div>
 			</div>
 		</Tabs.Content>
 		<Tabs.Content value="subscribe">

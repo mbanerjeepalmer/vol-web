@@ -132,14 +132,14 @@
 	}
 </script>
 
-<div class="flex flex-row gap-4 p-2">
+<div class="flex flex-col gap-4 p-2 md:flex-row">
 	<div class="flex shrink-0 flex-col gap-2">
 		<div class="relative">
 			{#if episode.image}
 				<img
 					src={episode.image}
 					alt={episode.title}
-					class="aspect-1/1 h-48 flex-shrink-0 self-start rounded-xl object-cover"
+					class="aspect-1/1 mx-auto h-48 flex-shrink-0 self-start rounded-xl object-cover"
 				/>
 			{:else}
 				<div
