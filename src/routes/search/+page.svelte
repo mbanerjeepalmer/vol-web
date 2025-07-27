@@ -23,33 +23,22 @@
 
 	let megaCatalogue: components['schemas']['MegaCatalogueResponse'] | null;
 	let errorText = $state('');
-	let episodes: JSONFeedItem[] | null = $state(null);
+	// TODO not sure if the null is really clarifying anything here
+	let episodes: JSONFeedItem[] = $state([]);
 	let relevantFeedID = $state('');
-	let relevantEpisodes: JSONFeedItem[] | null = $derived.by(() => {
-		if (episodes === null) {
-			return null;
-		} else {
-			return episodes.filter((item) =>
-				item._categories?.some((category) => category.feed_title !== 'Everything else')
-			);
-		}
+	let relevantEpisodes: JSONFeedItem[] = $derived.by(() => {
+		return episodes.filter((item) =>
+			item._categories?.some((category) => category.feed_title !== 'Everything else')
+		);
 	});
 	let everythingElseFeedID = '';
-	let everythingElseEpisodes: JSONFeedItem[] | null = $derived.by(() => {
-		if (episodes === null) {
-			return null;
-		} else {
-			return episodes.filter((item) =>
-				item._categories?.some((category) => category.feed_title === 'Everything else')
-			);
-		}
+	let everythingElseEpisodes: JSONFeedItem[] = $derived.by(() => {
+		return episodes.filter((item) =>
+			item._categories?.some((category) => category.feed_title === 'Everything else')
+		);
 	});
-	let unclassifiedEpisodes: JSONFeedItem[] | null = $derived.by(() => {
-		if (episodes === null) {
-			return null;
-		} else {
-			return episodes.filter((item) => !item._categories || item._categories.length === 0);
-		}
+	let unclassifiedEpisodes: JSONFeedItem[] = $derived.by(() => {
+		return episodes.filter((item) => !item._categories || item._categories.length === 0);
 	});
 	let thinkingAboutQueries = $state('');
 	let queries: string[] = $state([]);
@@ -311,8 +300,6 @@
 					}
 				} else {
 					console.debug(`No items in the response`, allEpisodes);
-					relevantEpisodes = [];
-					everythingElseEpisodes = [];
 				}
 
 				catalogueState = await fetchCatalogueState(data.catalogue_id);
@@ -328,10 +315,6 @@
 						return;
 				}
 
-				// Schedule next poll
-				// const pollInterval = ['syncing', 'classifying'].includes(catalogueState.state)
-				// 	? 5000
-				// 	: 1000;
 				intervalId = setTimeout(poll, 2000);
 			} catch (error) {
 				console.error('Polling error:', error);
@@ -497,7 +480,8 @@
 					<Badge variant="secondary">{query}</Badge>
 				{/each}
 			</div>
-			{#if relevantEpisodes !== null}
+
+			{#if (relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0) || catalogueState.state === 'classifying'}
 				<div class="-mx-4 my-8 flex flex-col rounded-2xl border-4 border-green-500/30">
 					<!-- Scrollable episodes container -->
 					<div
@@ -510,19 +494,20 @@
 								class="pointer-events-none absolute -top-6 left-0 right-0 z-10 h-6 bg-gradient-to-b from-white to-transparent"
 							></div>
 
-							<!-- Episodes list -->
-							<div class="flex flex-col gap-6">
-								{#each relevantEpisodes as episode (episode.id)}
-									<div class="relative">
-										<EpisodePreview
-											{episode}
-											{userClassify}
-											classificationStatus={getClassificationStatus(episode.id)}
-											{processClassificationQueue}
-										/>
-									</div>
-								{/each}
-							</div>
+							{#if relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0}
+								<div class="flex flex-col gap-6">
+									{#each relevantEpisodes as episode (episode.id)}
+										<div class="relative">
+											<EpisodePreview
+												{episode}
+												{userClassify}
+												classificationStatus={getClassificationStatus(episode.id)}
+												{processClassificationQueue}
+											/>
+										</div>
+									{/each}
+								</div>
+							{/if}
 
 							<!-- Bottom fade indicator -->
 							<div
@@ -530,18 +515,17 @@
 							></div>
 						</div>
 					</div>
-
 					<!-- Subscribe component - always visible -->
 					<div class="border-t border-green-500/20 px-4 py-6">
 						<Subscribe {relevantEpisodes} {relevantFeedID} />
 					</div>
 				</div>
 			{/if}
-			{#if episodes === null || (episodes.length === 0 && catalogueState.state === 'syncing')}
+			{#if episodes.length === 0 && catalogueState.state === 'syncing'}
 				<EmptyEpisodes />
 			{/if}
 			<div>
-				{#if unclassifiedEpisodes !== null}
+				{#if unclassifiedEpisodes.length > 0}
 					<div class="my-8 grid gap-6">
 						{#each unclassifiedEpisodes as episode (episode.id)}
 							<EpisodePreview
@@ -554,7 +538,7 @@
 				{/if}
 			</div>
 			<div class="">
-				{#if everythingElseEpisodes !== null}
+				{#if everythingElseEpisodes.length > 0}
 					<div class="my-8 grid gap-6">
 						{#each everythingElseEpisodes as episode (episode.id)}
 							<EpisodePreview
