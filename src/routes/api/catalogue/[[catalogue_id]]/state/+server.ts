@@ -19,5 +19,9 @@ export async function GET({ params }) {
     const { data: catalogueData, error: catalogueError } = await client.GET("/catalogue/{catalogue_id}",
         { params: { path: { catalogue_id: params.catalogue_id } } }
     )
+    if (catalogueError) {
+        console.error("Error fetching state from catalogue", catalogueError)
+        return json({ "state": undefined })
+    }
     return json({ "state": catalogueData?.state })
 }

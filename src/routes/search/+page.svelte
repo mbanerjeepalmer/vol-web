@@ -295,23 +295,14 @@
 				'/catalogue/{catalogue_id}/item',
 				{
 					params: {
-						path: {
-							catalogue_id: catalogue_id
-						},
-						query: {
-							format: 'json_feed',
-							count: 50,
-							sort: 'desc'
-						}
+						path: { catalogue_id: catalogue_id },
+						query: { format: 'json_feed', count: 50, sort: 'desc' }
 					}
 				}
 			);
 
 			if (allEpisodesError) {
-				console.error(allEpisodesError);
-				errorText = "couldn't get episodes from the server";
-				stopPolling();
-				return;
+				throw allEpisodesError;
 			}
 
 			// Note: This means if we don't have any episodes then we also don't have queries
@@ -321,23 +312,24 @@
 			return allEpisodes;
 		}
 
-		const poll = async () => {
+		const poll = async (retryCount = 0) => {
 			try {
 				if (!data.catalogue_id) {
 					console.debug('No catalogue ID');
 					return;
 				}
+
 				catalogueState = await fetchCatalogueState(data.catalogue_id);
 				let allEpisodes = await fetchEpisodes(data.catalogue_id);
 
-				if (allEpisodes.items) {
+				if (allEpisodes && allEpisodes.hasOwnProperty('items')) {
 					console.debug(`Got allEpisodes.items`, { items_count: allEpisodes.items.length });
+
 					const maxBatchTime = 3000; // 3s total max
 					const delayPerItem = 400; // Initial delay per item
 					const maxItemsBeforeBatch = Math.floor(maxBatchTime / delayPerItem); // ~10 items
 
 					let index = 0;
-
 					const interval = setInterval(() => {
 						if (index < allEpisodes.items.length) {
 							if (index < maxItemsBeforeBatch) {
@@ -380,6 +372,7 @@
 				}
 
 				catalogueState = await fetchCatalogueState(data.catalogue_id);
+
 				switch (catalogueState.state) {
 					case 'idle':
 						console.debug('State is idle, one more fetch then stop polling.');
@@ -396,8 +389,14 @@
 				intervalId = setTimeout(poll, 2000);
 			} catch (error) {
 				console.error('Polling error:', error);
-				errorText = 'the server broke';
-				stopPolling();
+
+				if (retryCount < 2) {
+					console.debug(`Retrying poll (attempt ${retryCount + 2}/3)`);
+					intervalId = setTimeout(() => poll(retryCount + 1), 2000);
+				} else {
+					errorText = 'server broke, sorry';
+					stopPolling();
+				}
 			}
 		};
 
