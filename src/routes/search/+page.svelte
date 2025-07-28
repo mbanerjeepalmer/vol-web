@@ -510,7 +510,7 @@
 	}
 </script>
 
-<svelte:head>{data.prompt}</svelte:head>
+<svelte:head><title>{data.prompt}</title></svelte:head>
 <div class="mx-auto max-w-fit px-2 py-8 sm:max-w-xl lg:px-4">
 	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
 		{data.prompt}
