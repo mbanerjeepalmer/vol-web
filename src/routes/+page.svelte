@@ -68,7 +68,7 @@
 					inputElement.focus();
 				}}
 				class="h-full w-full text-wrap rounded-md border border-input bg-slate-50 p-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
-				>{prompt}...</button
+				>{prompt}</button
 			>
 		{/each}
 	</div>
