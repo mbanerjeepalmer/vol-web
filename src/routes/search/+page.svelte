@@ -23,7 +23,6 @@
 
 	let { data = $bindable() }: Props = $props();
 
-	let megaCatalogue: components['schemas']['MegaCatalogueResponse'] | null;
 	let errorText = $state('');
 
 	let episodes: JSONFeedItem[] = $state([]);
@@ -59,7 +58,7 @@
 		const idx = list.findIndex((e) => e.id === incoming.id);
 
 		if (idx === -1) {
-			// not found  → append
+			// not found  → prepend
 			return [incoming, ...list];
 		}
 
@@ -332,6 +331,7 @@
 				let allEpisodes = await fetchEpisodes(data.catalogue_id);
 
 				if (allEpisodes.items) {
+					console.debug(`Got allEpisodes.items`, { items_count: allEpisodes.items.length });
 					const maxBatchTime = 3000; // 3s total max
 					const delayPerItem = 400; // Initial delay per item
 					const maxItemsBeforeBatch = Math.floor(maxBatchTime / delayPerItem); // ~10 items
@@ -343,15 +343,15 @@
 							if (index < maxItemsBeforeBatch) {
 								episodes = upsert(episodes, allEpisodes.items[index]);
 								index++;
+							} else {
+								// batch branch
+								const rest = allEpisodes.items.slice(index);
+								let next = episodes;
+								for (const ep of rest) next = upsert(next, ep);
+								episodes = next;
+								clearInterval(interval);
+								return;
 							}
-						} else {
-							// batch branch
-							const rest = allEpisodes.items.slice(index);
-							let next = episodes;
-							for (const ep of rest) next = upsert(next, ep);
-							episodes = next;
-							clearInterval(interval);
-							return;
 						}
 					}, delayPerItem);
 
@@ -510,6 +510,7 @@
 	}
 </script>
 
+<svelte:head>{data.prompt}</svelte:head>
 <div class="mx-auto max-w-fit px-2 py-8 sm:max-w-xl lg:px-4">
 	<h1 class="mb-8 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
 		{data.prompt}
@@ -612,7 +613,7 @@
 					{#if unclassifiedEpisodes.length > 0}
 						<Heading2
 							>{unclassifiedEpisodes.length} episode{everythingElseEpisodes.length === 1 ? '' : 's'}
-							waiting to be selected</Heading2
+							awaiting selection</Heading2
 						>
 						<div transition:slide class="my-8 grid gap-6">
 							{#each unclassifiedEpisodes as episode (episode.id)}
@@ -635,10 +636,10 @@
 								? ''
 								: 's'} excluded
 						</Heading2>
-						<div class="my-8 grid gap-6 px-4">
-							<div
-								class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[50vh] overflow-y-auto px-4 py-6"
-							>
+						<div
+							class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[50vh] overflow-y-auto px-4 py-6"
+						>
+							<div class="my-8 grid gap-6 px-4">
 								{#each everythingElseEpisodes as episode (episode.id)}
 									<EpisodePreview
 										{episode}
