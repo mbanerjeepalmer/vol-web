@@ -51,7 +51,7 @@
 		"groq-sdk": "^0.8.0",
 		"marked": "^15.0.0",
 		"openapi-fetch": "^0.14.0",
-		"posthog-js": "^1.187.2",
+		"posthog-js": "^1.258.2",
 		"posthog-node": "^4.2.2"
 	}
 }
