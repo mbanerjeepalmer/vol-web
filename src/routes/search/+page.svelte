@@ -548,7 +548,9 @@
 				<Tabs.Trigger value="subscribe">3. <Podcast class="mx-2 w-4" />subscribe</Tabs.Trigger>
 			</Tabs.List>
 		</div>
-		<Tabs.Content value="think"><Markdown content={thinkingAboutQueries} /></Tabs.Content>
+		<Tabs.Content value="think"
+			><div class="py-6"><Markdown content={thinkingAboutQueries} /></div></Tabs.Content
+		>
 		<Tabs.Content value="search">
 			<div class="flex flex-col gap-10">
 				<div
