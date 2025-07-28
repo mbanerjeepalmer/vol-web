@@ -559,15 +559,9 @@
 						</Heading2>
 						<!-- Scrollable episodes container -->
 						<div
-							class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[80vh] overflow-y-auto px-4 py-6"
+							class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[50vh] overflow-y-auto px-4 py-6"
 						>
-							<!-- Inner shadow indicators for scroll -->
 							<div class="relative">
-								<!-- Top fade indicator -->
-								<div
-									class="pointer-events-none absolute -top-6 left-0 right-0 z-10 h-6 bg-gradient-to-b from-white to-transparent"
-								></div>
-
 								{#if relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0}
 									<div class="flex flex-col gap-6">
 										{#each relevantEpisodes as episode (episode.id)}
@@ -616,7 +610,7 @@
 						</div>
 					{/if}
 				</div>
-				<div class="">
+				<div class="my-8 box-border flex flex-col rounded-2xl border-4 border-fuchsia-500/30 pt-4">
 					{#if everythingElseEpisodes.length > 0}
 						<Heading2>
 							{everythingElseEpisodes.length} episode{everythingElseEpisodes.length === 1
@@ -624,13 +618,17 @@
 								: 's'} excluded
 						</Heading2>
 						<div transition:slide class="my-8 grid gap-6 px-4">
-							{#each everythingElseEpisodes as episode (episode.id)}
-								<EpisodePreview
-									{episode}
-									{userClassify}
-									classificationStatus={getClassificationStatus(episode.id)}
-								/>
-							{/each}
+							<div
+								class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[50vh] overflow-y-auto px-4 py-6"
+							>
+								{#each everythingElseEpisodes as episode (episode.id)}
+									<EpisodePreview
+										{episode}
+										{userClassify}
+										classificationStatus={getClassificationStatus(episode.id)}
+									/>
+								{/each}
+							</div>
 						</div>
 					{:else}{/if}
 				</div>

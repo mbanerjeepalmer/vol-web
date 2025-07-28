@@ -218,7 +218,7 @@
 				{/each}
 			{/if}
 		</div>
-		<div class=" my-4 flex min-h-10 flex-row items-center gap-4 text-xs">
+		<div class=" my-4 flex min-h-10 flex-row items-center justify-between gap-4 text-xs">
 			{#if episode.id}
 				{#if classificationStatus === 'pending'}
 					<button disabled>
@@ -230,39 +230,39 @@
 					</button>
 				{:else if userClassify}
 					<button
-						class="flex flex-row items-center gap-2 rounded-2xl border border-transparent px-4 py-2 hover:border-green-200 hover:bg-green-50 hover:text-green-500 {categorisation ===
+						class="flex flex-row items-center gap-2 rounded-2xl border border-transparent px-4 py-2 hover:border-green-200 hover:bg-green-50 hover:text-green-500 hover:opacity-100 {categorisation ===
 						'relevant'
 							? 'text-green-500'
 							: 'opacity-40'}"
 						onclick={async () => userClassify(episode, 'plus')}
 					>
-						<CirclePlus class="h-6" />{episode._categories?.some(
-							(cat) => cat.feed_title && cat.feed_title !== 'Everything else'
-						)
-							? 'added'
-							: 'add'} to playlist</button
+						<CirclePlus class="h-6" />{categorisation === 'relevant'
+							? 'selected'
+							: 'select'}</button
 					>
 					<button
-						class="rounded-2xl border border-transparent px-2 py-2 hover:border-fuchsia-500/40 hover:bg-fuchsia-50 hover:text-fuchsia-500 {categorisation ===
+						class="flex flex-row items-center gap-2 rounded-2xl border border-transparent px-4 py-2 hover:border-fuchsia-500/40 hover:bg-fuchsia-50 hover:text-fuchsia-500 hover:opacity-100 {categorisation ===
 						'Everything else'
 							? 'text-fuchsia-500'
 							: 'opacity-40'}"
 						onclick={async () => userClassify(episode, 'minus')}
 					>
-						<CircleMinus class="h-6" /></button
+						<CircleMinus class="h-6" />{categorisation === 'Everything else'
+							? 'excluded'
+							: 'exclude'}</button
 					>
 				{:else}
 					<button
 						class="flex cursor-not-allowed flex-row items-center gap-2 rounded-2xl border border-transparent px-4 py-2 opacity-40 hover:border-green-200 hover:bg-green-50 hover:text-green-500"
 						disabled
 					>
-						<CirclePlus class="h-6" />add to playlist</button
+						<CirclePlus class="h-6" />select for playlist</button
 					>
 					<button
 						class="cursor-not-allowed rounded-2xl border border-transparent px-2 py-2 opacity-40 hover:border-fuchsia-500/40 hover:bg-fuchsia-50 hover:text-fuchsia-500"
 						disabled
 					>
-						<CircleMinus class="h-6" /></button
+						<CircleMinus class="h-6" />exclude</button
 					>
 				{/if}
 			{/if}
