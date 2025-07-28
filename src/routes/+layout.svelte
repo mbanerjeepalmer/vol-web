@@ -35,7 +35,7 @@
 	</main>
 
 	<footer class="container mx-auto mt-auto max-w-lg p-4">
-		<ul class="mx-auto flex w-fit flex-row items-center justify-center gap-4 text-sm">
+		<ul class="mx-auto flex w-fit flex-col items-center justify-center gap-4 text-sm sm:flex-row">
 			<li class="underline decoration-slate-400 opacity-70 hover:opacity-100">
 				<a href="/how-to">how to vol</a>
 			</li>
