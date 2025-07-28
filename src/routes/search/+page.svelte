@@ -542,9 +542,11 @@
 		<Tabs.Content value="think"><Markdown content={thinkingAboutQueries} /></Tabs.Content>
 		<Tabs.Content value="search">
 			<div class="flex flex-col gap-10">
-				<div class="my-4 min-h-16 w-full text-center leading-8">
+				<div
+					class=" my-4 flex min-h-16 w-full flex-wrap items-center justify-center gap-x-2 text-center leading-8"
+				>
 					{#each queries as query}
-						<Badge variant="secondary">{query}</Badge>
+						<Badge class="h-fit" variant="secondary">{query}</Badge>
 					{/each}
 				</div>
 
