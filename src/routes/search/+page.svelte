@@ -23,7 +23,10 @@
 
 	let megaCatalogue: components['schemas']['MegaCatalogueResponse'] | null;
 	let errorText = $state('');
-	// TODO not sure if the null is really clarifying anything here
+
+	// For catalogue metadata
+	let lastCategoriesCount = $state(0);
+	let lastSourcesCount = $state(0);
 	let episodes: JSONFeedItem[] = $state([]);
 	let relevantFeedID = $state('');
 	let relevantEpisodes: JSONFeedItem[] = $derived.by(() => {
@@ -187,28 +190,51 @@
 		return catalogueStateResponseJSON;
 	}
 
-	async function fetchMegaCatalogue(catalogue_id: string) {
-		console.debug(`fetching Mega Catalogue ${catalogue_id}`);
-		const megaCatalogueResponse = await fetch(`/api/catalogue/${catalogue_id}`);
-		megaCatalogue = await megaCatalogueResponse.json();
-		if (!megaCatalogueResponse.ok || !megaCatalogue) {
-			console.error(`megaCatalogue was`, megaCatalogue);
-			errorText = `sorry, couldn't get search from the server`;
+	function populateCatalogueMetadataFromEpisodes(allEpisodes) {
+		if (!allEpisodes || !allEpisodes.items) {
+			console.warn('No episodes data to process for catalogue metadata.');
 			return;
 		}
-		catalogueState = { state: megaCatalogue.catalogue.state };
-		data.prompt = megaCatalogue.catalogue.name;
-		megaCatalogue.output_feeds.forEach((f) => {
-			if (f.title === 'Everything else') {
-				console.debug(`Found 'Everything else' feed:  ${f.id}`);
-				everythingElseFeedID = f.id;
-			} else {
-				console.debug(`Found relevant feed: ${f.id}`);
-				relevantFeedID = f.id;
+
+		if (allEpisodes.title && !data.prompt) {
+			data.prompt = allEpisodes.title;
+		}
+
+		const newSources = new Set();
+		for (const item of allEpisodes.items) {
+			if (item._sources) {
+				for (const source of item._sources) {
+					newSources.add(source.feed_title);
+				}
 			}
-		});
-		if (megaCatalogue.input_feeds.length > 0) {
-			queries = megaCatalogue.input_feeds.map((f) => f.title);
+		}
+		if (queries.length !== newSources.size) {
+			console.debug('Updating queries');
+			queries = Array.from(newSources);
+		}
+
+		if (!relevantFeedID || !everythingElseFeedID) {
+			console.debug('Updating category IDs');
+			const newCategories = new Map();
+			for (const item of allEpisodes.items) {
+				if (item._categories) {
+					for (const category of item._categories) {
+						if (!newCategories.has(category.feed_title)) {
+							newCategories.set(category.feed_title, category.feed_id);
+						}
+					}
+				}
+			}
+
+			everythingElseFeedID = newCategories.get('Everything else') || null;
+			for (const [title, id] of newCategories.entries()) {
+				if (title !== 'Everything else') {
+					relevantFeedID = id;
+					break; // Assuming only one 'relevant' feed
+				}
+			}
+		} else {
+			console.debug('Both categories present. Skipping update.');
 		}
 	}
 
@@ -216,7 +242,6 @@
 		if (data.catalogue_id) {
 			activeTab = 'search';
 			console.debug(`Loading an existing catalogue`, data.catalogue_id);
-			await fetchMegaCatalogue(data.catalogue_id);
 			await startPolling();
 			return;
 		} else if (data.prompt) {
@@ -292,6 +317,10 @@
 					return;
 				}
 
+				// Note: This means if we don't have any episodes then we also don't have queries
+				// But on creation the queries are populated client-side.
+				// And for an existing catalogue the episodes should all be there.
+				populateCatalogueMetadataFromEpisodes(allEpisodes);
 				if (allEpisodes.items) {
 					const maxBatchTime = 3000; // 3s total max
 					const delayPerItem = 300; // Initial delay per item
@@ -391,7 +420,6 @@
 			newURL.searchParams.set('catalogue_id', catalogueResponseJSON.catalogue.id);
 			goto(newURL);
 			console.debug(`Going to start fetching data`);
-			await fetchMegaCatalogue(catalogueResponseJSON.catalogue.id);
 			await startPolling();
 		} catch (error) {
 			console.error('Search request failed:', error);
