@@ -6,9 +6,9 @@
 	let hasCopied = $state(false);
 </script>
 
-<div class="mx-auto max-w-2xl md:p-8">
+<div class="mx-auto max-w-md p-8">
 	<div
-		class="relative flex flex-col gap-y-4 rounded-md border border-border bg-primary-foreground px-3 py-3 md:m-8"
+		class="relative flex flex-col gap-y-4 rounded-md border border-border bg-primary-foreground px-3 py-3"
 		class:opacity-0={!relevantEpisodes || relevantEpisodes.length === 0}
 	>
 		<!-- Glow effect (pseudo-element) -->
