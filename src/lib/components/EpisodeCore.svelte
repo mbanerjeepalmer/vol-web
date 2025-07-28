@@ -30,6 +30,14 @@
 	let previewStartTime = $state(0);
 	let userHasSeeked = $state(false);
 
+	let categorisation = $derived.by(() => {
+		return episode._categories?.find((cat) => cat.feed_title === 'Everything else')
+			? 'Everything else'
+			: episode._categories?.length
+				? 'relevant'
+				: undefined;
+	});
+
 	// 2. Replace the formatTime function with this updated version:
 	function formatTime(seconds: number): string {
 		if (isNaN(seconds)) return '0:00';
@@ -143,7 +151,7 @@
 				/>
 			{:else}
 				<div
-					class="h-48 w-48 flex-shrink-0 rounded-xl bg-gradient-to-r from-fuchsia-500 to-green-500 opacity-80"
+					class="mx-auto h-48 w-48 flex-shrink-0 rounded-xl bg-gradient-to-r from-fuchsia-500 to-green-500 opacity-80"
 				></div>
 			{/if}
 			{#if audioAttachment && isPlayingPreview}
@@ -180,7 +188,10 @@
 					</button>
 				{:else}
 					<button
-						class="flex w-full items-center gap-2 rounded-lg bg-green-500 px-3 py-2 text-white hover:bg-green-600"
+						class="flex w-full items-center gap-2 rounded-lg bg-gradient-to-br {categorisation ===
+						'Everything else'
+							? 'border-fuchsia-600 from-fuchsia-500 to-fuchsia-600 hover:from-fuchsia-600 hover:to-fuchsia-700'
+							: 'from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'} px-3 py-2 font-medium text-white hover:bg-green-600"
 						onclick={togglePreviewPlayback}
 					>
 						<Play class="h-4 w-4" />
@@ -219,9 +230,8 @@
 					</button>
 				{:else if userClassify}
 					<button
-						class="flex flex-row items-center gap-2 rounded-2xl border border-transparent px-4 py-2 hover:border-green-200 hover:bg-green-50 hover:text-green-500 {episode._categories?.some(
-							(cat) => cat.feed_title && cat.feed_title !== 'Everything else'
-						)
+						class="flex flex-row items-center gap-2 rounded-2xl border border-transparent px-4 py-2 hover:border-green-200 hover:bg-green-50 hover:text-green-500 {categorisation ===
+						'relevant'
 							? 'text-green-500'
 							: 'opacity-40'}"
 						onclick={async () => userClassify(episode, 'plus')}
@@ -233,9 +243,8 @@
 							: 'add'} to playlist</button
 					>
 					<button
-						class="rounded-2xl border border-transparent px-2 py-2 hover:border-fuchsia-500/40 hover:bg-fuchsia-50 hover:text-fuchsia-500 {episode._categories?.some(
-							(cat) => cat.feed_title === 'Everything else'
-						)
+						class="rounded-2xl border border-transparent px-2 py-2 hover:border-fuchsia-500/40 hover:bg-fuchsia-50 hover:text-fuchsia-500 {categorisation ===
+						'Everything else'
 							? 'text-fuchsia-500'
 							: 'opacity-40'}"
 						onclick={async () => userClassify(episode, 'minus')}
