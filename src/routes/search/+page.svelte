@@ -14,6 +14,7 @@
 	import EmptyEpisodes from '$lib/components/EmptyEpisodes.svelte';
 	import createClient from 'openapi-fetch';
 	import { PUBLIC_ZACUSCA_API_BASE } from '$env/static/public';
+	import Heading2 from '$lib/components/Heading2.svelte';
 
 	interface Props {
 		data: PageData;
@@ -515,7 +516,7 @@
 	</p>
 	<Tabs.Root value={activeTab} class="w-full">
 		<div class="flex w-full">
-			<Tabs.List class="mx-auto">
+			<Tabs.List class="mx-auto flex h-fit flex-col gap-y-2 sm:flex-row">
 				<Tabs.Trigger value="think">1. <Orbit class="mx-2 w-4" /> think</Tabs.Trigger>
 				<Tabs.Trigger value="search">
 					<div class="flex w-fit flex-row">
@@ -552,11 +553,11 @@
 
 				{#if (relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0) || catalogueState.state === 'classifying'}
 					<div class="my-8 box-border flex flex-col rounded-2xl border-4 border-green-500/30 pt-4">
-						<h2 class="my-8 text-center text-2xl font-extrabold opacity-90 lg:text-5xl">
+						<Heading2>
 							selected {relevantEpisodes.length} episode{everythingElseEpisodes.length === 1
 								? ''
 								: 's'} for your playlist
-						</h2>
+						</Heading2>
 						<!-- Scrollable episodes container -->
 						<div
 							class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[80vh] overflow-y-auto px-4 py-6"
@@ -600,6 +601,11 @@
 				{/if}
 				<div>
 					{#if unclassifiedEpisodes.length > 0}
+						<Heading2
+							>{unclassifiedEpisodes.length} episode{everythingElseEpisodes.length === 1
+								? ''
+								: 's'}</Heading2
+						> waiting to be selected
 						<div class="my-8 grid gap-6">
 							{#each unclassifiedEpisodes as episode (episode.id)}
 								<EpisodePreview
@@ -613,11 +619,11 @@
 				</div>
 				<div class="">
 					{#if everythingElseEpisodes.length > 0}
-						<h2 class="my-8 text-center text-2xl font-extrabold opacity-90 lg:text-5xl">
+						<Heading2>
 							{everythingElseEpisodes.length} episode{everythingElseEpisodes.length === 1
 								? ''
 								: 's'} excluded
-						</h2>
+						</Heading2>
 						<div class="my-8 grid gap-6 px-4">
 							{#each everythingElseEpisodes as episode (episode.id)}
 								<EpisodePreview
