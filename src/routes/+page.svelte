@@ -7,7 +7,7 @@
 	let inputElement: HTMLInputElement | null = $state(null);
 
 	const predefinedPrompts = [
-		"i'm want to get into international cinema",
+		'i want to get into international cinema',
 		'i want to be like olivia rodrigo',
 		"i'm working on human computer interface design",
 		"i can't stop thinking about the roman empire"
