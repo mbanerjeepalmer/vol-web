@@ -201,15 +201,15 @@
 			</div>
 		{/if}
 	</div>
-	<div class="mx-1 flex h-full w-full flex-col items-start gap-4">
+	<div class="mx-1 flex h-full min-w-0 flex-1 flex-col items-start gap-4">
 		<a href={episode?.link} target="_blank">
 			<h3
-				class="mx-2 line-clamp-2 min-h-12 text-wrap break-words pt-2 font-sans text-lg font-bold opacity-90"
+				class="mx-2 line-clamp-2 min-h-12 min-w-0 text-wrap break-words pt-2 font-sans text-lg font-bold opacity-90"
 			>
 				{episode.title}
 			</h3></a
 		>
-		<div class="mx-1 flex w-full flex-row items-center gap-2">
+		<div class="mx-1 flex w-full min-w-0 flex-row items-center gap-2">
 			{#if episode._sources}
 				{#each episode._sources as source}
 					<Badge variant="secondary" class="w-fit border-none text-xs font-light">
@@ -218,7 +218,7 @@
 				{/each}
 			{/if}
 		</div>
-		<div class=" my-4 flex min-h-10 flex-row items-center justify-between gap-4 text-xs">
+		<div class="my-4 flex min-h-10 min-w-0 flex-row items-center justify-between gap-4 text-xs">
 			{#if episode.id}
 				{#if classificationStatus === 'pending'}
 					<button disabled>
@@ -269,19 +269,20 @@
 		</div>
 
 		{#if episode.summary}
-			<div class="px-4 text-primary/80">
+			<div class="max-w-full px-4 text-primary/80">
 				<button
 					bind:this={descriptionElem}
 					onclick={toggleExpanded}
-					class="w-full text-left"
+					class="block max-w-full text-left"
 					aria-expanded={expanded}
 					aria-controls="episode-description"
 				>
-					<span
+					<div
 						id="episode-description"
-						class={`w-full text-wrap break-words font-sans text-sm opacity-90 ${!expanded ? 'line-clamp-1' : ''}`}
-						>{@html formatDescription(episode.summary)}</span
+						class={`wrap-anywhere max-w-full overflow-x-hidden hyphens-auto text-wrap font-sans text-sm opacity-90 ${!expanded ? 'line-clamp-1' : ''}`}
 					>
+						{@html formatDescription(episode.summary)}
+					</div>
 				</button>
 			</div>
 		{/if}
