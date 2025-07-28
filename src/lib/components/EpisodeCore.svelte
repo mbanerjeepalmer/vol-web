@@ -140,8 +140,8 @@
 	}
 </script>
 
-<div class="flex flex-col gap-4 p-2 md:flex-row">
-	<div class="flex shrink-0 flex-col gap-2">
+<div class="flex max-w-full flex-col gap-4 p-2 md:flex-row">
+	<div class="flex max-w-full shrink-0 flex-col gap-2">
 		<div class="relative">
 			{#if episode.image}
 				<img
@@ -269,7 +269,7 @@
 		</div>
 
 		{#if episode.summary}
-			<div class="max-w-full px-4 text-primary/80">
+			<div class="max-w-full px-4 pb-2 text-primary/80">
 				<button
 					bind:this={descriptionElem}
 					onclick={toggleExpanded}
