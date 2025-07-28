@@ -27,12 +27,15 @@
 	let errorText = $state('');
 
 	let episodes: JSONFeedItem[] = $state([]);
+	// TODO should just be an object
+	let relevantFeedTitle = $state('');
 	let relevantFeedID = $state('');
 	let relevantEpisodes: JSONFeedItem[] = $derived.by(() => {
 		return episodes.filter((item) =>
 			item._categories?.some((category) => category.feed_title !== 'Everything else')
 		);
 	});
+	let everythingElseFeedID = $state('');
 	let everythingElseEpisodes: JSONFeedItem[] = $derived.by(() => {
 		return episodes.filter((item) =>
 			item._categories?.some((category) => category.feed_title === 'Everything else')
@@ -211,7 +214,7 @@
 			queries = Array.from(newSources);
 		}
 
-		if (!relevantFeedID) {
+		if (!relevantFeedID || !everythingElseFeedID) {
 			console.debug('Updating category ID');
 			const newCategories = new Map();
 			for (const item of allEpisodes.items) {
@@ -225,9 +228,13 @@
 			}
 
 			for (const [title, id] of newCategories.entries()) {
-				if (title !== 'Everything else') {
+				if (relevantFeedID && everythingElseFeedID) {
+					break;
+				} else if (title === 'Everything else') {
+					everythingElseFeedID = id;
+				} else if (title !== 'Everything else') {
 					relevantFeedID = id;
-					break; // Assuming only one 'relevant' feed
+					relevantFeedTitle = title;
 				}
 			}
 		} else {
@@ -284,40 +291,46 @@
 		isPolling = true;
 		console.debug(`Starting polling`);
 
-		const poll = async () => {
-			try {
-				// Always fetch catalogue state
-				catalogueState = await fetchCatalogueState(data.catalogue_id);
-
-				// Fetch episodes if we're syncing or classifying
-
-				const { data: allEpisodes, error: allEpisodesError } = await client.GET(
-					'/catalogue/{catalogue_id}/item',
-					{
-						params: {
-							path: {
-								catalogue_id: data.catalogue_id
-							},
-							query: {
-								format: 'json_feed',
-								count: 50,
-								sort: 'desc'
-							}
+		async function fetchEpisodes(catalogue_id: string) {
+			const { data: allEpisodes, error: allEpisodesError } = await client.GET(
+				'/catalogue/{catalogue_id}/item',
+				{
+					params: {
+						path: {
+							catalogue_id: catalogue_id
+						},
+						query: {
+							format: 'json_feed',
+							count: 50,
+							sort: 'desc'
 						}
 					}
-				);
+				}
+			);
 
-				if (allEpisodesError) {
-					console.error(allEpisodesError);
-					errorText = "couldn't get episodes from the server";
-					stopPolling();
+			if (allEpisodesError) {
+				console.error(allEpisodesError);
+				errorText = "couldn't get episodes from the server";
+				stopPolling();
+				return;
+			}
+
+			// Note: This means if we don't have any episodes then we also don't have queries
+			// But on creation the queries are populated client-side.
+			// And for an existing catalogue the episodes should all be there.
+			populateCatalogueMetadataFromEpisodes(allEpisodes);
+			return allEpisodes;
+		}
+
+		const poll = async () => {
+			try {
+				if (!data.catalogue_id) {
+					console.debug('No catalogue ID');
 					return;
 				}
+				catalogueState = await fetchCatalogueState(data.catalogue_id);
+				let allEpisodes = await fetchEpisodes(data.catalogue_id);
 
-				// Note: This means if we don't have any episodes then we also don't have queries
-				// But on creation the queries are populated client-side.
-				// And for an existing catalogue the episodes should all be there.
-				populateCatalogueMetadataFromEpisodes(allEpisodes);
 				if (allEpisodes.items) {
 					const maxBatchTime = 3000; // 3s total max
 					const delayPerItem = 400; // Initial delay per item
@@ -369,8 +382,9 @@
 				catalogueState = await fetchCatalogueState(data.catalogue_id);
 				switch (catalogueState.state) {
 					case 'idle':
-						console.debug("State is idle, we assume we're done, stopping polling");
+						console.debug('State is idle, one more fetch then stop polling.');
 						stopPolling();
+						await fetchEpisodes(data.catalogue_id);
 						return;
 					case 'errored':
 						console.error('There was an error with the catalogue');
@@ -454,42 +468,40 @@
 	 * 4. Classification state → refresh from server if active
 	 * 5. Conflicts → server state wins, user notified
 	 */
-	async function userClassify(episode: JSONFeedItem, category: 'plus' | 'minus') {
+	async function userClassify(episode: JSONFeedItem, label: 'plus' | 'minus') {
 		// Early return if no output feeds are available
-		if (!megaCatalogue?.output_feeds || megaCatalogue.output_feeds.length === 0) {
-			console.error('No output feeds in megaCatalogue');
+		if (!relevantFeedID || !relevantFeedTitle || !everythingElseFeedID) {
+			console.error("Don't have category data", {
+				relevantFeedID: relevantFeedID,
+				relevantFeedTitle: relevantFeedTitle,
+				everythingElseFeedID: everythingElseFeedID
+			});
 			errorText = "error: don't have categories";
 			return;
 		}
 
-		// Determine the target feed based on the category
-		const isMinus = category === 'minus';
-		const targetFeedTitle = isMinus ? 'Everything else' : null;
-		const targetFeed = megaCatalogue.output_feeds.find((f) =>
-			isMinus ? f.title === targetFeedTitle : f.title !== 'Everything else'
-		);
-
-		if (!targetFeed) {
-			const errorMessage = isMinus
-				? "Couldn't find 'Everything else' feed"
-				: "Couldn't find the non-'Everything else' feed";
-			console.error(errorMessage);
-			return;
-		}
+		// Determine the target feed based on the label
+		const isMinus = label === 'minus';
+		const targetFeedTitle = isMinus ? 'Everything else' : relevantFeedTitle;
 
 		// Update episode categories
-		episode._categories = [{ feed_title: targetFeed.title, feed_url: targetFeed.href }];
+		episode._categories = [
+			{
+				feed_title: targetFeedTitle,
+				feed_url: `${PUBLIC_ZACUSCA_API_BASE}/feed/${relevantFeedID}/rss`
+			}
+		];
 
 		// Update or add to classification queue
 		const existing = classificationQueue.find((q) => q.episodeId === episode.id);
 		if (existing) {
-			existing.feed_title = targetFeed.title;
+			existing.feed_title = targetFeedTitle;
 			existing.status = 'pending';
 			existing.retries = 0;
 		} else {
 			classificationQueue.push({
 				episodeId: episode.id,
-				feed_title: targetFeed.title,
+				feed_title: targetFeedTitle,
 				status: 'pending',
 				retries: 0
 			});
@@ -542,9 +554,15 @@
 				<div
 					class=" my-4 flex min-h-16 w-full flex-wrap items-center justify-center gap-2 text-center leading-8"
 				>
-					{#each queries as query}
-						<Badge class="h-fit" variant="secondary">{query}</Badge>
-					{/each}
+					{#if queries.length > 0}
+						{#each queries as query}
+							<Badge class="h-fit" variant="secondary">{query}</Badge>
+						{/each}
+					{:else if catalogueState.state === 'syncing'}
+						{#each Array(4) as _}
+							<Badge class="h-6 w-28 animate-pulse" variant="secondary"></Badge>
+						{/each}
+					{/if}
 				</div>
 
 				{#if (relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0) || catalogueState.state === 'classifying'}
@@ -576,29 +594,24 @@
 										{/each}
 									</div>
 								{/if}
-
-								<!-- Bottom fade indicator -->
-								<div
-									class="pointer-events-none absolute -bottom-6 left-0 right-0 z-10 h-6 bg-gradient-to-t from-white to-transparent"
-								></div>
 							</div>
 						</div>
-						<!-- Subscribe component - always visible -->
+
 						<div class="border-t border-green-500/20 px-4 py-6">
 							<Subscribe {relevantEpisodes} {relevantFeedID} />
 						</div>
 					</div>
 				{/if}
 				{#if episodes.length === 0 && catalogueState.state === 'syncing'}
+					<Heading2>searching for episodes</Heading2>
 					<EmptyEpisodes />
 				{/if}
 				<div>
 					{#if unclassifiedEpisodes.length > 0}
 						<Heading2
-							>{unclassifiedEpisodes.length} episode{everythingElseEpisodes.length === 1
-								? ''
-								: 's'}</Heading2
-						> waiting to be selected
+							>{unclassifiedEpisodes.length} episode{everythingElseEpisodes.length === 1 ? '' : 's'}
+							waiting to be selected</Heading2
+						>
 						<div transition:slide class="my-8 grid gap-6">
 							{#each unclassifiedEpisodes as episode (episode.id)}
 								<EpisodePreview
@@ -610,14 +623,17 @@
 						</div>
 					{/if}
 				</div>
-				<div class="my-8 box-border flex flex-col rounded-2xl border-4 border-fuchsia-500/30 pt-4">
-					{#if everythingElseEpisodes.length > 0}
+				{#if everythingElseEpisodes.length > 0}
+					<div
+						transition:slide
+						class="my-8 box-border flex flex-col rounded-2xl border-4 border-fuchsia-500/30 pt-4"
+					>
 						<Heading2>
 							{everythingElseEpisodes.length} episode{everythingElseEpisodes.length === 1
 								? ''
 								: 's'} excluded
 						</Heading2>
-						<div transition:slide class="my-8 grid gap-6 px-4">
+						<div class="my-8 grid gap-6 px-4">
 							<div
 								class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[50vh] overflow-y-auto px-4 py-6"
 							>
@@ -630,8 +646,8 @@
 								{/each}
 							</div>
 						</div>
-					{:else}{/if}
-				</div>
+					</div>
+				{/if}
 			</div>
 		</Tabs.Content>
 		<Tabs.Content value="subscribe">
