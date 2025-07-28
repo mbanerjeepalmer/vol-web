@@ -25,9 +25,6 @@
 	let megaCatalogue: components['schemas']['MegaCatalogueResponse'] | null;
 	let errorText = $state('');
 
-	// For catalogue metadata
-	let lastCategoriesCount = $state(0);
-	let lastSourcesCount = $state(0);
 	let episodes: JSONFeedItem[] = $state([]);
 	let relevantFeedID = $state('');
 	let relevantEpisodes: JSONFeedItem[] = $derived.by(() => {
@@ -35,7 +32,6 @@
 			item._categories?.some((category) => category.feed_title !== 'Everything else')
 		);
 	});
-	let everythingElseFeedID = '';
 	let everythingElseEpisodes: JSONFeedItem[] = $derived.by(() => {
 		return episodes.filter((item) =>
 			item._categories?.some((category) => category.feed_title === 'Everything else')
@@ -214,8 +210,8 @@
 			queries = Array.from(newSources);
 		}
 
-		if (!relevantFeedID || !everythingElseFeedID) {
-			console.debug('Updating category IDs');
+		if (!relevantFeedID) {
+			console.debug('Updating category ID');
 			const newCategories = new Map();
 			for (const item of allEpisodes.items) {
 				if (item._categories) {
@@ -227,7 +223,6 @@
 				}
 			}
 
-			everythingElseFeedID = newCategories.get('Everything else') || null;
 			for (const [title, id] of newCategories.entries()) {
 				if (title !== 'Everything else') {
 					relevantFeedID = id;
