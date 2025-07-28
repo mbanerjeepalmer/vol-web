@@ -15,6 +15,7 @@
 	import createClient from 'openapi-fetch';
 	import { PUBLIC_ZACUSCA_API_BASE } from '$env/static/public';
 	import Heading2 from '$lib/components/Heading2.svelte';
+	import { slide } from 'svelte/transition';
 
 	interface Props {
 		data: PageData;
@@ -319,7 +320,7 @@
 				populateCatalogueMetadataFromEpisodes(allEpisodes);
 				if (allEpisodes.items) {
 					const maxBatchTime = 3000; // 3s total max
-					const delayPerItem = 300; // Initial delay per item
+					const delayPerItem = 400; // Initial delay per item
 					const maxItemsBeforeBatch = Math.floor(maxBatchTime / delayPerItem); // ~10 items
 
 					let index = 0;
@@ -547,7 +548,10 @@
 				</div>
 
 				{#if (relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0) || catalogueState.state === 'classifying'}
-					<div class="my-8 box-border flex flex-col rounded-2xl border-4 border-green-500/30 pt-4">
+					<div
+						transition:slide
+						class="my-8 box-border flex flex-col rounded-2xl border-4 border-green-500/30 pt-4"
+					>
 						<Heading2>
 							selected {relevantEpisodes.length} episode{everythingElseEpisodes.length === 1
 								? ''
@@ -601,7 +605,7 @@
 								? ''
 								: 's'}</Heading2
 						> waiting to be selected
-						<div class="my-8 grid gap-6">
+						<div transition:slide class="my-8 grid gap-6">
 							{#each unclassifiedEpisodes as episode (episode.id)}
 								<EpisodePreview
 									{episode}
@@ -619,7 +623,7 @@
 								? ''
 								: 's'} excluded
 						</Heading2>
-						<div class="my-8 grid gap-6 px-4">
+						<div transition:slide class="my-8 grid gap-6 px-4">
 							{#each everythingElseEpisodes as episode (episode.id)}
 								<EpisodePreview
 									{episode}

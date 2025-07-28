@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 import type { TransitionConfig } from "svelte/transition";
 import { quintOut } from 'svelte/easing';
-import { crossfade } from 'svelte/transition';
+import { crossfade, slide } from 'svelte/transition';
 
 
 
@@ -68,19 +68,22 @@ export const flyAndScale = (
 };
 
 export const [send, receive] = crossfade({
-	duration: (d) => Math.sqrt(d * 200),
-
-	fallback(node, params) {
-		const style = getComputedStyle(node);
-		const transform = style.transform === 'none' ? '' : style.transform;
-
-		return {
-			duration: 600,
-			easing: quintOut,
-			css: (t) => `
-				transform: ${transform} scale(${t});
-				opacity: ${t}
-			`
-		};
+	fallback: (node, params, intro) => {
+		if (intro) {
+			// Entering: Use default slide (slides down)
+			return slide(node, params);
+		} else {
+			// Leaving: Custom slide-down transition
+			const axis = params.axis || 'y';
+			const distance = axis === 'x' ? node.scrollWidth : node.scrollHeight;
+			return {
+				duration: params.duration || 400,
+				easing: params.easing,
+				css: (t) => `
+          opacity: ${t};
+          ${axis === 'x' ? 'transform: translateX' : 'transform: translateY'}(${(1 - t) * distance}px);
+        `
+			};
+		}
 	}
 });
