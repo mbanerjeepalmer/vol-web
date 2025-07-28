@@ -528,22 +528,19 @@
 			<Tabs.List class="mx-auto flex h-fit flex-col gap-y-2 sm:flex-row">
 				<Tabs.Trigger value="think">1. <Orbit class="mx-2 w-4" /> think</Tabs.Trigger>
 				<Tabs.Trigger value="search">
-					<div class="flex w-fit flex-row">
+					<div class="flex w-fit flex-row items-center">
 						2.
-						<span class={'mx-2 flex flex-row'}
-							><Search class="mx-2 w-4" /><span
-								class={[catalogueState.state === 'syncing' && pulsingClasses]}
-							>
-								search</span
-							>
-							+
-							<span class={'mx-2 flex flex-row'}
-								><ChartCandlestick class="mx-2 w-4" />
-								<span class={[catalogueState.state === 'classifying' && pulsingClasses]}
-									>select</span
-								>
-							</span>
+
+						<Search class="mx-2 w-4" /><span
+							class={[catalogueState.state === 'syncing' && pulsingClasses]}
+						>
+							search
 						</span>
+
+						<span class="mx-2">+</span>
+
+						<ChartCandlestick class="mx-2 w-4" />
+						<span class={[catalogueState.state === 'classifying' && pulsingClasses]}>select</span>
 					</div>
 				</Tabs.Trigger>
 				<Tabs.Trigger value="subscribe">3. <Podcast class="mx-2 w-4" />subscribe</Tabs.Trigger>
