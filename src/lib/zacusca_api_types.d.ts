@@ -1510,6 +1510,7 @@ export interface operations {
         parameters: {
             query?: {
                 everything_else?: boolean;
+                batch_size?: number;
                 after?: string | null;
             };
             header?: never;
