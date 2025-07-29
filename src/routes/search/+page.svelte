@@ -595,7 +595,7 @@
 				<div>
 					{#if unclassifiedEpisodes.length > 0}
 						<ScrollableEpisodes>
-							{#snippet headingText()}{unclassifiedEpisodes.length} episode{everythingElseEpisodes.length ===
+							{#snippet headingText()}{unclassifiedEpisodes.length} episode{unclassifiedEpisodes.length ===
 								1
 									? ''
 									: 's'}
