@@ -573,7 +573,7 @@
 								: 's'} for your playlist
 						{/snippet}
 						{#snippet epsidodesSlot()}
-							{#each relevantEpisodes as episode}
+							{#each relevantEpisodes as episode (episode.id)}
 								<EpisodePreview
 									{episode}
 									{userClassify}
