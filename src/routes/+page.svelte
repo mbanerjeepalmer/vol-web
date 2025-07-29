@@ -55,6 +55,7 @@
 				bind:value={inputValue}
 				class="h-16 w-full"
 				placeholder="what's on your mind?"
+				data-posthog-no-mask
 			/>
 			<Button type="submit" class="text-md w-full sm:h-16 sm:w-auto">go</Button>
 		</div>

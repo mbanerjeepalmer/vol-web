@@ -12,6 +12,20 @@ export const load = async () => {
                 person_profiles: "identified_only",
                 capture_pageleave: false,
                 capture_pageview: false,
+                session_recording: {
+                    maskAllInputs: true,
+                    maskInputFn: (text, element) => {
+
+                        if (element?.hasAttribute('data-posthog-no-mask')) {
+                            return text;
+                        }
+                        // https://posthog.com/docs/session-replay/privacy#mask-or-un-mask-specific-inputs
+                        if (element?.attributes['type']?.value === 'search') {
+                            return text;
+                        }
+                        return '*'.repeat(text.length);
+                    },
+                }
             }
         )
     }
