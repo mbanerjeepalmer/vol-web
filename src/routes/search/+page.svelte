@@ -428,7 +428,7 @@
 			console.debug('catalogueResponseJSON', catalogueResponseJSON);
 			const newURL = new URL(page.url);
 			newURL.searchParams.set('catalogue_id', catalogueResponseJSON.catalogue.id);
-			goto(newURL);
+			goto(newURL, { noScroll: true });
 			console.debug(`Going to start fetching data`);
 			await startPolling();
 		} catch (error) {
