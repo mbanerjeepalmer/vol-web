@@ -15,7 +15,7 @@
 	import createClient from 'openapi-fetch';
 	import { PUBLIC_ZACUSCA_API_BASE } from '$env/static/public';
 	import Heading2 from '$lib/components/Heading2.svelte';
-	import { slide } from 'svelte/transition';
+	import ScrollableEpisodes from '$lib/components/ScrollableEpisodes.svelte';
 
 	interface Props {
 		data: PageData;
@@ -564,88 +564,72 @@
 					{/if}
 				</div>
 
-				{#if (relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0) || catalogueState.state === 'classifying'}
-					<div
-						transition:slide
-						class="my-8 box-border flex flex-col rounded-2xl border-4 border-green-500/30 pt-4"
-					>
-						<Heading2>
+				{#if relevantEpisodes.length > 0}
+					<!-- TODO use snippets more efficiently here -->
+					<ScrollableEpisodes themeColour="green">
+						{#snippet headingText()}
 							selected {relevantEpisodes.length} episode{everythingElseEpisodes.length === 1
 								? ''
 								: 's'} for your playlist
-						</Heading2>
-						<!-- Scrollable episodes container -->
-						<div
-							class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[50vh] overflow-y-auto px-4 py-6"
-						>
-							<div class="relative">
-								{#if relevantEpisodes.hasOwnProperty('length') && relevantEpisodes.length > 0}
-									<div class="flex flex-col gap-6">
-										{#each relevantEpisodes as episode (episode.id)}
-											<div class="relative">
-												<EpisodePreview
-													{episode}
-													{userClassify}
-													classificationStatus={getClassificationStatus(episode.id)}
-													{processClassificationQueue}
-												/>
-											</div>
-										{/each}
-									</div>
-								{/if}
-							</div>
-						</div>
-
-						<div class="border-t border-green-500/20 px-4 py-6">
+						{/snippet}
+						{#snippet epsidodesSlot()}
+							{#each relevantEpisodes as episode}
+								<EpisodePreview
+									{episode}
+									{userClassify}
+									classificationStatus={getClassificationStatus(episode.id)}
+									{processClassificationQueue}
+								/>
+							{/each}
+						{/snippet}
+						{#snippet subscribeSlot()}
 							<Subscribe {relevantEpisodes} {relevantFeedID} />
-						</div>
-					</div>
+						{/snippet}
+					</ScrollableEpisodes>
 				{/if}
+				<!-- TODO use <ScrollableEpisodes/> -->
 				{#if episodes.length === 0 && catalogueState.state === 'syncing'}
 					<Heading2>searching for episodes</Heading2>
 					<EmptyEpisodes />
 				{/if}
 				<div>
 					{#if unclassifiedEpisodes.length > 0}
-						<Heading2
-							>{unclassifiedEpisodes.length} episode{everythingElseEpisodes.length === 1 ? '' : 's'}
-							awaiting selection</Heading2
-						>
-						<div transition:slide class="my-8 grid gap-6">
-							{#each unclassifiedEpisodes as episode (episode.id)}
-								<EpisodePreview
-									{episode}
-									{userClassify}
-									classificationStatus={getClassificationStatus(episode.id)}
-								/>
-							{/each}
-						</div>
-					{/if}
-				</div>
-				{#if everythingElseEpisodes.length > 0}
-					<div
-						transition:slide
-						class="my-8 box-border flex flex-col rounded-2xl border-4 border-fuchsia-500/30 pt-4"
-					>
-						<Heading2>
-							{everythingElseEpisodes.length} episode{everythingElseEpisodes.length === 1
-								? ''
-								: 's'} excluded
-						</Heading2>
-						<div
-							class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-green-500/20 hover:scrollbar-thumb-green-500/40 max-h-[50vh] overflow-y-auto px-4 py-6"
-						>
-							<div class="my-8 grid gap-6 px-4">
-								{#each everythingElseEpisodes as episode (episode.id)}
+						<ScrollableEpisodes>
+							{#snippet headingText()}{unclassifiedEpisodes.length} episode{everythingElseEpisodes.length ===
+								1
+									? ''
+									: 's'}
+								awaiting selection
+							{/snippet}
+							{#snippet epsidodesSlot()}
+								{#each unclassifiedEpisodes as episode (episode.id)}
 									<EpisodePreview
 										{episode}
 										{userClassify}
 										classificationStatus={getClassificationStatus(episode.id)}
 									/>
 								{/each}
-							</div>
-						</div>
-					</div>
+							{/snippet}
+						</ScrollableEpisodes>
+					{/if}
+				</div>
+				{#if everythingElseEpisodes.length > 0}
+					<ScrollableEpisodes themeColour="fuchsia">
+						{#snippet headingText()}
+							{everythingElseEpisodes.length} episode{everythingElseEpisodes.length === 1
+								? ''
+								: 's'} excluded
+						{/snippet}
+						{#snippet epsidodesSlot()}
+							{#each everythingElseEpisodes as episode (episode.id)}
+								<EpisodePreview
+									{episode}
+									{userClassify}
+									classificationStatus={getClassificationStatus(episode.id)}
+								/>
+							{/each}
+						{/snippet}
+					</ScrollableEpisodes>
 				{/if}
 			</div>
 		</Tabs.Content>
