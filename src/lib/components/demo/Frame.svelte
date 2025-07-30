@@ -1,5 +1,5 @@
 <script lang="ts">
-	let { offspring } = $props();
+	let { offspring = [] } = $props();
 </script>
 
 <div
