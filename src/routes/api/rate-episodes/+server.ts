@@ -66,7 +66,7 @@ Example: {"goal": 85, "context": 70, "quality": 90, "freshness": 65}`
                 },
                 ]
             }],
-        model: "llama3-70b-8192",
+        model: "llama-3.3-70b-versatile",
         response_format: {
             type: "json_object"
         },
@@ -113,7 +113,7 @@ Example:
                         episodes: formattedEpisodes
                     })
                 }],
-            model: "llama3-70b-8192",
+            model: "llama-3.3-70b-versatile",
             temperature: 1.0,
             max_tokens: 2048,
         });

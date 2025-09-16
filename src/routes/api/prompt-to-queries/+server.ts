@@ -44,7 +44,7 @@ Mark Zuckerberg is the founder of Meta.
 ${prompt}`
             }
         ],
-        "model": "llama3-70b-8192",
+        "model": "llama-3.3-70b-versatile",
         "temperature": 1,
         "max_tokens": 1024,
         "stream": true,
