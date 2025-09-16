@@ -17,7 +17,6 @@ export const llmStore = writable<LLMStore>({
     readyMessage: ''
 });
 
-const MODEL_ID = 'Llama-3.2-1B-Instruct-q4f32_1-MLC';
 
 async function sendInitialMessage(engine: webllm.MLCEngineInterface) {
     try {
