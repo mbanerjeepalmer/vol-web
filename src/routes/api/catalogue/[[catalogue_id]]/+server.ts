@@ -42,10 +42,10 @@ export async function POST({ request }) {
     const input_feeds = queries.map(query => ({
         "href": `${PUBLIC_ZACUSCA_API_BASE}/search/spotify-itunes?query=${encodeURI(query)}&format=rss`,
         "link": `${PUBLIC_ZACUSCA_API_BASE}/search/spotify-itunes?query=${encodeURI(query)}&format=rss`,
-        "feed_type": "input",
+        "feed_type": "input" as const,
         "title": query,
         "description": `vol podcast search for '${query}', prompted by '${prompt}'`,
-        "polling_available": "manual"
+        "polling_available": "manual" as const
     }))
     const { data: catalogueData, error: catalogueError } = await client.POST("/catalogue-mega-async",
         {
@@ -54,7 +54,7 @@ export async function POST({ request }) {
                 catalogue: {
                     name: prompt
                 },
-                input_feeds,
+                input_feeds: input_feeds,
                 output_feeds: [{
                     title: prompt,
                     description: criteria
