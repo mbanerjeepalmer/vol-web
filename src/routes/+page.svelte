@@ -2,6 +2,8 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { onMount } from 'svelte';
+	import * as Alert from '$lib/components/ui/alert/index.js';
+	import { Root } from '$lib/components/ui/card';
 
 	let inputValue = $state();
 	let inputElement: HTMLInputElement | null = $state(null);
@@ -44,6 +46,12 @@
 				>vol</span
 			> is better than you at finding podcasts
 		</h1>
+		<Alert.Root variant="destructive" class="mx-auto mt-8 w-fit bg-red-50 px-8 py-4 text-center"
+			><p class="font-medium">vol is overwhelmed, sorry.</p>
+			<a class="underline underline-offset-4" href="https://tally.so/r/mJVbb7" target="_blank"
+				>find out when it's back</a
+			></Alert.Root
+		>
 	</div>
 	<form method="POST" class="mx-auto w-full max-w-lg px-4">
 		<div class="flex flex-col gap-2 sm:flex-row">
